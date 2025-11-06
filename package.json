@@ -1,0 +1,42 @@
+{
+  "name": "cosci-connect",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@auth/mongodb-adapter": "^3.9.0",
+    "axios": "^1.8.4",
+    "cloudinary": "^1.41.3",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.10.5",
+    "i": "^0.3.7",
+    "lucide-react": "^0.552.0",
+    "mongoose": "^8.13.2",
+    "multer": "^1.4.5-lts.2",
+    "multer-storage-cloudinary": "^4.0.0",
+    "next": "15.3.1",
+    "next-auth": "^4.24.11",
+    "nodemailer": "^6.10.1",
+    "pusher": "^5.2.0",
+    "pusher-js": "^8.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-easy-crop": "^5.4.1",
+    "react-hot-toast": "^2.5.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/nodemailer": "^6.4.17",
+    "@types/react": "19.1.2",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.1",
+    "tailwindcss": "^4",
+    "typescript": "^5.8.3"
+  }
+}
