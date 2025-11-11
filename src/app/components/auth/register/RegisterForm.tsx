@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import StepRole from "./steps/StepRole";
+import Step1_UserInfo from "./steps/Step1NameAndRole";
+// import StepRole from "./steps/StepRole";
 import StepPersonalInfo from "./steps/StepPersonalInfo";
 import StepMajorAndSkills from "./steps/StepMajorAndSkills";
 import StepEmail from "./steps/StepEmail";
@@ -26,7 +27,7 @@ export const skillCategories = {
   "Audio": ["Sound Design", "Music Production", "Voice Over"]
 };
 
-export type UserRole = "student" | "alumni" | "teacher";
+export type UserRole = "student" | "alumni" | "teacher" | "";
 
 export interface RegisterData {
   role: UserRole;
@@ -65,6 +66,13 @@ interface ValidationState {
   lastName: {
     error: string;
   };
+  // *** เพิ่ม: validation สำหรับ password ***
+  password: {
+    error: string;
+  };
+  confirmPassword: {
+    error: string;
+  };
 }
 
 function RegisterForm({ onLoginClick }: RegisterFormProps) {
@@ -96,11 +104,18 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     },
     lastName: {
       error: ''
-    }
+    },
+ // *** เพิ่ม: state สำหรับ password ***
+    password: {
+      error: '',
+    },
+    confirmPassword: {
+      error: '',
+    },
   });
   
   const [registerData, setRegisterData] = useState<RegisterData>({
-    role: "student",
+    role: "",
     firstName: "",
     lastName: "",
     name: "",
@@ -265,39 +280,25 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   // เช็คว่าขั้นตอนปัจจุบันมีข้อมูลครบหรือไม่
   const isStepValid = () => {
     switch (currentStep) {
-      case 1: // Role
-        return !!registerData.role;
-      case 2: // Personal Info
-        if (!registerData.firstName || !registerData.lastName) return false;
-        if (validation.firstName.error || validation.lastName.error) return false;
-        
-        if (registerData.role === "student") {
-          if (!registerData.studentId || registerData.studentId.length !== 11) {
-            return false;
-          }
-          // ตรวจสอบว่ามีข้อผิดพลาดในรหัสนิสิตหรือไม่
-          if (validation.studentId.error || validation.studentId.exists) {
-            return false;
-          }
-        }
-        return true;
-      case 3: // Major and Skills
-        if (!registerData.major) return false;
-        if (registerData.role === "student" && registerData.skills.length === 0) {
-          return false;
-        }
-        return true;
-      case 4: // Email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(registerData.email)) return false;
-        
-        // ตรวจสอบว่ามีข้อผิดพลาดในอีเมลหรือไม่
-        if (validation.email.error || validation.email.exists) {
-          return false;
-        }
-        
-        return true;
-      case 5: // Profile (optional fields, always valid)
+      case 1: // Role, First Name, Last Name
+        // ตรวจสอบว่าเลือก role และกรอกชื่อ-นามสกุลครบถ้วน
+        // และไม่มี error validation
+        return (
+          !!registerData.role &&
+          !!registerData.firstName &&
+          !!registerData.lastName &&
+          !validation.firstName.error &&
+          !validation.lastName.error
+        );
+      case 2: // Email & Password (ยังไม่ได้สร้าง)
+        // (ยังไม่ implement - จะทำใน step ถัดไป)
+        // Placeholder:
+        return !!registerData.email; 
+      case 3: // Academic Info (ยังไม่ได้สร้าง)
+        // (ยังไม่ implement - จะทำใน step ถัดไป)
+        // Placeholder:
+        return !!registerData.major;
+      case 4: // Profile (optional)
         return true;
       default:
         return false;
@@ -309,7 +310,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     setError("");
     
     // Check if this is the final step
-    if (currentStep === 5) {
+    if (currentStep === 4) {
       // Final step, submit form
       handleSubmit();
       return;
@@ -619,10 +620,11 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-medium">สร้างบัญชีใหม่</h1>
             <span className="text-gray-500 text-sm">
-              ขั้นตอน {currentStep} จาก 5
+              ขั้นตอน {currentStep} จาก 4
             </span>
           </div>
 
+          <StepIndicator currentStep={currentStep} totalSteps={4} />
           <hr className="text-gray-200" />
 
           {error && (
@@ -633,31 +635,48 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
           <div className="flex flex-col gap-6">
             {currentStep === 1 && (
-              <StepRole 
-                selectedRole={registerData.role} 
-                onRoleSelect={(role) => updateRegisterData({ role })} 
+              <Step1_UserInfo
+                data={registerData}
+                validation={validation}
+                updateData={updateRegisterData}
+                onValidateName={handleNameValidation} 
+                // selectedRole={registerData.role} 
+                // onRoleSelect={(role) => updateRegisterData({ role })} 
               />
             )}
 
             {currentStep === 2 && (
-              <StepPersonalInfo 
-                data={registerData} 
-                validation={validation}
-                updateData={updateRegisterData}
-                onValidateName={handleNameValidation}
-                onStudentIdTouched={handleStudentIdTouched}
+              <StepEmail 
+                email={registerData.email}
+                isVerified={registerData.isEmailVerified}
+                validation={validation.email}
+                onEmailChange={(email) => updateRegisterData({ email })}
+                onEmailTouched={handleEmailTouched} // (จะ implement ทีหลัง)
               />
+              // <StepPersonalInfo 
+              //   data={registerData} 
+              //   validation={validation}
+              //   updateData={updateRegisterData}
+              //   onValidateName={handleNameValidation}
+              //   onStudentIdTouched={handleStudentIdTouched}
+              // />
             )}
 
             {currentStep === 3 && (
+              // (Placeholder - จะสร้าง Step 3 ในขั้นถัดไป)
               <StepMajorAndSkills 
                 data={registerData} 
                 updateData={updateRegisterData} 
                 skillCategories={skillCategories}
               />
+              // <StepMajorAndSkills 
+              //   data={registerData} 
+              //   updateData={updateRegisterData} 
+              //   skillCategories={skillCategories}
+              // />
             )}
 
-            {currentStep === 4 && (
+            {/* {currentStep === 4 && (
               <StepEmail 
                 email={registerData.email}
                 isVerified={registerData.isEmailVerified}
@@ -665,9 +684,9 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
                 onEmailChange={(email) => updateRegisterData({ email })}
                 onEmailTouched={handleEmailTouched}
               />
-            )}
+            )} */}
 
-            {currentStep === 5 && (
+            {currentStep === 4 && (
               <StepProfile 
                 data={registerData} 
                 updateData={updateRegisterData}
@@ -698,7 +717,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
                 {isLoading && (
                   <span className="inline-block h-4 w-4 border-2 border-white border-r-transparent rounded-full animate-spin mr-2"></span>
                 )}
-                {currentStep < 5 ? 'ถัดไป' : 'สร้างบัญชี'}
+                {currentStep < 4 ? 'ถัดไป' : 'สร้างบัญชี'}
               </button>
             </div>
 

@@ -5,7 +5,8 @@ import axios from "axios";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import React, { useState, useEffect } from "react";
-import OTP from "../otp/OTP";
+import Image from "next/image";
+//ลบ otp ออก ใช้แค่ตอน register
 
 interface LoginFormProps {
   onRegisterClick: () => void;
@@ -13,214 +14,149 @@ interface LoginFormProps {
 
 function LoginForm({ onRegisterClick }: LoginFormProps) {
   const [email, setEmail] = useState("");
-  const [showOTP, setShowOTP] = useState(false);
+  const [password, setPassword] = useState(""); // เพิ่ม state สำหรับรหัสผ่าน
   const [isLoading, setIsLoading] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
-  const [emailExists, setEmailExists] = useState(false);
   const [error, setError] = useState("");
-  const [emailTouched, setEmailTouched] = useState(false);
-
-  // ตรวจสอบอีเมลเมื่อผู้ใช้พิมพ์และแล้วหยุดพิมพ์
-  useEffect(() => {
-    // กำหนด timeout สำหรับการตรวจสอบหลังจากผู้ใช้หยุดพิมพ์
-    const delayCheck = setTimeout(() => {
-      if (email && emailTouched) {
-        checkEmailExists();
-      }
-    }, 500);
-
-    return () => clearTimeout(delayCheck);
-  }, [email, emailTouched]);
-
-  // ตรวจสอบว่าอีเมลมีในระบบหรือไม่
-  const checkEmailExists = async () => {
-    if (!email || !isValidEmail(email)) return;
-
-    setIsChecking(true);
-    setError("");
-
-    try {
-      const response = await axios.get(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
-      setEmailExists(response.data.exists);
-      
-      if (!response.data.exists) {
-        setError("อีเมลนี้ยังไม่ได้ลงทะเบียนในระบบ");
-      }
-    } catch (error) {
-      console.error("Error checking email:", error);
-      setEmailExists(false);
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
-  // ตรวจสอบรูปแบบอีเมล
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    setEmailTouched(true);
-    
-    if (!e.target.value) {
-      setEmailExists(false);
-      setError("");
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !emailExists) return;
-    
-    // Clear any previous errors
-    setError("");
-    
-    // Show loading state
-    setIsLoading(true);
-    
-    try {
-      // Request an OTP
-      const response = await axios.get(`/api/auth/verify-otp?email=${encodeURIComponent(email)}`);
-      console.log("OTP request response:", response.data);
-      
-      if (response.data.success) {
-        // Show OTP verification
-        setShowOTP(true);
-      } else {
-        setError("Failed to send OTP. Please try again.");
-      }
-    } catch (error: any) {
-      console.error("Error sending OTP:", error);
-      
-      // แสดงข้อความเอเร่อจาก API ถ้ามี
-      if (error.response && error.response.data && error.response.data.error) {
-        setError(error.response.data.error);
-      } else {
-        setError("An error occurred. Please try again later.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    e.preventDefault(); // ป้องกันการ reload หน้า
+    setError(""); // เคลียร์ข้อความผิดพลาดเดิม
+    setIsLoading(true); // แสดงสถานะกำลังโหลด
 
-  // OTP ถูกต้องและต้องการล็อกอินทันที
-  const handleOTPVerified = async () => {
-    // ซ่อนหน้าต่าง OTP
-    setShowOTP(false);
-    // แสดงสถานะกำลังโหลด
-    setIsLoading(true);
-    
+    if (!email.trim() || !password.trim()) {
+      setError("กรุณากรอกอีเมลและรหัสผ่าน");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // ล็อกอินโดยตรงไม่ผ่านการยืนยันอีเมลซ้ำ
-      // เราใช้ "credentials" เพื่อล็อกอินด้วยอีเมลเท่านั้น
+      // ใช้ NextAuth เพื่อล็อกอินด้วย credentials (email และ password)
       const result = await signIn("credentials", {
         email: email,
-        redirect: false,
-        callbackUrl: "/"
+        password: password,
+        redirect: false, // ไม่ redirect อัตโนมัติ
+        callbackUrl: "/", // หน้าที่ต้องการไปหลังจากล็อกอินสำเร็จ
       });
-      
-      // ถ้าล็อกอินสำเร็จ
+
       if (!result?.error) {
-        // Redirect ไปหน้าหลัก
-        window.location.href = "/";
+        // ล็อกอินสำเร็จ
+        window.location.href = "/"; // Redirect ไปหน้าหลัก
       } else {
-        // ถ้ามีข้อผิดพลาด
-        setError(result.error || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองอีกครั้ง");
+        // ล็อกอินไม่สำเร็จ
+        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง"); // ข้อความผิดพลาดทั่วไปเพื่อความปลอดภัย
+        console.error("Login error:", result.error);
       }
-    } catch (error: any) {
-      console.error("Login error:", error);
-      setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองอีกครั้ง");
+    } catch (err) {
+      console.error("An unexpected error occurred during login:", err);
+      setError("เกิดข้อผิดพลาดไม่คาดคิด กรุณาลองใหม่ภายหลัง");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // ซ่อนสถานะกำลังโหลด
     }
   };
 
   return (
-    <div className="max-w-[520px] max-h-[640px] w-full h-full bg-white m-3 p-6 flex flex-col gap-4 rounded-xl shadow-md">
-      <div>
-        <h1 className="text-xl font-medium">ลงชื่อเข้าใช้งาน</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen min-w-screen bg-primary-gray p-4">
+      <div className="flex flex-col items-center mb-8">
+
+        {/* โลโก้ COSCI Hub */}
+        <Image src="/logo/favicon.ico" alt="cosci hub logo" width={50} height={50} className="h-[50px] w-auto mb-5" priority/>
+        {/* <img src="/logo/favicon.ico" alt="cosci hub logo" className="h-[50px]" /> */}
+
+        <h1 className="text-2xl font-semibold text-gray-800">
+          ยินดีต้อนรับสู่ COSCI Hub
+        </h1>
       </div>
 
-      <hr className="text-gray-300"/>
+      {/* <div className="w-full max-w-sm bg-white p-8 rounded-lg shadow-md"> */}
+        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+          {/* Email Field */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              อีเมล
+            </label>
+            <div className="relative">
+              <input
+                
+                id="email"
+                type="email"
+                className="w-full pr-4 py-2 pl-10 bg-secondary-gray border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="กรอกอีเมลของคุณ (@g.swu.ac.th)"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </div>
+          </div>
 
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="label">อีเมล</label>
-          <div className="relative">
-            <input 
-              type="email" 
-              className={`input ${
-                email && (
-                  isChecking ? 'border-gray-400' : 
-                  emailExists ? 'border-green-500' : 
-                  error ? 'border-red-500' : ''
-                )
-              }`}
-              placeholder="example@g.swu.ac.th"
-              value={email}
-              onChange={handleEmailChange}
-              onBlur={() => setEmailTouched(true)}
-              required
-            />
-            
-            {/* แสดงไอคอนสถานะการตรวจสอบอีเมล */}
-            {email && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                {isChecking ? (
-                  <div className="w-5 h-5 border-2 border-gray-400 border-r-transparent rounded-full animate-spin"></div>
-                ) : emailExists ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                ) : email && emailTouched ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                  </svg>
-                ) : null}
-              </div>
-            )}
+          {/* Password Field */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              รหัสผ่าน
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type="password"
+                className="w-full pr-4 py-2 pl-10 bg-secondary-gray border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="กรอกรหัสผ่าน"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
           </div>
-          <div className="relative py-2">
-            {error && (
-              <p className="text-xs text-red-500 absolute">
-                {error}
-              </p>
-            )}
+
+          {/* Forgot Password Link */}
+          <div className="text-right -mt-2">
+            <Link href="/forgot-password">
+              <span className="text-sm text-blue-600 hover:text-blue-500 hover:underline">
+                ลืมรหัสผ่าน?
+              </span>
+            </Link>
           </div>
-          
-        </div>
-        
-        <button 
-          type="submit" 
-          className={`btn-primary w-full flex justify-center items-center ${
-            isLoading || isChecking || !email || !emailExists ? 'opacity-75 cursor-not-allowed' : ''
-          }`}
-          disabled={isLoading || isChecking || !email || !emailExists}
-        >
-          {isLoading ? (
-            <span className="inline-block h-5 w-5 border-2 border-white border-r-transparent rounded-full animate-spin mr-2"></span>
-          ) : null}
-          ลงชื่อเข้าใช้
-        </button>
-        <div className="flex gap-2 text-sm">
-          <p className="text-gray-400">ยังไม่มีบัญชี ?</p>
-          <button 
-            type="button" 
-            className="text-primary-blue-500 hover:text-primary-blue-400 hover:underline"
-            onClick={onRegisterClick}
+
+          {/* Error Message */}
+          {error && (
+            <p className="text-sm text-red-600 text-center">{error}</p>
+          )}
+
+          {/* Login Button */}
+          <button
+            type="submit"
+            className={`w-full bg-blue-600 text-white py-2 px-50 rounded-md hover:bg-blue-700 transition duration-300 flex items-center justify-center ${
+              isLoading ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
+            disabled={isLoading}
           >
-            สร้างบัญชี
+            {isLoading && (
+              <span className="inline-block h-4 w-4 border-2 border-white border-r-transparent rounded-full animate-spin mr-2"></span>
+            )}
+            เข้าสู่ระบบ
           </button>
-        </div>
-      </form>
 
-      {/* ส่งอีเมลไปด้วยเพื่อใช้ในการตรวจสอบ OTP */}
-      {showOTP && <OTP onClose={() => setShowOTP(false)} onVerified={handleOTPVerified} email={email} />}
+          {/* Register Link */}
+          <div className="text-center text-sm mt-4">
+            <p className="text-gray-600">
+              ยังไม่มีบัญชีใช่ไหม?{" "}
+              <button
+                type="button"
+                className="text-blue-600 hover:text-blue-500 hover:underline font-medium"
+                onClick={onRegisterClick}
+              >
+                ลงทะเบียน
+              </button>
+            </p>
+          </div>
+        </form>
+      {/* </div> */}
     </div>
   );
 }
