@@ -126,9 +126,10 @@ const MajorDropdown: React.FC<MajorDropdownProps> = ({
     >
       {/* Dropdown trigger */}
       <div
-        className={`flex items-center justify-between px-2.5 py-2 w-full border rounded-xl cursor-pointer ${
+      // className="w-full pr-4 py-2 pl-10 bg-secondary-gray border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={`flex items-center justify-between  pr-4 pl-10 py-2 w-full border rounded-xl  ${
           isOpen ? 'border-primary-blue-500 ring-2 ring-primary-blue-100' : 'border-gray-400'
-        } ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white hover:border-gray-500'}`}
+        } ${disabled ? 'bg-white cursor-not-allowed' : 'bg-secondary-gray hover:border-gray-500'}`}
         onClick={toggleDropdown}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -167,7 +168,7 @@ const MajorDropdown: React.FC<MajorDropdownProps> = ({
                     option.value === value
                       ? 'bg-primary-blue-100 text-primary-blue-600'
                       : highlightedIndex === index
-                      ? 'bg-gray-100'
+                      ? 'bg-white'
                       : 'hover:bg-gray-50'
                   }`}
                   onClick={() => selectOption(option)}

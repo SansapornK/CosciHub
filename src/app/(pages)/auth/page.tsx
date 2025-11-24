@@ -44,7 +44,7 @@ function AuthPage() {
   }
   
   return (
-    <div className="w-screen h-screen bg-gradient-to-t from-slate-800 to-primary-blue-500 fixed inset-0 z-[200] flex justify-center place-items-center">
+    <div className="w-screen h-screen bg-white fixed inset-0 z-[200] flex justify-center place-items-center">
       <Suspense fallback={null}>
         <AuthStateHandler onStateChange={handleStateChange} />
       </Suspense>
