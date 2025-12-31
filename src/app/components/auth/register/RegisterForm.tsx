@@ -610,7 +610,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   };
 
   return (
-    <div className="max-w-[520px] max-h-[660px] w-full h-full bg-white flex flex-col">
+    <div className="max-w-[520px] w-full bg-white flex flex-col items-center px-6 py-8">
             <div className="flex flex-col items-center mb-8">
       
               {/* โลโก้ COSCI Hub */}
@@ -624,7 +624,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
             
       {isRegistrationSuccess ? (
         // หน้าสำเร็จ
-        <div className="text-center py-4">
+        <div className="text-center py-4 w-full">
           <div className="mb-4 flex justify-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
@@ -642,8 +642,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         </div>
       ) : (
         // หน้าลงทะเบียนปกติ
-        <>
-          <div className="flex justify-end items-center">
+        <div className="w-full flex flex-col">
+          <div className="flex justify-end items-center mb-4">
             <span className="text-gray-500 text-sm">
               ขั้นตอน {currentStep} จาก 5
             </span>
@@ -653,12 +653,12 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           {/* <hr className="text-gray-200" /> */}
 
           {error && (
-            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded-lg">
+            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded-lg mb-4">
               {error}
             </div>
           )}
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 items-center w-full">
             {currentStep === 1 && (
               
               <StepRole 
@@ -722,7 +722,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
               />
             )}
 
-            <div className="flex justify-between">
+            <div className="flex justify-between w-full">
               {currentStep > 1 ? (
                 <button 
                   type="button"
@@ -749,7 +749,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
               </button>
             </div>
 
-            <div className="flex gap-2 justify-end text-sm">
+            <div className="flex gap-2 justify-end text-sm w-full">
               <p className="text-gray-400">มีบัญชีอยู่แล้ว ?</p>
               <button 
                 type="button" 
@@ -760,7 +760,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {showOTP && (

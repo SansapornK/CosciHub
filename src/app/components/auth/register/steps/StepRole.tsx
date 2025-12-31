@@ -156,7 +156,7 @@ function Step1_UserInfo({
   // };
 
   return (
-    <div className="flex flex-col gap-6 w-full h-full">
+    <div className="flex flex-col gap-6 w-full items-center">
       {/* ปรับ UI ให้ตรงกับภาพ: 
         เราสามารถลบ icon ใน input ออกได้หากต้องการให้เหมือนในภาพเป๊ะๆ 
         หรือปรับสไตล์ .input ใน globals.css ให้มี padding-left เพิ่มขึ้น
@@ -206,7 +206,7 @@ function Step1_UserInfo({
         </div>
       </div> */}
 
-      <div>
+      <div className="w-full">
         <label htmlFor="role" className="block text-gray-700 text-sm mb-1">
           บทบาท <span className="text-red-500">*</span>
         </label>

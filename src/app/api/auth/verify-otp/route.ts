@@ -74,15 +74,38 @@ export async function GET(req: NextRequest) {
     // เก็บ OTP
     otpStore.set(email, { otp, expires });
     
+    // ตรวจสอบว่า environment variables ถูกตั้งค่าหรือไม่
+    if (!process.env.EMAIL_SERVER_HOST || !process.env.EMAIL_SERVER_PORT || 
+        !process.env.EMAIL_SERVER_USER || !process.env.EMAIL_SERVER_PASSWORD) {
+      console.error('Email configuration is missing. Please set EMAIL_SERVER_HOST, EMAIL_SERVER_PORT, EMAIL_SERVER_USER, and EMAIL_SERVER_PASSWORD');
+      
+      // ในโหมดพัฒนา ยังคงส่ง OTP กลับไปเพื่อการทดสอบ
+      return NextResponse.json({ 
+        success: true, 
+        message: 'OTP generated. Email configuration missing - check server logs for OTP.',
+        otp // ส่ง OTP ในการตอบกลับเพื่อการทดสอบ
+      });
+    }
+
     // สร้าง transporter สำหรับส่งอีเมล
+    const port = Number(process.env.EMAIL_SERVER_PORT);
+    const isSecure = port === 465;
+    
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
-      port: Number(process.env.EMAIL_SERVER_PORT),
-      secure: Number(process.env.EMAIL_SERVER_PORT) === 465, // true สำหรับ 465, false สำหรับพอร์ตอื่น
+      port: port,
+      secure: isSecure, // true สำหรับ 465, false สำหรับ 587
       auth: {
         user: process.env.EMAIL_SERVER_USER,
         pass: process.env.EMAIL_SERVER_PASSWORD,
       },
+      // สำหรับ port 587 ต้องใช้ requireTLS
+      ...(port === 587 && {
+        requireTLS: true,
+        tls: {
+          rejectUnauthorized: false // สำหรับ development (ควรเป็น true ใน production)
+        }
+      }),
     });
 
     // เตรียมเนื้อหาอีเมล
@@ -112,18 +135,31 @@ export async function GET(req: NextRequest) {
     // ส่งอีเมล
     try {
       await transporter.sendMail(mailOptions);
-      console.log(`OTP sent to ${email}`);
-    } catch (emailError) {
-      console.error('Error sending email:', emailError);
+      console.log(`✅ OTP sent successfully to ${email}`);
       
-      // ถ้าส่งอีเมลไม่สำเร็จในโหมดพัฒนา ให้แสดง OTP ในคอนโซล
+      // ในโหมดพัฒนา ให้แสดง OTP ใน console เพื่อการทดสอบ
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[DEV MODE] OTP for ${email}: ${otp}`);
+      }
+    } catch (emailError: any) {
+      console.error('❌ Error sending email:', emailError);
+      console.error('Error details:', {
+        code: emailError.code,
+        command: emailError.command,
+        response: emailError.response,
+        responseCode: emailError.responseCode
+      });
+      
+      // ถ้าส่งอีเมลไม่สำเร็จ ให้แสดง OTP ในคอนโซลเพื่อการทดสอบ
       console.log(`[DEV MODE] OTP for ${email}: ${otp}`);
+      console.log('Please check your email configuration (EMAIL_SERVER_HOST, EMAIL_SERVER_PORT, EMAIL_SERVER_USER, EMAIL_SERVER_PASSWORD)');
       
       // แจ้งผู้ใช้ว่ามีปัญหาในการส่งอีเมล แต่ยังคงสร้าง OTP
       return NextResponse.json({ 
         success: true, 
-        message: 'OTP generated but email sending failed. Check server logs.',
-        otp // ส่ง OTP ในการตอบกลับเพื่อการทดสอบ
+        message: 'OTP generated but email sending failed. Check server logs for OTP.',
+        otp, // ส่ง OTP ในการตอบกลับเพื่อการทดสอบ
+        error: process.env.NODE_ENV === 'development' ? emailError.message : undefined
       });
     }
 

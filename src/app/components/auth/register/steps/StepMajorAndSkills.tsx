@@ -40,8 +40,8 @@ function StepMajorAndSkills({ data, updateData, skillCategories }: StepMajorAndS
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
+    <div className="flex flex-col gap-4 w-full items-center">
+      <div className="w-full">
         <h2 className="text-lg font-medium text-gray-800">วิชาเอกและทักษะ</h2>
         <p className="text-gray-500 text-sm">
           {data.role === 'student' 
@@ -50,7 +50,7 @@ function StepMajorAndSkills({ data, updateData, skillCategories }: StepMajorAndS
         </p>
       </div>
 
-      <div>
+      <div className="w-full">
         <label htmlFor="major" className="block text-gray-700 text-sm mb-1">
           วิชาเอก
         </label>
@@ -65,7 +65,7 @@ function StepMajorAndSkills({ data, updateData, skillCategories }: StepMajorAndS
       </div>
 
       {data.role === 'student' && (
-        <div className="mt-2">
+        <div className="mt-2 w-full">
           <label className="block text-gray-700 text-sm mb-1">
             ทักษะ
             <span className="text-xs text-gray-500 ml-1">

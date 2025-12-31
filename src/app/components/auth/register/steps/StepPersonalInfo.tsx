@@ -53,13 +53,13 @@ function StepPersonalInfo({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
+    <div className="flex flex-col gap-4 w-full items-center">
+      <div className="w-full">
         <h2 className="text-lg font-medium text-gray-800">ข้อมูลส่วนตัว</h2>
         <p className="text-gray-500 text-sm">กรอกข้อมูลส่วนตัวของคุณ</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
         <div>
           <label htmlFor="firstName" className="block text-gray-700 text-sm mb-1">
             ชื่อ
@@ -102,7 +102,7 @@ function StepPersonalInfo({
       </div>
 
       {data.role === 'student' && (
-        <div>
+        <div className="w-full">
           <label htmlFor="studentId" className="block text-gray-700 text-sm mb-1">
             รหัสนิสิต
           </label>

@@ -168,7 +168,7 @@ const MajorDropdown: React.FC<MajorDropdownProps> = ({
                     option.value === value
                       ? 'bg-primary-blue-100 text-primary-blue-600'
                       : highlightedIndex === index
-                      ? 'bg-white'
+                      ? 'bg-gray-100'
                       : 'hover:bg-gray-50'
                   }`}
                   onClick={() => selectOption(option)}

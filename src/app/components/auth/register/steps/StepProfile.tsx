@@ -105,8 +105,8 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
+    <div className="flex flex-col gap-4 w-full items-center">
+      <div className="w-full">
         <h2 className="text-lg font-medium text-gray-800">โปรไฟล์</h2>
         <p className="text-gray-500 text-sm">
           เพิ่มรูปโปรไฟล์และรายละเอียดเพิ่มเติม
@@ -114,7 +114,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
       </div>
 
       {/* Profile Image */}
-      <div>
+      <div className="w-full">
         <label className="block text-gray-700 text-sm mb-1">
           รูปโปรไฟล์
         </label>
@@ -164,7 +164,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
       </div>
 
       {/* Bio */}
-      <div>
+      <div className="w-full">
         <label htmlFor="bio" className="block text-gray-700 text-sm mb-1">
           คำอธิบายตนเอง
         </label>
@@ -182,7 +182,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
       {data.role === 'student' && (
         <>
           {/* ราคาเริ่มต้น */}
-          <div>
+          <div className="w-full">
             <label htmlFor="basePrice" className="block text-gray-700 text-sm mb-1">
               ราคาเริ่มต้น (บาท)
             </label>
@@ -236,7 +236,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
           </div> */}
 
           {/* Portfolio file upload */}
-          <div>
+          <div className="w-full">
             <label htmlFor="portfolio" className="block text-gray-700 text-sm mb-1">
               พอร์ตโฟลิโอ (PDF)
             </label>
