@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { RegisterData } from '../RegisterForm';
 import MajorDropdown from './MajorDropdown';
 
 interface StepMajorAndSkillsProps {
   data: RegisterData;
   updateData: (data: Partial<RegisterData>) => void;
-  skillCategories: Record<string, string[]>;
+  skillOptions: string[];
+  jobOptions: string[];
 }
 
-function StepMajorAndSkills({ data, updateData, skillCategories }: StepMajorAndSkillsProps) {
-  const [activeCategory, setActiveCategory] = useState(Object.keys(skillCategories)[0]);
-  
+function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: StepMajorAndSkillsProps) {
   // Array of majors for dropdown
   const majors = [
     { value: "คอมพิวเตอร์เพื่อการสื่อสาร", label: "คอมพิวเตอร์เพื่อการสื่อสาร" },
@@ -39,10 +38,18 @@ function StepMajorAndSkills({ data, updateData, skillCategories }: StepMajorAndS
     updateData({ skills: updatedSkills });
   };
 
+  const handleJobToggle = (job: string) => {
+    const current = data.interestedJobs || [];
+    const updatedJobs = current.includes(job)
+      ? current.filter(item => item !== job)
+      : [...current, job];
+    updateData({ interestedJobs: updatedJobs });
+  };
+
   return (
     <div className="flex flex-col gap-4 w-full items-center">
       <div className="w-full">
-        <h2 className="text-lg font-medium text-gray-800">วิชาเอกและทักษะ</h2>
+        {/* <h2 className="text-lg font-medium text-gray-800">วิชาเอกและทักษะ</h2> */}
         <p className="text-gray-500 text-sm">
           {data.role === 'student' 
             ? 'ระบุวิชาเอกและทักษะที่คุณมี' 
@@ -73,45 +80,25 @@ function StepMajorAndSkills({ data, updateData, skillCategories }: StepMajorAndS
             </span>
           </label>
           
-          {/* Category tabs */}
-          <div className="flex overflow-x-auto pb-2 mb-2 gap-2">
-            {Object.keys(skillCategories).map((category) => (
-              <button
-                key={category}
-                type="button"
-                className={`px-3 py-1 rounded-lg text-sm whitespace-nowrap ${
-                  activeCategory === category
-                    ? 'bg-primary-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                onClick={() => setActiveCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-          
-          {/* Skills selection */}
-          <div className="border border-gray-200 rounded-lg p-3 h-45 max-h-45 overflow-y-scroll bg-white shadow-sm">
-            <div className="grid grid-cols-2 gap-2">
-              {skillCategories[activeCategory].map((skill) => (
-                <div key={skill} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`skill-${skill}`}
-                    checked={data.skills.includes(skill)}
-                    onChange={() => handleSkillToggle(skill)}
-                    className="w-4 h-4 text-primary-blue-500 ring-primary-blue-500 border-gray-300 rounded cursor-pointer focus:ring-primary-blue-500"
-                  />
-                  <label
-                    htmlFor={`skill-${skill}`}
-                    className="ml-2 text-sm text-gray-600"
-                  >
-                    {skill}
-                  </label>
-                </div>
-              ))}
-            </div>
+          {/* Skills selection as chips */}
+          <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+            {skillOptions.map((skill) => {
+              const selected = data.skills.includes(skill);
+              return (
+                <button
+                  key={skill}
+                  type="button"
+                  onClick={() => handleSkillToggle(skill)}
+                  className={`px-3 py-1 rounded-full text-sm border transition ${
+                    selected
+                      ? 'bg-primary-blue-500 text-white border-primary-blue-500'
+                      : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                  }`}
+                >
+                  {skill}
+                </button>
+              );
+            })}
           </div>
 
           {/* Selected skills display */}
@@ -141,6 +128,55 @@ function StepMajorAndSkills({ data, updateData, skillCategories }: StepMajorAndS
           </div>
         </div>
       )}
+
+      <div className="mt-4 w-full">
+        <label className="block text-gray-700 text-sm mb-1">
+          ประเภทงานที่สนใจ
+        </label>
+        <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+          {jobOptions.map((job) => {
+            const selected = (data.interestedJobs || []).includes(job);
+            return (
+              <button
+                key={job}
+                type="button"
+                onClick={() => handleJobToggle(job)}
+                className={`px-3 py-1 rounded-full text-sm border transition ${
+                  selected
+                    ? 'bg-primary-blue-500 text-white border-primary-blue-500'
+                    : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                }`}
+              >
+                {job}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-3">
+          <p className="text-sm text-gray-500 mb-2">งานที่สนใจ ({(data.interestedJobs || []).length})</p>
+          <div className="flex flex-wrap gap-2">
+            {(data.interestedJobs || []).map(job => (
+              <span 
+                key={job}
+                className="bg-primary-blue-100 text-primary-blue-600 text-xs px-2 py-1 rounded-lg flex items-center"
+              >
+                {job}
+                <button 
+                  type="button"
+                  onClick={() => handleJobToggle(job)} 
+                  className="ml-1 text-primary-blue-600 hover:text-primary-blue-800 transition-colors"
+                  aria-label={`ลบประเภทงาน ${job}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

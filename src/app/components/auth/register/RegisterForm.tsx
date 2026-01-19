@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Step1_UserInfo from "./steps/Step1NameAndRole";
 import StepRole from "./steps/StepRole";
 import StepPersonalInfo from "./steps/StepPersonalInfo";
 import StepMajorAndSkills from "./steps/StepMajorAndSkills";
@@ -21,12 +20,23 @@ interface RegisterFormProps {
 
 // รายชื่อทักษะตามหมวดหมู่
 export const skillCategories = {
-  "IT": ["Web Development", "UX/UI Design", "Data Analysis", "Mobile App Development", "Game Development", "AI/Machine Learning"],
-  "Graphic": ["Figma", "Adobe Photoshop", "Adobe Illustrator", "Adobe After Effects", "3D Modeling"],
-  "Business": ["Marketing", "Content Writing", "Business Analysis", "Project Management", "Financial Analysis"],
-  "Video": ["Video Editing", "Animation", "Motion Graphics", "Videography"],
-  "Audio": ["Sound Design", "Music Production", "Voice Over"]
+  "IT": ["พัฒนาเว็บไซต์", "พัฒนาแอปพลิเคชัน", "วิเคราะห์ข้อมูล", "ออกแบบ UX/UI"],
+  "Public": ["เชียร์ขายสินค้า", "การประสานงาน","การแสดง", "การพูดในที่สาธารณะ"],
+  "Business": ["การตลาด", "การเขียนคอนเทนต์", "PR"],
+  "Photo/Video": ["ถ่ายภาพ/วิดีโอ", "อนิเมชัน", "โมชันกราฟฟิก", "ตัดต่อ","กราฟฟิกดีไซน์"],
+  "อื่นๆ": ["วิชาการ", "วิจัย", "แปลบทความ"]
 };
+
+const jobInterestOptions = [
+  "งานด้านวิชาการ/วิจัย/ผู้ช่วย",
+  "งานกิจกรรม/อีเวนต์",
+  "งานพัฒนาออกแบบเว็บไซต์/แอปพลิเคชั่น/ระบบต่างๆ",
+  "งานสื่อมัลติมีเดีย",
+  "งานประชาสัมพันธ์/สื่อสาร",
+  "งานบริการ/ธุรการ",
+  "งานสอนพิเศษ",
+  "งานกองถ่าย/Extra"
+];
 
 export type UserRole = "student" | "alumni" | "teacher" | "";
 
@@ -46,6 +56,7 @@ export interface RegisterData {
   basePrice?: number;
   isOpen?: boolean;
   galleryImages?: File[];
+  interestedJobs?: string[];
 }
 
 interface ValidationState {
@@ -123,6 +134,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     studentId: "",
     major: "",
     skills: [],
+    interestedJobs: [],
     email: "",
     isEmailVerified: false,
     bio: "",
@@ -403,6 +415,11 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       // Add bio if provided
       if (registerData.bio) {
         formData.append('bio', registerData.bio);
+      }
+
+      // Add interested job types if provided
+      if (registerData.interestedJobs && registerData.interestedJobs.length > 0) {
+        formData.append('interestedJobs', JSON.stringify(registerData.interestedJobs));
       }
       
       // Add profile image if provided
@@ -695,7 +712,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
               <StepMajorAndSkills 
                 data={registerData} 
                 updateData={updateRegisterData} 
-                skillCategories={skillCategories}
+                skillOptions={Object.values(skillCategories).flat()}
+                jobOptions={jobInterestOptions}
               />
               // <StepMajorAndSkills 
               //   data={registerData} 
