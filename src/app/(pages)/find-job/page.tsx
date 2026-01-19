@@ -1,3 +1,4 @@
+// find-job/page.tsx
 'use client';
 
 import React, { Suspense } from "react";
@@ -179,7 +180,7 @@ function FreelancePageContent() {
         // Reset to page 1
         params.set('page', '1');
         
-        router.push(`/find-freelance?${params.toString()}`);
+        router.push(`/find-job?${params.toString()}`);
     };
     
     const resetFilters = () => {
@@ -187,7 +188,7 @@ function FreelancePageContent() {
         setSelectedSkills([]);
         setSelectedMajor('');
         setPriceRange({ min: 0, max: null });
-        router.push('/find-freelance');
+        router.push('/find-job');
     };
     
     const majors = [
@@ -213,43 +214,41 @@ function FreelancePageContent() {
             </section>
 
             {/* page title */}
-            <section className="mt-6 mb-4 flex flex-col gap-2">
-                {/* freelance list with pagination */}
-            {isLoading ? (
-                <div className="flex justify-center my-12">
-                    <Loading size="large" color="primary" />
-                </div>
-            ) : (
-                <JobList 
-                    totalItems={totalFreelancers}
-                    searchQuery={searchQuery}
-                    selectedSkills={selectedSkills} 
-                    selectedMajor={selectedMajor}
-                    priceRange={priceRange}
+            <section className="mt-6 mb-4 flex flex-col gap-2 px-12">
+                {/* Filters section */}
+                <FreelanceFilter
+                selectedSkills={selectedSkills}
+                onSkillsChange={setSelectedSkills}
+                selectedMajor={selectedMajor}
+                onMajorChange={setSelectedMajor}
+                priceRange={priceRange}
+                onPriceRangeChange={setPriceRange}
+                onApplyFilters={applyFilters}
+                onResetFilters={resetFilters}
+                availableSkills={allSkills}
+                availableMajors={majors}
                 />
-            )}
+                {/* freelance list with pagination */}
+                {isLoading ? (
+                    <div className="flex justify-center my-12">
+                        <Loading size="large" color="primary" />
+                    </div>
+                ) : (
+                    <JobList 
+                        searchQuery={searchQuery}
+                        selectedSkills={selectedSkills} 
+                        selectedMajor={selectedMajor}
+                        priceRange={priceRange}
+                    />
+                )}
             </section>
 
-            {/* Filters section */}
-            <FreelanceFilter
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            selectedSkills={selectedSkills}
-            onSkillsChange={setSelectedSkills}
-            selectedMajor={selectedMajor}
-            onMajorChange={setSelectedMajor}
-            priceRange={priceRange}
-            onPriceRangeChange={setPriceRange}
-            onApplyFilters={applyFilters}
-            onResetFilters={resetFilters}
-            availableSkills={allSkills}
-            availableMajors={majors}
-            />
+            
 
-            <hr className="text-gray-300"/>
+            {/* <hr className="text-gray-300"/> */}
 
             {/* freelance list with pagination */}
-            {isLoading ? (
+            {/* {isLoading ? (
                 <div className="flex justify-center my-12">
                     <Loading size="large" color="primary" />
                 </div>
@@ -261,7 +260,7 @@ function FreelancePageContent() {
                     selectedMajor={selectedMajor}
                     priceRange={priceRange}
                 />
-            )}
+            )} */}
         </div>
     );
 }

@@ -9,8 +9,6 @@ interface PriceRange {
 }
 
 interface FreelanceFilterProps {
-    searchQuery: string;
-    onSearchChange: (query: string) => void;
     selectedSkills: string[];
     onSkillsChange: (skills: string[]) => void;
     selectedMajor: string;
@@ -21,11 +19,19 @@ interface FreelanceFilterProps {
     onResetFilters: () => void;
     availableSkills: string[];
     availableMajors: string[];
+    // *** NEW PROPS FOR SORTING ***
+    currentSort: string; 
+    onSortChange: (sortOption: string) => void;
 }
 
+// *** ตัวเลือกการเรียงลำดับตามราคาเท่านั้น ***
+const priceSortOptions = [
+    { value: 'price_desc', label: 'ราคาสูงสุด' },
+    { value: 'price_asc', label: 'ราคาต่ำสุด' },
+    { value: 'default', label: 'ค่าเริ่มต้น' }, // เพิ่มค่าเริ่มต้น
+];
+
 const FreelanceFilter: React.FC<FreelanceFilterProps> = ({
-    searchQuery,
-    onSearchChange,
     selectedSkills,
     onSkillsChange,
     selectedMajor,
@@ -35,12 +41,17 @@ const FreelanceFilter: React.FC<FreelanceFilterProps> = ({
     onApplyFilters,
     onResetFilters,
     availableSkills,
-    availableMajors
+    availableMajors,
+    // *** NEW PROPS DESTRUCTURING ***
+    currentSort,
+    onSortChange,
 }) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [filteredSkills, setFilteredSkills] = useState<string[]>(availableSkills);
     const [skillSearch, setSkillSearch] = useState('');
     const [isMajorDropdownOpen, setIsMajorDropdownOpen] = useState(false);
+    // *** NEW STATE FOR SORT DROPDOWN ***
+    const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
     
     useEffect(() => {
         if (skillSearch) {
@@ -52,12 +63,16 @@ const FreelanceFilter: React.FC<FreelanceFilterProps> = ({
         }
     }, [skillSearch, availableSkills]);
     
-    // ปิด dropdown เมื่อคลิกนอกพื้นที่
+    // ปิด dropdown เมื่อคลิกนอกพื้นที่ (รวม Sort Dropdown)
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
-            if (isMajorDropdownOpen && !target.closest('.custom-dropdown')) {
+            // ใช้ custom class แยกสำหรับ Major/Sort
+            if (isMajorDropdownOpen && !target.closest('.custom-major-dropdown')) {
                 setIsMajorDropdownOpen(false);
+            }
+            if (isSortDropdownOpen && !target.closest('.custom-sort-dropdown')) {
+                setIsSortDropdownOpen(false);
             }
         };
 
@@ -65,12 +80,27 @@ const FreelanceFilter: React.FC<FreelanceFilterProps> = ({
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isMajorDropdownOpen]);
+    }, [isMajorDropdownOpen, isSortDropdownOpen]);
     
     const toggleFilter = () => {
         setIsFilterOpen(!isFilterOpen);
+        if (isSortDropdownOpen) setIsSortDropdownOpen(false); // ปิด Sort เมื่อเปิด Filter
     };
     
+    // **NEW**: Handle Sort Click and close dropdown
+    const handleSortClick = (optionValue: string) => {
+        onSortChange(optionValue);
+        setIsSortDropdownOpen(false);
+        onApplyFilters(); // เรียก apply filters เมื่อมีการจัดเรียง
+    };
+    
+    const currentSortLabel = priceSortOptions.find(opt => opt.value === currentSort)?.label || 'จัดเรียง';
+
+    const handleApplyAndClose = () => {
+        onApplyFilters();
+        setIsFilterOpen(false);
+    };
+
     const handleSkillToggle = (skill: string) => {
         if (selectedSkills.includes(skill)) {
             onSkillsChange(selectedSkills.filter(s => s !== skill));
@@ -90,67 +120,90 @@ const FreelanceFilter: React.FC<FreelanceFilterProps> = ({
         onPriceRangeChange({ ...priceRange, max: value });
     };
     
-    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            onApplyFilters();
-        }
-    };
+    // ตรวจสอบว่ามีตัวกรองใด ๆ ถูกเลือกหรือไม่
+    const hasActiveFilters = selectedSkills.length > 0 || selectedMajor || priceRange.min > 0 || priceRange.max !== null;
     
     return (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-6 transition-all duration-300">
-            {/* Search bar - always visible */}
-            <div className="p-2 flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative group">
-                    <input 
-                        type="text"
-                        className="w-full p-1.5 pl-12 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white transition-all duration-300 focus:ring-2 focus:ring-primary-blue-300 focus:border-primary-blue-500 focus:outline-none placeholder:text-gray-400"
-                        placeholder="ค้นหาฟรีแลนซ์..."
-                        value={searchQuery}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                        onKeyDown={handleSearchKeyDown}
-                    />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-blue-500 transition-colors duration-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </div>
-                </div>
+        <div className="overflow-hidden transition-all duration-300">
+            
+            {/* Filter controls - always visible */}
+            <div className="p-2 flex justify-between items-center gap-3">
+                <h2 className="text-xl font-semibold text-gray-800 p-2 whitespace-nowrap">
+                    งานทั้งหมด
+                </h2>
                 
-                <div className="flex gap-3">
+                <div className="flex gap-3 relative z-20"> {/* เพิ่ม z-index ให้ปุ่ม Dropdown อยู่ด้านบน */}
+                    
+                    {/* *** ปุ่ม ตัวกรอง/เปิด-ปิด *** */}
                     <button 
-                        className={`flex items-center gap-2 px-5 rounded-xl transition-all duration-300 ${
+                        className={`flex items-center gap-2 px-5 py-2 rounded-full transition-all duration-300 ${ // ใช้ py-2 เพื่อให้เท่ากับ Sort
                             isFilterOpen 
-                            ? 'bg-primary-blue-50 text-primary-blue-600 bg-primary-blue-100' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-primary-blue-50 text-primary-blue-600 border border-primary-blue-300' 
+                            : 'border border-gray-300 text-gray-700 hover:text-primary-blue-600 hover:border-primary-blue-300 hover:bg-gray-50'
                         }`}
                         onClick={toggleFilter}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="4" y1="21" x2="4" y2="14"></line>
-                            <line x1="4" y1="10" x2="4" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12" y2="3"></line>
-                            <line x1="20" y1="21" x2="20" y2="16"></line>
-                            <line x1="20" y1="12" x2="20" y2="3"></line>
-                            <line x1="1" y1="14" x2="7" y2="14"></line>
-                            <line x1="9" y1="8" x2="15" y2="8"></line>
-                            <line x1="17" y1="16" x2="23" y2="16"></line>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
                         </svg>
                         ตัวกรอง
-                        {(selectedSkills.length > 0 || selectedMajor || priceRange.min > 0 || priceRange.max !== null) && (
+                        {hasActiveFilters && (
                             <span className="flex items-center justify-center ml-1 w-5 h-5 bg-primary-blue-500 text-white text-xs font-semibold rounded-full">
                                 {selectedSkills.length + (selectedMajor ? 1 : 0) + ((priceRange.min > 0 || priceRange.max !== null) ? 1 : 0)}
                             </span>
                         )}
                     </button>
                     
-                    <button 
-                        className="btn-primary"
-                        onClick={onApplyFilters}
-                    >
-                        ค้นหา
-                    </button>
+                    {/* *** ปุ่มจัดเรียง (Sort Button) *** */}
+                    <div className="relative custom-sort-dropdown">
+                        <button
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                                isSortDropdownOpen
+                                ? 'bg-primary-blue-50 text-primary-blue-600 border border-primary-blue-300'
+                                : 'border border-gray-300 text-gray-700 hover:text-primary-blue-600 hover:border-primary-blue-300 hover:bg-gray-50'
+                            }`}
+                            onClick={() => {
+                                // setIsSortDropdownOpen(!isSortDropdownOpen);
+                                if (isFilterOpen) setIsFilterOpen(false); // ปิด Filter เมื่อเปิด Sort
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+                            </svg>
+                            {currentSortLabel}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-300 ${isSortDropdownOpen ? 'rotate-180' : ''}`}>
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        
+                        <AnimatePresence>
+                            {isSortDropdownOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+                                >
+                                    {/*  priceSortOptions  */}
+                                    {priceSortOptions.map((option) => (
+                                        <div
+                                            key={option.value}
+                                            className={`p-2 px-4 cursor-pointer text-sm ${
+                                                currentSort === option.value 
+                                                ? 'bg-primary-blue-50 text-primary-blue-600 font-semibold' 
+                                                : 'hover:bg-gray-50 text-gray-700'
+                                            }`}
+                                            onClick={() => handleSortClick(option.value)}
+                                        >
+                                            {option.label}
+                                        </div>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                    
                 </div>
             </div>
             
@@ -237,7 +290,7 @@ const FreelanceFilter: React.FC<FreelanceFilterProps> = ({
                                         </svg>
                                         วิชาเอก
                                     </h3>
-                                    <div className="custom-dropdown">
+                                    <div className="custom-major-dropdown">
                                         <div 
                                             className="relative"
                                             onClick={() => setIsMajorDropdownOpen(!isMajorDropdownOpen)}
@@ -336,13 +389,16 @@ const FreelanceFilter: React.FC<FreelanceFilterProps> = ({
                                 </div>
                             </div>
                             
-                            {/* Selected filters & reset button */}
+                            {/* Selected filters & reset button + APPLY BUTTON (ด้านใน) */}
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-6 pt-4 border-t border-gray-200">
+                                
+                                {/* Selected filters display (โค้ดเดิม) */}
                                 <div className="flex flex-wrap gap-2 mb-3 sm:mb-0">
-                                    {selectedSkills.length > 0 || selectedMajor || priceRange.min > 0 || priceRange.max !== null ? (
+                                    {hasActiveFilters ? (
                                         <>
                                             <span className="text-sm text-gray-500 py-1">ตัวกรองที่เลือก:</span>
                                             
+                                            {/* ... (โค้ดแสดง/ลบตัวกรองที่เลือก) ... */}
                                             {selectedSkills.map((skill) => (
                                                 <span 
                                                     key={skill}
@@ -402,20 +458,30 @@ const FreelanceFilter: React.FC<FreelanceFilterProps> = ({
                                     )}
                                 </div>
                                 
-                                {/* Reset all filters */}
-                                {(selectedSkills.length > 0 || selectedMajor || priceRange.min > 0 || priceRange.max !== null || searchQuery) && (
+                                {/* Reset all filters + Apply Button */}
+                                <div className="flex gap-3">
+                                    {/* Reset Button */}
+                                    {hasActiveFilters && ( 
+                                        <button 
+                                            className="text-red-500 hover:text-red-600 text-sm flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-red-50 transition-colors"
+                                            onClick={onResetFilters}
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M3 6h18"></path>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            </svg>
+                                            ล้างตัวกรอง
+                                        </button>
+                                    )}
+
                                     <button 
-                                        className="text-red-500 hover:text-red-600 text-sm flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-red-50 transition-colors"
-                                        onClick={onResetFilters}
+                                        className="btn-primary px-5 py-2 rounded-xl text-sm font-semibold"
+                                        onClick={handleApplyAndClose} // เรียกใช้ฟังก์ชันที่ซ่อน Filter Panel ด้วย
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M3 6h18"></path>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                        </svg>
-                                        ล้างตัวกรองทั้งหมด
+                                        ตกลง
                                     </button>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </motion.div>
