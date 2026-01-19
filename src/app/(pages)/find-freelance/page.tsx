@@ -54,7 +54,7 @@ const FindFreelancePage = () => {
 // สร้าง Component ย่อยที่มีโค้ดหลักทั้งหมด
 import { useState, useEffect } from "react";
 import JobList from "../../components/lists/JobList";
-import FreelanceFilter from "../../components/filters/FreelanceFilter";
+import JobFilter from "../../components/filters/JobFilter";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { skillCategories } from "../../components/auth/register/RegisterForm";
@@ -231,7 +231,7 @@ function FreelancePageContent() {
             </section>
 
             {/* Filters section */}
-            <FreelanceFilter
+            <JobFilter
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             selectedSkills={selectedSkills}

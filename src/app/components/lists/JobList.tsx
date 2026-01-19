@@ -21,7 +21,6 @@ interface JobItem {
   description: string;
   budgetMin: number;
   budgetMax: number | null;
-  requiredSkills: string[];
   category: string;
   postedDate: string;
   owner: string;
@@ -45,7 +44,7 @@ interface JobCardData {
 interface JobListProps {
   initialItemsPerPage?: number;
   searchQuery?: string;
-  selectedSkills?: string[];
+  selectedJobTypes?: string[];   // ✅ เปลี่ยน
   selectedMajor?: string;
   priceRange?: PriceRange;
   currentSort?: string;
@@ -61,6 +60,7 @@ const calculateTimeAgo = (dateString: string): string => {
   if (days < 7) return `${days} วันที่แล้ว`;
   return "มากกว่า 1 สัปดาห์";
 };
+
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
@@ -191,7 +191,7 @@ const JobCard = ({ data }: { data: JobCardData }) => {
 function JobList({
   initialItemsPerPage = 12,
   searchQuery = "",
-  selectedSkills = [],
+  selectedJobTypes = [],          // ✅ ค่า default ป้องกัน undefined
   selectedMajor = "",
   priceRange = { min: 0, max: null },
   currentSort = "default",
@@ -203,7 +203,6 @@ function JobList({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(initialItemsPerPage);
   const [totalItems, setTotalItems] = useState(0);
 
   /* ---------- Fetch from API ---------- */
@@ -214,22 +213,21 @@ function JobList({
     try {
       const params: any = {
         page: currentPage,
-        limit: itemsPerPage,
-        sort: currentSort,
+        limit: initialItemsPerPage,
       };
 
       if (searchQuery) params.q = searchQuery;
-      if (selectedMajor) params.major = selectedMajor;
-      if (selectedSkills.length > 0)
-        params.skills = selectedSkills.join(",");
+      if (selectedJobTypes.length > 0)
+        params.jobTypes = selectedJobTypes.join(",");
       if (priceRange.min > 0) params.minPrice = priceRange.min;
       if (priceRange.max !== null) params.maxPrice = priceRange.max;
+      if (currentSort !== "default") params.sort = currentSort;
 
       const res = await axios.get("/api/jobs", { params });
 
       setJobItems(res.data.jobs);
       setTotalItems(res.data.total);
-    } catch (err) {
+    } catch {
       setError("ไม่สามารถโหลดข้อมูลงานได้");
     } finally {
       setLoading(false);
@@ -241,14 +239,13 @@ function JobList({
   }, [
     currentPage,
     searchQuery,
-    selectedSkills,
-    selectedMajor,
+    selectedJobTypes,
     priceRange,
     currentSort,
   ]);
 
-  /* ---------- Pagination from URL ---------- */
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  /* ---------- Pagination ---------- */
+  const totalPages = Math.ceil(totalItems / initialItemsPerPage);
 
   useEffect(() => {
     const page = Number(searchParams.get("page") || 1);
