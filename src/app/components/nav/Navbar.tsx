@@ -24,7 +24,7 @@ interface BurgerIconProps {
 
 const navItems: NavItem[] = [
   { name: 'หน้าแรก', path: '/', icon: Home },
-  { name: 'ค้นหางานพิเศษ', path: '/find-freelance', icon: BriefcaseBusiness },
+  { name: 'ค้นหางานพิเศษ', path: '/find-job', icon: BriefcaseBusiness },
   // { name: 'โปรเจกต์บอร์ด', path: '/project-board', icon: Briefcase }, // Example with more icons
   // { name: 'จัดการโปรเจกต์', path: '/manage-projects', icon: FileText}
   // { name: 'เกี่ยวกับเรา', path: '/about-us', icon: Info} 
@@ -228,7 +228,7 @@ function Navbar() {
                 <NotificationPanel 
                   isOpen={isNotificationOpen} 
                   onClose={closeNotification} 
-                  navHeight={navHeight}
+                  // navHeight={navHeight}
                 />
               </div>
 

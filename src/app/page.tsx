@@ -311,7 +311,7 @@ const JobCard = ({ data }) => {
       
       {/* Action Buttons */}
       <div className="flex justify-between items-center gap-3">
-        <Link href={`/find-freelance/${data.id}`} className="flex-grow">
+        <Link href={`/find-job/${data.id}`} className="flex-grow">
           <button className="bg-primary-blue-500 text-white text-base py-3 px-4 rounded-lg w-full hover:bg-primary-blue-600 transition-colors">
             ดูรายละเอียดงาน
           </button>
@@ -392,17 +392,7 @@ const CONNECT_SECTION_DATA = {
   },
 };
 
-const HOW_TO_CLIENT = [
-  { id: "client-1", title: "ค้นหาฟรีแลนซ์", description: "เลือกหมวดหมู่งานที่สนใจ ค้นหาฟรีแลนซ์ผ่านโปรไฟล์ฟรีแลนซ์ตามทักษะความสามารถและผลงานที่แสดง", image: "/images/howto/howto1.png" },
-  { id: "client-2", title: "สร้างโปรเจกต์ในโปรเจกต์บอร์ด", description: "ระบุประเภทงาน งบประมาณประมาณค่าจ้าง ทักษะความสามารถที่ต้องการ รอคำขอจากฟรีแลนซ์", image: "/images/howto/howto2.png" },
-  { id: "client-3", title: "ค้นหาฟรีแลนซ์", description: "พูดคุยกับฟรีแลนซ์ผ่านแชท ตรวจสอบสถานะงาน และกดยืนยันงานเสร็จสิ้นหลังได้รับงานที่พอใจ", image: "/images/howto/howto3.png" },
-];
 
-const HOW_TO_FREELANCER = [
-  { id: "freelancer-1", title: "สร้างโปรไฟล์", description: "กรอกข้อมูล ชื่อ-สกุล ทักษะ ค่าจ้าง เพิ่มพอร์ตโฟลิโอและอัปโหลดผลงานที่เคยทำลงหน้าแก้ไขโปรไฟล์", image: "/images/howto/howto4.png" },
-  { id: "freelancer-2", title: "วิธีหางาน", description: "โพสผลงานในหน้าโปรไฟล์เพื่อให้แสดงในหน้าค้นหาฟรีแลนซ์หรือค้นหางานจากโปรเจกต์บอร์ด", image: "/images/howto/howto5.png" },
-  { id: "freelancer-3", title: "อัพเดทสถานะงาน", description: "อัพเดทสถานะงานให้ลูกค้าอย่างต่อเนื่องผ่านแดชบอร์ดพูดคุยรายละเอียดงานผ่านแชท และกดยืนยันเมื่องานเสร็จ", image: "/images/howto/howto6.png" },
-];
 
 // --- 3. Components ---
 
@@ -430,7 +420,7 @@ const HowToCard = ({ title, description, image }) => (
 
 const CategoryCard = ({ title, icon, bgColor, path }) => (
   <Link 
-    href={path || '/find-freelance'} 
+    href={path || '/find-job'} 
     className="flex flex-col items-center p-2 transition-all duration-200" 
     // aria-label={`ค้นหางาน ${title}`}
   >
@@ -552,14 +542,14 @@ export default function Home() {
               <CategoryCard 
                 key={category.id} 
                 {...category} 
-                path={`/find-freelance?category=${category.id}`} 
+                path={`/find-job?category=${category.id}`} 
               />
             ))}
           </div>
       </section>
 
       {/* --- Job Recommendation Section--- */}
-      <section className="w-full flex flex-col gap-3 mt-5 mb-10 justify-center text-center py-10">
+      <section className="w-full flex flex-col gap-3 mt-5 mb-10 justify-center text-center py-10 px-12">
         <h2 className="text-xl font-bold text-primary-gray-500 text-start">
           งานแนะนำสำหรับนิสิต
         </h2>
@@ -573,7 +563,7 @@ export default function Home() {
         </div>
           
         {/* ปุ่มดูงานทั้งหมด */}
-        <Link href="/find-freelance" className="mt-6">
+        <Link href="/find-job" className="mt-6">
           <button className="bg-primary-blue-500 text-white font-medium text-base py-3 px-6 rounded-full shadow-md hover:bg-primary-blue-600 transition-colors hover:shadow-lg">
             ดูงานทั้งหมด <Briefcase className="w-5 h-5 ml-2 inline"/>
           </button>
@@ -581,7 +571,7 @@ export default function Home() {
       </section>
 
       {/* --- About Section --- */}
-        <section className="w-full flex flex-col gap-1 mt-5 mb-15 justify-center text-center">
+        <section className="w-full flex flex-col gap-1 mt-5 mb-15 justify-center text-center px-12">
           
           {/* Header Area */}
           <div className="flex flex-col items-start px-4 md:px-0 justify-end"> 
