@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -44,7 +44,7 @@ interface JobCardData {
 interface JobListProps {
   initialItemsPerPage?: number;
   searchQuery?: string;
-  selectedJobTypes?: string[];   // ✅ เปลี่ยน
+  selectedJobTypes?: string[];
   selectedMajor?: string;
   priceRange?: PriceRange;
   currentSort?: string;
@@ -60,7 +60,6 @@ const calculateTimeAgo = (dateString: string): string => {
   if (days < 7) return `${days} วันที่แล้ว`;
   return "มากกว่า 1 สัปดาห์";
 };
-
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
@@ -140,48 +139,69 @@ const getCategoryIcon = (category: string) => {
   }
 };
 
-
 /* ===================== JobCard ===================== */
+import { Bookmark, DollarSign, User, Tag, Briefcase } from 'lucide-react'; 
 
-const JobCard = ({ data }: { data: JobCardData }) => {
+const JobCard = ({ data, isLoggedIn }: { data: JobCardData, isLoggedIn: boolean }) => {
   const compensation = data.maxCompensation
     ? `${data.minCompensation} - ${data.maxCompensation}`
     : `${data.minCompensation}+`;
 
+  const isFav = data.isFavorite; 
+  const favBtnClass = isFav ? 'text-primary-blue-500 fill-current' : 'text-gray-400';
+
   return (
-    <div className="bg-white shadow rounded-xl p-6 flex flex-col h-full border">
-      <div className="text-xs text-blue-400 mb-2 text-right">
+    <div className="bg-white shadow-lg rounded-xl p-6 flex flex-col border border-gray-200 transition-shadow duration-300 relative hover:shadow-xl">
+      {/* <div className="text-xs text-blue-400 mb-2 text-right"> */}
+      <div className="absolute top-4 right-6 text-xs text-blue-400 text-center">
         โพสต์เมื่อ {data.timeAgo}
       </div>
 
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3 mb-3 mt-4">
         {data.icon}
-        <h3 className="font-semibold text-lg">{data.title}</h3>
+        <h3 className="text-lg font-semibold text-gray-800">{data.title}</h3>
       </div>
 
-      <span className="text-xs bg-gray-100 px-3 py-1 rounded-full w-fit mb-1">
+      <div className="flex flex-col items-start mb-4">
+        <span className="text-xs font-medium text-primary-blue-700 bg-gray-100 px-3 py-1 rounded-full mb-1">
         {data.type}
-      </span>
-
-      <p className="text-sm text-blue-400 mb-3">โดย {data.postedBy}</p>
-
-      <p className="text-sm text-gray-500 line-clamp-3 mb-4">
-        {data.details}
-      </p>
-
-      <div className="mt-auto flex justify-between items-center">
-        <span className="text-sm">งบประมาณ</span>
-        <span className="text-lg font-bold">
-          {compensation} {data.currency}
         </span>
+
+        <p className="text-sm text-blue-400 mt-1">โดย {data.postedBy}</p>
       </div>
 
-      <Link
-        href={`/project/${data.id}`}
-        className="mt-4 bg-primary-blue-500 text-white text-center py-2 rounded-lg hover:bg-primary-blue-600"
-      >
-        ดูรายละเอียดงาน
-      </Link>
+      {/* Job Description */}
+      <div className="mb-4">
+        <p className="text-sm font-medium text-gray-800 mb-1 text-start">คำอธิบายงาน :</p>
+        <p className="text-sm text-gray-500 line-clamp-3 text-start">
+        {data.details}
+        </p>
+      </div>
+
+      <div className="mt-auto mb-4 flex justify-between items-center w-full">
+        <p className="text-sm font-medium text-gray-800">ค่าตอบแทน</p>
+        <p className="text-lg font-bold text-gray-800">
+          {compensation} {data.currency}
+        </p>
+      </div>
+
+      <div className="flex justify-between items-center gap-3">
+        <Link href={`/find-job/${data.id}`} className="flex-grow">
+          <button className="bg-primary-blue-500 text-white text-base py-3 px-4 rounded-lg w-full hover:bg-primary-blue-600 transition-colors">
+            ดูรายละเอียดงาน
+          </button>
+        </Link>
+
+        {/* เพิ่มเงื่อนไขการเช็ค Login เข้าไปร่วมกับ isVisible */}
+        {isLoggedIn && data.isVisible && (
+          <button 
+            className={`p-3 rounded-lg bg-gray-100 ${favBtnClass} hover:bg-gray-200 transition-colors duration-200 cursor-pointer`}
+            aria-label={isFav ? "Remove bookmark" : "Add bookmark"}
+          >
+            <Bookmark className="w-5 h-5 fill-current"/>
+          </button>
+        )}
+      </div>
     </div>
   );
 };
@@ -191,19 +211,30 @@ const JobCard = ({ data }: { data: JobCardData }) => {
 function JobList({
   initialItemsPerPage = 12,
   searchQuery = "",
-  selectedJobTypes = [],          // ✅ ค่า default ป้องกัน undefined
+  selectedJobTypes = [],
   selectedMajor = "",
   priceRange = { min: 0, max: null },
-  currentSort = "default",
+  currentSort = "latest",
 }: JobListProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  const pageFromUrl = useMemo(() => {
+    return Number(searchParams.get("page") || 1);
+  }, [searchParams]);
 
   const [jobItems, setJobItems] = useState<JobItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // หรือตรวจสอบตามระบบ Auth ของคุณ
+    setIsLoggedIn(!!token);
+  }, []);
 
   /* ---------- Fetch from API ---------- */
   const fetchJobs = async () => {
@@ -212,13 +243,15 @@ function JobList({
 
     try {
       const params: any = {
-        page: currentPage,
+        page: pageFromUrl,
         limit: initialItemsPerPage,
+        sort: currentSort, // ✅ ส่งค่า Sort ไปที่ API
       };
 
       if (searchQuery) params.q = searchQuery;
       if (selectedJobTypes.length > 0)
         params.jobTypes = selectedJobTypes.join(",");
+      if (selectedMajor) params.major = selectedMajor;
       if (priceRange.min > 0) params.minPrice = priceRange.min;
       if (priceRange.max !== null) params.maxPrice = priceRange.max;
       if (currentSort !== "default") params.sort = currentSort;
@@ -237,40 +270,29 @@ function JobList({
   useEffect(() => {
     fetchJobs();
   }, [
-    currentPage,
+    pageFromUrl, 
     searchQuery,
     selectedJobTypes,
+    selectedMajor,
     priceRange,
-    currentSort,
+    currentSort
   ]);
+  
 
-  /* ---------- Pagination ---------- */
   const totalPages = Math.ceil(totalItems / initialItemsPerPage);
 
-  useEffect(() => {
-    const page = Number(searchParams.get("page") || 1);
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  }, [searchParams, totalPages]);
-
-  /* ---------- Map Data ---------- */
-  const mapToCard = (job: JobItem): JobCardData => ({
-    id: job._id,
-    icon: getCategoryIcon(job.category),
-    title: job.title,
-    type: job.category,
-    postedBy: job.owner,
-    details: job.description,
-    minCompensation: job.budgetMin.toLocaleString(),
-    maxCompensation: job.budgetMax
-      ? job.budgetMax.toLocaleString()
-      : null,
-    currency: "บาท",
-    timeAgo: calculateTimeAgo(job.postedDate),
-    isFavorite: false,
-    isVisible: true,
-  });
+  // useEffect(() => {
+  //   const page = Number(searchParams.get("page") || 1);
+  //   if (page > 0 && page <= totalPages) {
+  //     setCurrentPage(page);
+  //   }
+  // }, [searchParams, totalPages]);
+  const getPaginationBaseUrl = () => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    current.delete("page"); // ลบ page ออกเพื่อให้ Pagination ใส่เอง
+    const queryString = current.toString();
+    return `/find-job${queryString ? `?${queryString}` : ""}`;
+  };
 
   /* ---------- Render ---------- */
   if (loading) {
@@ -306,15 +328,36 @@ function JobList({
     <div>
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {jobItems.map((job) => (
-          <JobCard key={job._id} data={mapToCard(job)} />
+          <JobCard
+            key={job._id}
+            isLoggedIn={isLoggedIn}
+            data={{
+              id: job._id,
+              icon: getCategoryIcon(job.category),
+              title: job.title,
+              type: job.category,
+              postedBy: job.owner,
+              details: job.description,
+              minCompensation: job.budgetMin.toLocaleString(),
+              maxCompensation: job.budgetMax
+                ? job.budgetMax.toLocaleString()
+                : null,
+              currency: "บาท",
+              timeAgo: calculateTimeAgo(job.postedDate),
+              isFavorite: false,
+              isVisible: true,
+            }}
+          />
         ))}
       </section>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        baseUrl="/find-job"
-      />
+      <div className="mt-8">
+        <Pagination
+          currentPage={pageFromUrl}
+          totalPages={totalPages}
+          baseUrl="/find-job" 
+        />
+      </div>
     </div>
   );
 }

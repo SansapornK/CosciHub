@@ -9,7 +9,6 @@ interface PriceRange {
 }
 
 interface JobFilterProps {
-    // เปลี่ยนจาก Skills เป็น JobTypes
     selectedJobTypes: string[];
     onJobTypesChange: (jobTypes: string[]) => void;
     selectedMajor: string;
@@ -18,16 +17,16 @@ interface JobFilterProps {
     onPriceRangeChange: (range: PriceRange) => void;
     onApplyFilters: () => void;
     onResetFilters: () => void;
-    availableJobTypes: string[]; // รายการประเภทงานที่คุณให้มา
+    availableJobTypes: string[];
     availableMajors: string[];
     currentSort: string; 
     onSortChange: (sortOption: string) => void;
 }
 
 const priceSortOptions = [
-    { value: 'price_desc', label: 'ราคาสูงสุด' },
-    { value: 'price_asc', label: 'ราคาต่ำสุด' },
-    { value: 'default', label: 'ค่าเริ่มต้น' },
+    { value: 'price-desc', label: 'ราคาสูงสุด' }, 
+    { value: 'price-asc', label: 'ราคาต่ำสุด' },
+    { value: 'latest', label: 'งานล่าสุด' },
 ];
 
 const JobFilter: React.FC<JobFilterProps> = ({
@@ -114,13 +113,13 @@ const JobFilter: React.FC<JobFilterProps> = ({
     const hasActiveFilters = selectedJobTypes.length > 0 || selectedMajor || priceRange.min > 0 || priceRange.max !== null;
     
     return (
-        <div className="overflow-hidden transition-all duration-300">
+        <div className="relative z-40 transition-all duration-300">
             <div className="p-2 flex justify-between items-center gap-3">
                 <h2 className="text-xl font-semibold text-gray-800 p-2 whitespace-nowrap">
                     งานทั้งหมด
                 </h2>
                 
-                <div className="flex gap-3 relative z-20">
+                <div className="flex gap-3 relative">
                     <button 
                         className={`flex items-center gap-2 px-5 py-2 rounded-full transition-all duration-300 ${
                             isFilterOpen 
@@ -168,7 +167,7 @@ const JobFilter: React.FC<JobFilterProps> = ({
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: 10 }}
                                     transition={{ duration: 0.2 }}
-                                    className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+                                    className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50"
                                 >
                                     {priceSortOptions.map((option) => (
                                         <div
@@ -201,7 +200,7 @@ const JobFilter: React.FC<JobFilterProps> = ({
                     >
                         <div className="p-5 bg-gray-50 border-t border-gray-100">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {/* Job Type filter (เปลี่ยนจาก Skills) */}
+                                {/* Job Type filter */}
                                 <div>
                                     <h3 className="text-gray-700 font-medium mb-3 flex items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary-blue-500">
@@ -272,7 +271,7 @@ const JobFilter: React.FC<JobFilterProps> = ({
                                         </svg>
                                         วิชาเอก
                                     </h3>
-                                    <div className="custom-major-dropdown">
+                                    <div className="custom-major-dropdown relative">
                                         <div className="relative" onClick={() => setIsMajorDropdownOpen(!isMajorDropdownOpen)}>
                                             <div className="flex items-center justify-between w-full p-2 pl-4 border border-gray-200 rounded-xl bg-white cursor-pointer hover:border-primary-blue-300">
                                                 <span className={selectedMajor ? "text-gray-800" : "text-gray-500"}>
@@ -291,7 +290,7 @@ const JobFilter: React.FC<JobFilterProps> = ({
                                                     initial={{ opacity: 0, y: -10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0, y: -10 }}
-                                                    className="absolute z-10 w-full max-w-[400px] mt-1 bg-white border border-gray-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto shadow-md"
+                                                    className="absolute z-[60] w-full mt-1 bg-white border border-gray-200 rounded-xl overflow-hidden max-h-60 overflow-y-auto shadow-md"
                                                 >
                                                     <div className="p-1">
                                                         <div 
