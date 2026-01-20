@@ -3,6 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+export const MAJOR_JOB_MAPPING: Record<string, string[]> = {
+    "คอมพิวเตอร์เพื่อการสื่อสาร": ["งานพัฒนาเว็บไซต์ / แอปพลิเคชัน / ระบบต่าง ๆ", "งานสื่อมัลติมีเดีย"],
+    "การจัดการธุรกิจไซเบอร์": ["งานด้านวิชาการ / วิจัย / ผู้ช่วยวิจัย", "งานบริการ / ธุรการ", "งานประชาสัมพันธ์ / สื่อสารองค์กร"],
+    "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย": ["งานสื่อมัลติมีเดีย", "งานกองถ่าย / Extra"],
+    "การสื่อสารเพื่อการท่องเที่ยว": ["งานกิจกรรม / อีเวนต์", "งานประชาสัมพันธ์ / สื่อสารองค์กร"],
+    "การสื่อสารเพื่อสุขภาพ": ["งานประชาสัมพันธ์ / สื่อสารองค์กร", "งานด้านวิชาการ / วิจัย / ผู้ช่วยวิจัย"],
+};
+
 interface PriceRange {
     min: number;
     max: number | null;
@@ -26,7 +34,7 @@ interface JobFilterProps {
 const priceSortOptions = [
     { value: 'price-desc', label: 'ราคาสูงสุด' }, 
     { value: 'price-asc', label: 'ราคาต่ำสุด' },
-    { value: 'latest', label: 'งานล่าสุด' },
+    { value: 'latest', label: 'ค่าเริ่มต้น' },
 ];
 
 const JobFilter: React.FC<JobFilterProps> = ({
@@ -100,13 +108,15 @@ const JobFilter: React.FC<JobFilterProps> = ({
     };
     
     const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseInt(e.target.value, 10) || 0;
-        onPriceRangeChange({ ...priceRange, min: value });
+    // ป้องกันค่าติดลบ และใช้ 0 เป็นค่าเริ่มต้นหากช่องว่าง
+    const value = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0);
+    onPriceRangeChange({ ...priceRange, min: value });
     };
-    
+
     const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.trim();
-        const value = inputValue === '' ? null : parseInt(inputValue, 10) || 0;
+        // ถ้าว่างให้เป็น null (ไม่จำกัด) ถ้ามีค่าให้เป็นตัวเลขที่ไม่ติดลบ
+        const value = inputValue === '' ? null : Math.max(0, parseInt(inputValue, 10) || 0);
         onPriceRangeChange({ ...priceRange, max: value });
     };
     

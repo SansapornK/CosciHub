@@ -6,7 +6,7 @@ import axios from "axios";
 
 import Loading from "../../components/common/Loading";
 import JobList from "../../components/lists/JobList";
-import JobFilter from "../../components/filters/JobFilter";
+import JobFilter, { MAJOR_JOB_MAPPING } from "../../components/filters/JobFilter";
 
 // ================= SearchInput =================
 const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => (
@@ -44,12 +44,12 @@ const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => (
 const FindJobPage = () => {
   return (
     <Suspense fallback={<Loading size="large" color="primary" />}>
-      <FreelancePageContent />
+      <FindJobPageContent />
     </Suspense>
   );
 };
 
-function FreelancePageContent() {
+function FindJobPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -57,44 +57,46 @@ function FreelancePageContent() {
   const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   const [selectedMajor, setSelectedMajor] = useState("");
   const [currentSort, setCurrentSort] = useState("default");
-  const [isLoading, setIsLoading] = useState(false);
 
   const [priceRange, setPriceRange] = useState({
     min: 0,
     max: null as number | null,
   });
 
-  // ===== init from URL =====
+  // ===== ฟังก์ชันสำคัญ: คำนวณประเภทงานที่จะส่งไปกรองจริง =====
+  const getEffectiveJobTypes = () => {
+    // 1. ถ้าผู้ใช้มีการเลือกติ๊กประเภทงานเอง ให้ยึดตามที่ติ๊ก
+    if (selectedJobTypes.length > 0) return selectedJobTypes;
+    
+    // 2. ถ้าไม่ได้ติ๊กประเภทงาน แต่เลือกวิชาเอก ให้เอางานที่ Mapping ไว้มาแสดง
+    if (selectedMajor && MAJOR_JOB_MAPPING[selectedMajor]) {
+      return MAJOR_JOB_MAPPING[selectedMajor];
+    }
+    
+    return [];
+  };
+
+  // ===== init from URL (เหมือนเดิม) =====
   useEffect(() => {
     setSearchQuery(searchParams.get("q") || "");
     setSelectedMajor(searchParams.get("major") || "");
-
     const jobTypes = searchParams.get("jobTypes");
     if (jobTypes) setSelectedJobTypes(jobTypes.split(","));
-
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
-
     setPriceRange({
       min: minPrice ? parseInt(minPrice) : 0,
       max: maxPrice ? parseInt(maxPrice) : null,
     });
   }, [searchParams]);
 
-  // ===== apply filter =====
   const applyFilters = () => {
     const params = new URLSearchParams();
-
     if (searchQuery) params.set("q", searchQuery);
-    if (selectedJobTypes.length > 0)
-      params.set("jobTypes", selectedJobTypes.join(","));
+    if (selectedJobTypes.length > 0) params.set("jobTypes", selectedJobTypes.join(","));
     if (selectedMajor) params.set("major", selectedMajor);
-    if (priceRange.min > 0)
-      params.set("minPrice", priceRange.min.toString());
-    if (priceRange.max !== null)
-      params.set("maxPrice", priceRange.max.toString());
-
-    params.set("page", "1");
+    if (priceRange.min > 0) params.set("minPrice", priceRange.min.toString());
+    if (priceRange.max !== null) params.set("maxPrice", priceRange.max.toString());
     router.push(`/find-job?${params.toString()}`);
   };
 
@@ -103,19 +105,11 @@ function FreelancePageContent() {
     setSelectedJobTypes([]);
     setSelectedMajor("");
     setPriceRange({ min: 0, max: null });
-    setCurrentSort("default");
     router.push("/find-job");
   };
 
-  const majors = [
-    "คอมพิวเตอร์เพื่อการสื่อสาร",
-    "การจัดการธุรกิจไซเบอร์",
-    "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย",
-    "การสื่อสารเพื่อการท่องเที่ยว",
-    "การสื่อสารเพื่อสุขภาพ",
-  ];
-
-  const jobTypes = [
+  const majors = Object.keys(MAJOR_JOB_MAPPING);
+  const allJobTypes = [
     "งานด้านวิชาการ / วิจัย / ผู้ช่วยวิจัย",
     "งานพัฒนาเว็บไซต์ / แอปพลิเคชัน / ระบบต่าง ๆ",
     "งานกิจกรรม / อีเวนต์",
@@ -128,8 +122,8 @@ function FreelancePageContent() {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="bg-blue-50 py-12 px-10 text-center rounded-b-3xl">
+    <div className="flex flex-col gap-6 bg-gray-50/30 min-h-screen">
+      <section className="bg-blue-50/50 py-16 px-10 text-center rounded-b-[4rem]">
         <SearchInput
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -137,7 +131,7 @@ function FreelancePageContent() {
         />
       </section>
 
-      <section className="px-12">
+      <section className="px-10">
         <JobFilter
           selectedJobTypes={selectedJobTypes}
           onJobTypesChange={setSelectedJobTypes}
@@ -145,7 +139,7 @@ function FreelancePageContent() {
           onMajorChange={setSelectedMajor}
           priceRange={priceRange}
           onPriceRangeChange={setPriceRange}
-          availableJobTypes={jobTypes}
+          availableJobTypes={allJobTypes}
           availableMajors={majors}
           currentSort={currentSort}
           onSortChange={setCurrentSort}
@@ -153,13 +147,16 @@ function FreelancePageContent() {
           onResetFilters={resetFilters}
         />
 
-        <JobList
-          searchQuery={searchQuery}
-          selectedJobTypes={selectedJobTypes}
-          selectedMajor={selectedMajor}
-          priceRange={priceRange}
-          currentSort={currentSort}
-        />
+        <div className="mt-2">
+            <JobList
+              searchQuery={searchQuery}
+              selectedJobTypes={getEffectiveJobTypes()} // ส่งค่าที่ผ่านการคำนวณแล้วไปกรอง
+              selectedMajor={selectedMajor}
+              priceRange={priceRange}
+              currentSort={currentSort}
+              onResetFilters={resetFilters}
+            />
+        </div>
       </section>
     </div>
   );

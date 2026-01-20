@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/libs/mongodb";
 import Job from "@/models/Job";
 
-// api/jobs/route.ts
-
 export async function GET(req: Request) {
   await dbConnect();
 
@@ -20,34 +18,46 @@ export async function GET(req: Request) {
   const sort = searchParams.get("sort");
 
   const filter: any = {};
-  if (q) filter.title = { $regex: q, $options: "i" };
-  if (jobTypes) filter.category = { $in: jobTypes.split(",") };
+
+  // ค้นหาด้วย keyword
+  if (q) {
+    filter.title = { $regex: q, $options: "i" };
+  }
+
+  // กรองประเภทงาน
+  if (jobTypes) {
+    filter.category = { $in: jobTypes.split(",") };
+  }
 
   if (minPrice || maxPrice) {
-    filter.$and = [];
-    if (minPrice) filter.$and.push({ budgetMin: { $gte: Number(minPrice) } });
-    if (maxPrice) filter.$and.push({ budgetMax: { $lte: Number(maxPrice) } });
+    filter.budgetMin = {};
+
+    if (minPrice) {
+      filter.budgetMin.$gte = Number(minPrice);
+    }
+
+    if (maxPrice) {
+      filter.budgetMin.$lte = Number(maxPrice);
+    }
   }
 
   const total = await Job.countDocuments(filter);
 
   let query = Job.find(filter);
 
+  // Sort
   if (sort === "price-asc") {
-  // เรียงจากน้อยไปมาก
-  query = query.sort({ budgetMin: 1 }); 
-} else if (sort === "price-desc") {
-  // ✅ เรียงจากมากไปน้อย
-  query = query.sort({ budgetMin: -1 }); 
-} else {
-  // ค่าเริ่มต้น: เรียงตามวันที่ลงประกาศล่าสุด
-  query = query.sort({ postedDate: -1 });
-}
+    query = query.sort({ budgetMin: 1 });
+  } else if (sort === "price-desc") {
+    query = query.sort({ budgetMin: -1 });
+  } else {
+    query = query.sort({ postedDate: -1 });
+  }
 
-const jobs = await query.skip(skip).limit(limit).exec();
+  const jobs = await query.skip(skip).limit(limit).exec();
 
   return NextResponse.json({
     jobs,
-    total, 
+    total,
   });
 }

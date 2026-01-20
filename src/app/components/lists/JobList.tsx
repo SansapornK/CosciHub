@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { useSearchParams, useRouter } from "next/navigation";
-
+import { useSession } from "next-auth/react";
 import Pagination from "../common/Pagination";
 import Loading from "../common/Loading";
 
@@ -43,11 +43,13 @@ interface JobCardData {
 
 interface JobListProps {
   initialItemsPerPage?: number;
+  limit?: number;
   searchQuery?: string;
   selectedJobTypes?: string[];
   selectedMajor?: string;
   priceRange?: PriceRange;
   currentSort?: string;
+  onResetFilters?: () => void;
 }
 
 /* ===================== Helpers ===================== */
@@ -192,15 +194,20 @@ const JobCard = ({ data, isLoggedIn }: { data: JobCardData, isLoggedIn: boolean 
           </button>
         </Link>
 
-        {/* เพิ่มเงื่อนไขการเช็ค Login เข้าไปร่วมกับ isVisible */}
-        {isLoggedIn && data.isVisible && (
+        {isLoggedIn && (
           <button 
-            className={`p-3 rounded-lg bg-gray-100 ${favBtnClass} hover:bg-gray-200 transition-colors duration-200 cursor-pointer`}
+            onClick={(e) => {
+              e.preventDefault();
+              // ใส่ฟังก์ชันสำหรับการ Save ลง DB ที่นี่
+              console.log("บันทึกงานไอดี:", data.id);
+            }}
+            className={`p-3 rounded-lg bg-gray-100 ${favBtnClass} hover:bg-gray-200 transition-colors duration-200 cursor-pointer shadow-sm`}
             aria-label={isFav ? "Remove bookmark" : "Add bookmark"}
           >
-            <Bookmark className="w-5 h-5 fill-current"/>
+            <Bookmark className="w-5 h-5" />
           </button>
         )}
+        
       </div>
     </div>
   );
@@ -215,7 +222,10 @@ function JobList({
   selectedMajor = "",
   priceRange = { min: 0, max: null },
   currentSort = "latest",
+  onResetFilters,
 }: JobListProps) {
+  const { status } = useSession();
+
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -229,12 +239,7 @@ function JobList({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token"); // หรือตรวจสอบตามระบบ Auth ของคุณ
-    setIsLoggedIn(!!token);
-  }, []);
+  const isLoggedIn = status === "authenticated";
 
   /* ---------- Fetch from API ---------- */
   const fetchJobs = async () => {
@@ -245,16 +250,18 @@ function JobList({
       const params: any = {
         page: pageFromUrl,
         limit: initialItemsPerPage,
-        sort: currentSort, // ✅ ส่งค่า Sort ไปที่ API
+        sort: currentSort, 
       };
 
       if (searchQuery) params.q = searchQuery;
       if (selectedJobTypes.length > 0)
         params.jobTypes = selectedJobTypes.join(",");
       if (selectedMajor) params.major = selectedMajor;
+
       if (priceRange.min > 0) params.minPrice = priceRange.min;
       if (priceRange.max !== null) params.maxPrice = priceRange.max;
       if (currentSort !== "default") params.sort = currentSort;
+      
 
       const res = await axios.get("/api/jobs", { params });
 
@@ -314,7 +321,7 @@ function JobList({
         ไม่พบงานที่ตรงตามเงื่อนไข
         <div>
           <button
-            onClick={() => router.push("/find-job")}
+            onClick={() => onResetFilters?.()}
             className="mt-4 bg-primary-blue-500 text-white px-4 py-2 rounded"
           >
             ล้างตัวกรอง
