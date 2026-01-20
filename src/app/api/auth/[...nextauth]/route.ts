@@ -8,6 +8,7 @@ import User from '@/models/User';
 import { Adapter } from 'next-auth/adapters';
 import mongoose from 'mongoose';
 import connectToDatabase from '@/libs/mongodb';
+import bcrypt from 'bcryptjs';
 
 // Define NextAuth configuration with custom adapter for MongoDB
 const handler = NextAuth({
@@ -29,9 +30,10 @@ const handler = NextAuth({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email) {
+        if (!credentials?.email || !credentials?.password) { // เช็คว่ามี password ส่งมาไหม
           return null;
         }
 
@@ -39,8 +41,8 @@ const handler = NextAuth({
           // เชื่อมต่อกับฐานข้อมูล
           await connectToDatabase();
           
-          // ค้นหาผู้ใช้จากอีเมล
-          const user = await User.findOne({ email: credentials.email }).exec();
+          // ค้นหาผู้ใช้จากอีเมล และ รหัสผ่าน
+          const user = await User.findOne({ email: credentials.email }).select('+password').exec();
           
           // ถ้าไม่พบผู้ใช้
           if (!user) {
@@ -51,6 +53,17 @@ const handler = NextAuth({
           // ตรวจสอบว่าอีเมลได้รับการยืนยันแล้วหรือไม่
           if (!user.emailVerified) {
             console.log('Email not verified:', credentials.email);
+            throw new Error("Email not verified");
+          }
+
+          // ตรวจสอบรหัสผ่าน
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+
+          if (!isPasswordValid) {
+            throw new Error("Invalid password"); // รหัสผ่านผิด
+          }
+
+          if (!user.emailVerified) {
             throw new Error("Email not verified");
           }
           

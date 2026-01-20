@@ -50,6 +50,8 @@ export interface RegisterData {
   skills: string[];
   email: string;
   isEmailVerified: boolean;
+  password?: string;        // <--- เพิ่ม
+  confirmPassword?: string; // <--- เพิ่ม
   profileImage?: File;
   portfolioFile?: File;
   bio?: string;
@@ -137,6 +139,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     interestedJobs: [],
     email: "",
     isEmailVerified: false,
+    password: "",         // <--- เพิ่ม
+    confirmPassword: "",  // <--- เพิ่ม
     bio: "",
     // เริ่มต้นโดยไม่กำหนดค่าสำหรับฟิลด์เฉพาะนิสิต
   });
@@ -219,6 +223,36 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       }));
     }
   }, [registerData.email, validation.email.touched]);
+
+  // Validate Password
+  useEffect(() => {
+    const { password, confirmPassword } = registerData;
+    
+    // รีเซ็ต Error ก่อน
+    setValidation(prev => ({
+      ...prev,
+      password: { error: '' },
+      confirmPassword: { error: '' }
+    }));
+
+    if (password) {
+      if (password.length < 8) {
+        setValidation(prev => ({
+          ...prev,
+          password: { error: 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร' }
+        }));
+      }
+    }
+
+    if (confirmPassword && password) {
+      if (password !== confirmPassword) {
+        setValidation(prev => ({
+          ...prev,
+          confirmPassword: { error: 'รหัสผ่านไม่ตรงกัน' }
+        }));
+      }
+    }
+  }, [registerData.password, registerData.confirmPassword]);
 
   // ตรวจสอบว่ารหัสนิสิตมีในระบบแล้วหรือไม่
   const checkStudentIdExists = async (studentId: string) => {
@@ -318,11 +352,14 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       case 4: // Email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(registerData.email)) return false;
+
+        // ตรวจสอบ Email Error
+        if (validation.email.error || validation.email.exists) return false;
         
-        // ตรวจสอบว่ามีข้อผิดพลาดในอีเมลหรือไม่
-        if (validation.email.error || validation.email.exists) {
-          return false;
-        }
+        // *** เพิ่ม: ตรวจสอบ Password ***
+        if (!registerData.password || registerData.password.length < 8) return false;
+        if (registerData.password !== registerData.confirmPassword) return false;
+        if (validation.password.error || validation.confirmPassword.error) return false;
         
         return true;
       case 5: // Profile (optional fields, always valid)
@@ -409,6 +446,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       formData.append('firstName', registerData.firstName);
       formData.append('lastName', registerData.lastName);
       formData.append('email', registerData.email);
+      formData.append('password', registerData.password || '');
       formData.append('role', registerData.role);
       formData.append('major', registerData.major);
       
@@ -722,12 +760,21 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
               // />
             )}
 
-            {currentStep === 4 && (
+            {/* {currentStep === 4 && (
               <StepEmail 
                 email={registerData.email}
                 isVerified={registerData.isEmailVerified}
                 validation={validation.email}
                 onEmailChange={(email) => updateRegisterData({ email })}
+                onEmailTouched={handleEmailTouched}
+              />
+            )} */}
+
+            {currentStep === 4 && (
+              <StepEmail 
+                data={registerData}
+                validation={validation}
+                updateData={updateRegisterData}
                 onEmailTouched={handleEmailTouched}
               />
             )}

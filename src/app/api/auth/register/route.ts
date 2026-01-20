@@ -4,6 +4,7 @@ import connectToDatabase from '@/libs/mongodb';
 import User from '@/models/User';
 import { uploadToCloudinary } from '@/libs/cloudinary';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     
     const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
     const firstName = formData.get('firstName') as string;
     const lastName = formData.get('lastName') as string;
     const name = `${firstName} ${lastName}`;
@@ -21,7 +23,7 @@ export async function POST(req: NextRequest) {
     const major = formData.get('major') as string;
     const bio = formData.get('bio') as string || '';
     
-    if (!email || !firstName || !lastName || !role || !major) {
+    if (!email || !password || !firstName || !lastName || !role || !major) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -37,6 +39,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // สร้างอ็อบเจกต์ข้อมูลผู้ใช้พื้นฐาน
     const userData: any = {
       name,
@@ -47,6 +51,7 @@ export async function POST(req: NextRequest) {
       major,
       bio,
       emailVerified: true, // Set to true since we verify via OTP
+      password: hashedPassword,
     };
 
     // เพิ่มข้อมูลเฉพาะสำหรับนิสิตเท่านั้น

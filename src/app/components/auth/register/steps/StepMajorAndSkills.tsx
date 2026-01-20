@@ -47,12 +47,12 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full items-center">
+    <div className="flex flex-col gap-4 w-full items-center max-h-[55vh] overflow-y-auto pr-2">
       <div className="w-full">
-        {/* <h2 className="text-lg font-medium text-gray-800">วิชาเอกและทักษะ</h2> */}
+        <h2 className="text-lg font-medium text-gray-800">วิชาเอกและทักษะ</h2>
         <p className="text-gray-500 text-sm">
           {data.role === 'student' 
-            ? 'ระบุวิชาเอกและทักษะที่คุณมี' 
+            ? 'ระบุวิชาเอก ทักษะ และงานที่คุณสนใจ' 
             : 'ระบุวิชาเอกของคุณ'}
         </p>
       </div>
@@ -81,7 +81,8 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
           </label>
           
           {/* Skills selection as chips */}
-          <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+          {/* แก้ไข 2: ลด max-h จาก 48 เป็น 32 เพื่อประหยัดพื้นที่ */}
+          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1 border border-gray-100 rounded-lg p-2">
             {skillOptions.map((skill) => {
               const selected = data.skills.includes(skill);
               return (
@@ -133,7 +134,8 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
         <label className="block text-gray-700 text-sm mb-1">
           ประเภทงานที่สนใจ
         </label>
-        <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+        {/* แก้ไข 3: ลด max-h จาก 48 เป็น 32 และเพิ่มขอบเพื่อให้ดูเป็นสัดส่วน */}
+        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1 border border-gray-100 rounded-lg p-2">
           {jobOptions.map((job) => {
             const selected = (data.interestedJobs || []).includes(job);
             return (
