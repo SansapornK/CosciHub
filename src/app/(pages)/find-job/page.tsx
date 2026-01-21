@@ -150,7 +150,7 @@ function FindJobPageContent() {
         <div className="mt-2">
             <JobList
               searchQuery={searchQuery}
-              selectedJobTypes={getEffectiveJobTypes()} // ส่งค่าที่ผ่านการคำนวณแล้วไปกรอง
+              selectedJobTypes={getEffectiveJobTypes()}
               selectedMajor={selectedMajor}
               priceRange={priceRange}
               currentSort={currentSort}

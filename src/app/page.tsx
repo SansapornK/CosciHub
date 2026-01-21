@@ -3,6 +3,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import React, { useState, useEffect } from "react"; 
+import JobList from "./components/lists/JobList";
 
 // --- 1. Hero Slides Data ---
 const HERO_SLIDES = [
@@ -557,9 +558,10 @@ export default function Home() {
           งานที่ถูกคัดสรรมาแล้วตามความสนใจและวิชาเอกของคุณ
         </p> */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4 px-4 sm:px-0">
-          {RECOMMENDED_JOBS.map((job) => (
+          {/* {RECOMMENDED_JOBS.map((job) => (
             <JobCard key={job.id} data={job} />
-          ))}
+          ))} */}
+          
         </div>
           
         {/* ปุ่มดูงานทั้งหมด */}
