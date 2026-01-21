@@ -1,6 +1,6 @@
-import React from 'react';
-import { RegisterData } from '../RegisterForm';
-import MajorDropdown from './MajorDropdown';
+import React from "react";
+import { RegisterData } from "../RegisterForm";
+import MajorDropdown from "./MajorDropdown";
 
 interface StepMajorAndSkillsProps {
   data: RegisterData;
@@ -9,13 +9,18 @@ interface StepMajorAndSkillsProps {
   jobOptions: string[];
 }
 
-function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: StepMajorAndSkillsProps) {
+function StepMajorAndSkills({
+  data,
+  updateData,
+  skillOptions,
+  jobOptions,
+}: StepMajorAndSkillsProps) {
   // Array of majors for dropdown
   const majors = [
-    { value: "คอมพิวเตอร์เพื่อการสื่อสาร", label: "คอมพิวเตอร์เพื่อการสื่อสาร" },
+    { value: "คอมพิวเตอร์เพื่อการสื่อสาร",label: "คอมพิวเตอร์เพื่อการสื่อสาร",},
     { value: "การจัดการธุรกิจไซเบอร์", label: "การจัดการธุรกิจไซเบอร์" },
-    { value: "การออกแบบส่ื่อปฏิสัมพันธ์และมัลติมีเดีย", label: "การออกแบบส่ื่อปฏิสัมพันธ์และมัลติมีเดีย" },
-    { value: "การสื่อสารเพื่อการท่องเที่ยว", label: "การสื่อสารเพื่อการท่องเที่ยว" },
+    { value: "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย", label: "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย",},
+    { value: "การสื่อสารเพื่อการท่องเที่ยว",label: "การสื่อสารเพื่อการท่องเที่ยว",},
     { value: "การสื่อสารเพื่อสุขภาพ", label: "การสื่อสารเพื่อสุขภาพ" },
   ];
 
@@ -25,7 +30,7 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
 
   const handleSkillToggle = (skill: string) => {
     const updatedSkills = [...data.skills];
-    
+
     if (updatedSkills.includes(skill)) {
       // Remove skill if already selected
       const index = updatedSkills.indexOf(skill);
@@ -34,30 +39,32 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
       // Add skill if not already selected
       updatedSkills.push(skill);
     }
-    
+
     updateData({ skills: updatedSkills });
   };
 
   const handleJobToggle = (job: string) => {
     const current = data.interestedJobs || [];
     const updatedJobs = current.includes(job)
-      ? current.filter(item => item !== job)
+      ? current.filter((item) => item !== job)
       : [...current, job];
     updateData({ interestedJobs: updatedJobs });
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full items-center max-h-[55vh] overflow-y-auto pr-2">
+    // แก้ไข 1: เอา overflow-y-auto และ max-h ออก เพื่อไม่ให้ Dropdown ถูกตัด
+    <div className="flex flex-col gap-4 w-full items-center">
+    {/* <div className="flex flex-col gap-4 w-full items-center max-h-[55vh] overflow-y-auto pr-2"> */}
       <div className="w-full">
         <h2 className="text-lg font-medium text-gray-800">วิชาเอกและทักษะ</h2>
         <p className="text-gray-500 text-sm">
-          {data.role === 'student' 
-            ? 'ระบุวิชาเอก ทักษะ และงานที่คุณสนใจ' 
-            : 'ระบุวิชาเอกของคุณ'}
+          {data.role === "student"
+            ? "ระบุวิชาเอก ทักษะ และงานที่คุณสนใจ"
+            : "ระบุวิชาเอกของคุณ"}
         </p>
       </div>
 
-      <div className="w-full">
+      <div className="w-full relative z-20">
         <label htmlFor="major" className="block text-gray-700 text-sm mb-1">
           วิชาเอก
         </label>
@@ -71,7 +78,7 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
         />
       </div>
 
-      {data.role === 'student' && (
+      {data.role === "student" && (
         <div className="mt-2 w-full">
           <label className="block text-gray-700 text-sm mb-1">
             ทักษะ
@@ -79,9 +86,8 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
               (เลือกอย่างน้อย 1 ทักษะ)
             </span>
           </label>
-          
+
           {/* Skills selection as chips */}
-          {/* แก้ไข 2: ลด max-h จาก 48 เป็น 32 เพื่อประหยัดพื้นที่ */}
           <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1 border border-gray-100 rounded-lg p-2">
             {skillOptions.map((skill) => {
               const selected = data.skills.includes(skill);
@@ -92,8 +98,8 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
                   onClick={() => handleSkillToggle(skill)}
                   className={`px-3 py-1 rounded-full text-sm border transition ${
                     selected
-                      ? 'bg-primary-blue-500 text-white border-primary-blue-500'
-                      : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                      ? "bg-primary-blue-500 text-white border-primary-blue-500"
+                      : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
                   }`}
                 >
                   {skill}
@@ -104,81 +110,103 @@ function StepMajorAndSkills({ data, updateData, skillOptions, jobOptions }: Step
 
           {/* Selected skills display */}
           <div className="mt-3">
-                  <p className="text-sm text-gray-500 mb-2">ทักษะที่เลือก ({data.skills.length})</p>
-                  <div className="flex flex-wrap gap-2">
-                    {data.skills.map(skill => (
-                      <span 
-                        key={skill}
-                        className="bg-primary-blue-100 text-primary-blue-600 text-xs px-2 py-1 rounded-lg flex items-center"
+            <p className="text-sm text-gray-500 mb-2">
+              ทักษะที่เลือก ({data.skills.length})
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {data.skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="bg-primary-blue-100 text-primary-blue-600 text-xs px-2 py-1 rounded-lg flex items-center"
+                >
+                  {skill}
+                  <button
+                    type="button"
+                    onClick={() => handleSkillToggle(skill)}
+                    className="ml-1 text-primary-blue-600 hover:text-primary-blue-800 transition-colors"
+                    aria-label={`ลบทักษะ ${skill}`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 w-full">
+            <label className="block text-gray-700 text-sm mb-1">
+              ประเภทงานที่สนใจ
+            </label>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1 border border-gray-100 rounded-lg p-2">
+              {jobOptions.map((job) => {
+                const selected = (data.interestedJobs || []).includes(job);
+                return (
+                  <button
+                    key={job}
+                    type="button"
+                    onClick={() => handleJobToggle(job)}
+                    className={`px-3 py-1 rounded-full text-sm border transition ${
+                      selected
+                        ? "bg-primary-blue-500 text-white border-primary-blue-500"
+                        : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                    }`}
+                  >
+                    {job}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-3">
+              <p className="text-sm text-gray-500 mb-2">
+                งานที่สนใจ ({(data.interestedJobs || []).length})
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(data.interestedJobs || []).map((job) => (
+                  <span
+                    key={job}
+                    className="bg-primary-blue-100 text-primary-blue-600 text-xs px-2 py-1 rounded-lg flex items-center"
+                  >
+                    {job}
+                    <button
+                      type="button"
+                      onClick={() => handleJobToggle(job)}
+                      className="ml-1 text-primary-blue-600 hover:text-primary-blue-800 transition-colors"
+                      aria-label={`ลบประเภทงาน ${job}`}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       >
-                        {skill}
-                        <button 
-                          type="button"
-                          onClick={() => handleSkillToggle(skill)} 
-                          className="ml-1 text-primary-blue-600 hover:text-primary-blue-800 transition-colors"
-                          aria-label={`ลบทักษะ ${skill}`}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
-
-      <div className="mt-4 w-full">
-        <label className="block text-gray-700 text-sm mb-1">
-          ประเภทงานที่สนใจ
-        </label>
-        {/* แก้ไข 3: ลด max-h จาก 48 เป็น 32 และเพิ่มขอบเพื่อให้ดูเป็นสัดส่วน */}
-        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1 border border-gray-100 rounded-lg p-2">
-          {jobOptions.map((job) => {
-            const selected = (data.interestedJobs || []).includes(job);
-            return (
-              <button
-                key={job}
-                type="button"
-                onClick={() => handleJobToggle(job)}
-                className={`px-3 py-1 rounded-full text-sm border transition ${
-                  selected
-                    ? 'bg-primary-blue-500 text-white border-primary-blue-500'
-                    : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
-                }`}
-              >
-                {job}
-              </button>
-            );
-          })}
-        </div>
-        <div className="mt-3">
-          <p className="text-sm text-gray-500 mb-2">งานที่สนใจ ({(data.interestedJobs || []).length})</p>
-          <div className="flex flex-wrap gap-2">
-            {(data.interestedJobs || []).map(job => (
-              <span 
-                key={job}
-                className="bg-primary-blue-100 text-primary-blue-600 text-xs px-2 py-1 rounded-lg flex items-center"
-              >
-                {job}
-                <button 
-                  type="button"
-                  onClick={() => handleJobToggle(job)} 
-                  className="ml-1 text-primary-blue-600 hover:text-primary-blue-800 transition-colors"
-                  aria-label={`ลบประเภทงาน ${job}`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

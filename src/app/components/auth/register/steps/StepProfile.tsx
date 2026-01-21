@@ -115,12 +115,9 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
 
       {/* Profile Image */}
       <div className="w-full">
-        <label className="block text-gray-700 text-sm mb-1">
-          รูปโปรไฟล์
-        </label>
         
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+          <div className="w-30 h-30 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
             {previewImage ? (
               <img
                 src={previewImage}
@@ -128,7 +125,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
@@ -163,6 +160,12 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
         </div>
       </div>
 
+      <div className="w-full">
+        <p className="text-gray-400 text-sm">
+          แนะนำใช้รูปที่เห็นใบหน้าชัดเจน ไม่ใส่แว่นทึบ หมวก หรือวัตถุที่ปิดบังใบหน้า
+        </p>
+      </div>
+
       {/* Bio */}
       <div className="w-full">
         <label htmlFor="bio" className="block text-gray-700 text-sm mb-1">
@@ -172,7 +175,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
           id="bio"
           rows={3}
           className="input resize-none"
-          placeholder="แนะนำตัวคุณสั้นๆ..."
+          placeholder="กรอกคำอธิบายตนเอง..."
           value={data.bio}
           onChange={handleBioChange}
         />
@@ -182,7 +185,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
       {data.role === 'student' && (
         <>
           {/* ราคาเริ่มต้น */}
-          <div className="w-full">
+          {/* <div className="w-full">
             <label htmlFor="basePrice" className="block text-gray-700 text-sm mb-1">
               ราคาเริ่มต้น (บาท)
             </label>
@@ -199,7 +202,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
               <span className="text-gray-600">บาท</span>
             </div>
             <p className="text-xs text-gray-500 mt-1">ราคาเริ่มต้นสำหรับการรับงาน (ขั้นต่ำ 100 บาท)</p>
-          </div>
+          </div> */}
 
           {/* สถานะรับงาน */}
           {/* <div>
@@ -236,7 +239,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
           </div> */}
 
           {/* Portfolio file upload */}
-          <div className="w-full">
+          {/* <div className="w-full">
             <label htmlFor="portfolio" className="block text-gray-700 text-sm mb-1">
               พอร์ตโฟลิโอ (PDF)
             </label>
@@ -312,7 +315,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
                 </p>
               </div>
             )}
-          </div>
+          </div> */}
         </>
       )}
     </div>

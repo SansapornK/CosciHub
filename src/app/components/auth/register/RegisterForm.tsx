@@ -159,7 +159,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
   // Validate student ID pattern whenever it changes
   useEffect(() => {
-    if (registerData.role === 'student' && registerData.studentId) {
+    if ((registerData.role === 'student' || registerData.role === 'alumni') && registerData.studentId) {
       if (registerData.studentId.length !== 11) {
         setValidation(prev => ({
           ...prev,

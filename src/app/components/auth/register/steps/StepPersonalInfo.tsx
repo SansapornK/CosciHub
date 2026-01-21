@@ -101,21 +101,21 @@ function StepPersonalInfo({
         </div>
       </div>
 
-      {data.role === 'student' && (
+      {(data.role === 'student' || data.role === 'alumni') && (
         <div className="w-full">
           <label htmlFor="studentId" className="block text-gray-700 text-sm mb-1">
-            รหัสนิสิต
+            {data.role === 'alumni' ? 'รหัสนิสิตเก่า' : 'รหัสนิสิต'}
           </label>
           <div className="relative">
             <input
               type="text"
               id="studentId"
               className={`input ${validation.studentId.error ? 'border-red-500' : validation.studentId.touched && !validation.studentId.exists && data.studentId.length === 11 ? 'border-green-500' : ''}`}
-              placeholder="รหัสนิสิต"
-              value={data.studentId}
+              placeholder={data.role === 'alumni' ? "รหัสนิสิตเก่า (ถ้ามี)" : "รหัสนิสิต"}
+              value={data.studentId || ''}
               onChange={handleStudentIdChange}
               onBlur={onStudentIdTouched}
-              required
+              required={data.role === 'student'} // Alumni อาจจะไม่บังคับ? ถ้าบังคับให้ลบเงื่อนไขออก
             />
             
             {/* แสดงไอคอนสถานะการตรวจสอบรหัสนิสิต */}

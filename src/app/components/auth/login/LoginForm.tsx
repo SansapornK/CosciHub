@@ -6,7 +6,8 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-//ลบ otp ออก ใช้แค่ตอน register
+import { ChevronLeft } from "lucide-react";
+
 
 interface LoginFormProps {
   onRegisterClick: () => void;
@@ -55,7 +56,17 @@ function LoginForm({ onRegisterClick }: LoginFormProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen min-w-screen bg-primary-gray p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen min-w-screen bg-primary-gray p-4 relative">
+      
+      <div className="absolute top-6 left-6">
+        <Link 
+          href="/" 
+          className="flex items-center text-gray-400 hover:text-primary-blue-500 transition-colors text-sm font-medium group">
+          <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
+            กลับหน้าหลัก
+        </Link>
+      </div>
+
       <div className="flex flex-col items-center mb-8">
 
         {/* โลโก้ COSCI Hub */}
