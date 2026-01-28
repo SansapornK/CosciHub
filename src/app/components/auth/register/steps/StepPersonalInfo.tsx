@@ -1,3 +1,4 @@
+// scr/app/components/auth/register/steps/StepPersonalInfo.tsx
 import React from 'react';
 import { RegisterData } from '../RegisterForm';
 
@@ -51,6 +52,8 @@ function StepPersonalInfo({
       updateData({ studentId: value });
     }
   };
+
+  const safeStudentId = data.studentId || '';
 
   return (
     <div className="flex flex-col gap-4 w-full items-center">
@@ -110,7 +113,7 @@ function StepPersonalInfo({
             <input
               type="text"
               id="studentId"
-              className={`input ${validation.studentId.error ? 'border-red-500' : validation.studentId.touched && !validation.studentId.exists && data.studentId.length === 11 ? 'border-green-500' : ''}`}
+              className={`input ${validation.studentId.error ? 'border-red-500' : validation.studentId.touched && !validation.studentId.exists && safeStudentId.length === 11 ? 'border-green-500' : ''}`}
               placeholder={data.role === 'alumni' ? "รหัสนิสิตเก่า (ถ้ามี)" : "รหัสนิสิต"}
               value={data.studentId || ''}
               onChange={handleStudentIdChange}

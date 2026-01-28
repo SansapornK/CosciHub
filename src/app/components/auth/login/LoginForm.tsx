@@ -56,7 +56,7 @@ function LoginForm({ onRegisterClick }: LoginFormProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen min-w-screen bg-primary-gray p-4 relative">
+    <div className="flex flex-col items-center justify-center min-h-screen min-w-screen bg-white p-4 relative">
       
       <div className="absolute top-6 left-6">
         <Link 
@@ -91,7 +91,7 @@ function LoginForm({ onRegisterClick }: LoginFormProps) {
                 id="email"
                 type="email"
                 className="w-full pr-4 py-2 pl-10 bg-secondary-gray border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="กรอกอีเมลของคุณ (@g.swu.ac.th)"
+                placeholder="กรอกอีเมลของคุณ"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

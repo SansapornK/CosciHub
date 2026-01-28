@@ -5,6 +5,7 @@ import User from '@/models/User';
 import { uploadToCloudinary } from '@/libs/cloudinary';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { sendTeacherVerificationEmails } from '@/libs/emailToProf';
 
 export async function POST(req: NextRequest) {
   try {
@@ -198,6 +199,30 @@ export async function POST(req: NextRequest) {
       responseData.user.isOpen = user.isOpen;
       responseData.user.basePrice = user.basePrice;
       responseData.user.galleryImages = user.galleryImages;
+    }
+
+    if (role === 'alumni') {
+      const teacherEmailsJson = formData.get('teacherEmails') as string;
+      
+      if (teacherEmailsJson) {
+        // Parse emails อย่างปลอดภัย
+        let teacherEmails: string[] = [];
+        try {
+          teacherEmails = JSON.parse(teacherEmailsJson);
+        } catch (e) {
+          teacherEmails = [];
+        }
+
+        // เรียกใช้ฟังก์ชันจาก libs/email.ts
+        // ไม่ต้อง await ก็ได้ เพื่อให้ User ได้รับ Response ทันที (Fire and Forget)
+        // หรือถ้าอยากมั่นใจว่าส่งชัวร์ค่อยใส่ await
+        sendTeacherVerificationEmails({
+          toEmails: teacherEmails,
+          studentName: `${firstName} ${lastName}`,
+          studentMajor: major,
+          profileImageUrl: user.profileImageUrl // URL รูปที่เพิ่งอัปโหลดเสร็จ
+        }).catch(err => console.error('Background email sending failed:', err));
+      }
     }
 
     return NextResponse.json(responseData, { status: 201 });

@@ -60,7 +60,7 @@ function StepEmail({ data, validation, updateData, onEmailTouched }: StepEmailPr
                   ? 'border-green-400 bg-green-50 text-gray-600'
                   : 'border-gray-300 focus:ring-primary-blue-200 focus:border-primary-blue-400'
               }`}
-            placeholder="example@cosci.swu.ac.th"
+            placeholder="กรอกอีเมลของคุณ"
           />
           
           {/* Loading Indicator */}

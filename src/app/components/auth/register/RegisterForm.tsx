@@ -10,7 +10,6 @@ import StepEmail from "./steps/StepEmail";
 import StepProfile from "./steps/StepProfile";
 import OTP from "../otp/OTP";
 import ImageCropModal from "./steps/ImageCropModal";
-import StepIndicator from "./steps/StepIndicator";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -50,8 +49,9 @@ export interface RegisterData {
   skills: string[];
   email: string;
   isEmailVerified: boolean;
-  password?: string;        // <--- เพิ่ม
-  confirmPassword?: string; // <--- เพิ่ม
+  teacherEmails?: string[];
+  password?: string;      
+  confirmPassword?: string; 
   profileImage?: File;
   portfolioFile?: File;
   bio?: string;
@@ -139,11 +139,14 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     interestedJobs: [],
     email: "",
     isEmailVerified: false,
-    password: "",         // <--- เพิ่ม
-    confirmPassword: "",  // <--- เพิ่ม
+    teacherEmails: ['', ''],
+    password: "",        
+    confirmPassword: "",  
     bio: "",
-    // เริ่มต้นโดยไม่กำหนดค่าสำหรับฟิลด์เฉพาะนิสิต
+    
   });
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // เพิ่มค่าเริ่มต้นสำหรับฟิลด์ของนิสิตเมื่อเลือกบทบาทเป็นนิสิต
   useEffect(() => {
@@ -345,12 +348,21 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         return true;
       case 3: // Major and Skills
         if (!registerData.major) return false;
+
+        // Validation สำหรับ Alumni
+        if (registerData.role === 'alumni') {
+          // ตรวจสอบรูปโปรไฟล์ (ถ้าบังคับ)
+           if (!registerData.profileImage) return false;
+           // ตรวจสอบอีเมลอาจารย์ (ต้องมีอย่างน้อย 2 อีเมลที่ถูกต้อง)
+           const validEmails = (registerData.teacherEmails || []).filter(email => emailRegex.test(email));
+           if (validEmails.length < 2) return false;
+        }
+
         if (registerData.role === "student" && registerData.skills.length === 0) {
           return false;
         }
         return true;
       case 4: // Email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(registerData.email)) return false;
 
         // ตรวจสอบ Email Error
@@ -496,6 +508,18 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           registerData.galleryImages.forEach((file, index) => {
             formData.append(`galleryImage${index}`, file);
           });
+        }
+      }
+
+      // เพิ่มฟิลด์เฉพาะของศิษย์เก่าเท่านั้น
+      if (registerData.role === 'alumni') {
+        if (registerData.profileImage) {
+          formData.append('profileImage', registerData.profileImage);
+        }
+        if (registerData.teacherEmails) {
+          // ส่งเป็น JSON String หรือ Loop append ก็ได้ ขึ้นอยู่กับ Backend รับยังไง
+          // ในที่นี้สมมติส่งเป็น JSON
+          formData.append('teacherEmails', JSON.stringify(registerData.teacherEmails));
         }
       }
       
@@ -698,11 +722,11 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       ) : (
         // หน้าลงทะเบียนปกติ
         <div className="w-full flex flex-col">
-          <div className="flex justify-end items-center mb-4">
+          {/* <div className="flex justify-end items-center mb-4">
             <span className="text-gray-500 text-sm">
               ขั้นตอน {currentStep} จาก 5
             </span>
-          </div>
+          </div> */}
 
           {/* <StepIndicator currentStep={currentStep} totalSteps={5} /> */}
           {/* <hr className="text-gray-200" /> */}

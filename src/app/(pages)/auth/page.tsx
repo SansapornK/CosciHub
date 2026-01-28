@@ -44,7 +44,8 @@ function AuthPage() {
   }
   
   return (
-    <div className="w-screen h-screen bg-white fixed inset-0 z-[200] flex justify-center place-items-center">
+    <div className="fixed inset-0 z-[200] bg-white overflow-y-auto">
+      <div className="min-h-screen w-full flex items-center justify-center">
       <Suspense fallback={null}>
         <AuthStateHandler onStateChange={handleStateChange} />
       </Suspense>
@@ -54,6 +55,7 @@ function AuthPage() {
       ) : (
         <RegisterForm onLoginClick={toggleAuthState} />
       )}
+      </div>
     </div>
   )
 }

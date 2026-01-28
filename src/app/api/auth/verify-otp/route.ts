@@ -110,14 +110,14 @@ export async function GET(req: NextRequest) {
 
     // เตรียมเนื้อหาอีเมล
     const mailOptions = {
-      from: process.env.EMAIL_FROM || `"COSCI-CONNECT" <${process.env.EMAIL_SERVER_USER}>`,
+      from: `"COSCI HUB" <${process.env.EMAIL_SERVER_USER}>`,
       to: email,
-      subject: 'รหัส OTP สำหรับยืนยันตัวตน - COSCI-CONNECT',
+      subject: 'รหัส OTP สำหรับยืนยันตัวตน - COSCI HUB',
       text: `รหัส OTP ของคุณคือ ${otp}\n\nรหัสนี้จะหมดอายุใน 10 นาที\n\nหากคุณไม่ได้ทำการร้องขอรหัสนี้ กรุณาละเว้นอีเมลฉบับนี้`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #1167AE; color: white; padding: 20px; text-align: center;">
-            <h1 style="margin: 0;">COSCI-CONNECT</h1>
+          <div style="background: linear-gradient(135deg, #0047BA 0%, #0066FF 100%); padding: 30px 20px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">COSCI HUB</h2>
           </div>
           <div style="padding: 20px; border: 1px solid #e0e0e0; border-top: none;">
             <h2>ยืนยันตัวตนของคุณ</h2>
