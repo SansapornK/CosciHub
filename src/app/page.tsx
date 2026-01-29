@@ -4,6 +4,8 @@ import Head from "next/head";
 import Link from "next/link";
 import React, { useState, useEffect } from "react"; 
 import JobList from "./components/lists/JobList";
+import axios from "axios";
+import Loading from "./components/common/Loading"; 
 
 // --- 1. Hero Slides Data ---
 const HERO_SLIDES = [
@@ -207,93 +209,53 @@ const CATEGORIES = [
   },
 ];
 
-// --- Recommended Jobs Data ---
-const RECOMMENDED_JOBS = [
-  {
-    id: 1,
-    icon: ( // เพิ่ม prop สำหรับ icon
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-      </svg>
-    ),
-    title: 'ออกแบบ Mobile App',
-    type: 'งานไอที/เทคโนโลยีสื่อสาร',
-    postedBy: 'อาจารย์ โคซาย',
-    details: 'ออกแบบ UI/UX ของฟอร์มใหม่ ภายในแอปพลิเคชันสำหรับเด็กเล็ก เพื่อเป็นสื่อการเรียนการสอน',
-    compensation: '1200',
-    currency: 'บาท',
-    timeAgo: '1 วัน',
-    isFavorite: false,
-    isVisible: false, 
-  },
-  {
-    id: 2,
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-      </svg>
-    ),
-    title: 'พัฒนาเกม 3D',
-    type: 'งานไอที/เทคโนโลยีสื่อสาร',
-    postedBy: 'อาจารย์ โคซาย',
-    details: 'พัฒนเกม 3D โดยใช้โปรแกรม Unity อยูเกม 3D โดยใช้ให้ได้กับคนคน Unity Unity',
-    compensation: '1300',
-    currency: 'บาท',
-    timeAgo: '5 วัน',
-    isFavorite: false,
-    isVisible: false,
-  },
-  {
-    id: 3,
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-      </svg>
-    ),
-    title: 'ตัดต่อวิดีโอ',
-    type: 'งานตัดต่อ',
-    postedBy: 'อาจารย์ สาม',
-    details: 'ตัดต่อวิดีโอโฆษณาเพื่อใช้โปรโมทวิทยาลัย นวัตกรรมสื่อสารสังคม ภายใน 3 นาที',
-    compensation: '1000',
-    currency: 'บาท',
-    timeAgo: '1 สัปดาห์',
-    isFavorite: false,
-    isVisible: false,
-  },
-];
+
+interface JobCardData {
+  id: string;
+  icon: JSX.Element;
+  title: string;
+  type: string;
+  postedBy: string;
+  minCompensation: string;
+  maxCompensation: string | null;
+  details: string;
+  currency: string;
+  timeAgo: string;
+  isFavorite: boolean;
+  isVisible: boolean;
+}
 
 // --- New Component: Job Card ---
 import { Bookmark, DollarSign, User, Tag, Briefcase } from 'lucide-react'; 
 
-const JobCard = ({ data }) => {
+const JobCard = ({ data, isLoggedIn }: { data: JobCardData, isLoggedIn: boolean }) => {
+  const compensation = data.maxCompensation
+    ? `${data.minCompensation} - ${data.maxCompensation}`
+    : `${data.minCompensation}+`;
+
   const isFav = data.isFavorite; 
   const favBtnClass = isFav ? 'text-primary-blue-500 fill-current' : 'text-gray-400';
-  
+
   return (
-    <div className="bg-white shadow-lg rounded-xl p-6 flex flex-col border border-gray-200 transition-shadow duration-300 relative hover:shadow-xl"> 
-      
-      {/* Time Ago (Top Right - absolute) */}
+    <div className="bg-white shadow-lg rounded-xl p-6 flex flex-col border border-gray-200 transition-shadow duration-300 relative hover:shadow-xl">
+      {/* <div className="text-xs text-blue-400 mb-2 text-right"> */}
       <div className="absolute top-4 right-6 text-xs text-blue-400 text-center">
-        โพสต์เมื่อ {data.timeAgo}ที่แล้ว
+        โพสต์เมื่อ {data.timeAgo}
       </div>
 
-      {/* Header (Icon + Title) */}
-      <div className="flex items-center gap-3 mb-3 mt-4"> 
+      <div className="flex items-center gap-3 mb-3 mt-4">
         {data.icon}
-        <h3 className="text-l font-semibold text-gray-800">{data.title}</h3>
+        <h3 className="text-lg font-semibold text-gray-800">{data.title}</h3>
       </div>
-      
 
       <div className="flex flex-col items-start mb-4">
         <span className="text-xs font-medium text-primary-blue-700 bg-gray-100 px-3 py-1 rounded-full mb-1">
-          {data.type} 
+        {data.type}
         </span>
-        
-        <p className="text-sm text-blue-400 mt-1">
-          โดย {data.postedBy}
-        </p>
+
+        <p className="text-sm text-blue-400 mt-1">โดย {data.postedBy}</p>
       </div>
-      
+
       {/* Job Description */}
       <div className="mb-4">
         <p className="text-sm font-medium text-gray-800 mb-1 text-start">คำอธิบายงาน :</p>
@@ -301,32 +263,34 @@ const JobCard = ({ data }) => {
         {data.details}
         </p>
       </div>
-      
-      {/* Compensation */}
+
       <div className="mt-auto mb-4 flex justify-between items-center w-full">
         <p className="text-sm font-medium text-gray-800">ค่าตอบแทน</p>
-        <p className="text-xl font-bold text-gray-800">
-          {data.compensation} {data.currency}
+        <p className="text-lg font-bold text-gray-800">
+          {compensation} {data.currency}
         </p>
       </div>
-      
-      {/* Action Buttons */}
+
       <div className="flex justify-between items-center gap-3">
         <Link href={`/find-job/${data.id}`} className="flex-grow">
           <button className="bg-primary-blue-500 text-white text-base py-3 px-4 rounded-lg w-full hover:bg-primary-blue-600 transition-colors">
             ดูรายละเอียดงาน
           </button>
         </Link>
-        
-        {/* *** Conditional Rendering based on isVisible *** */}
-        {data.isVisible && (
+
+        {isLoggedIn && (
           <button 
-            className={`p-3 rounded-lg bg-gray-100 ${favBtnClass} hover:bg-gray-200 transition-colors duration-200 cursor-pointer`}
+            onClick={(e) => {
+              e.preventDefault();
+              console.log("บันทึกงานไอดี:", data.id);
+            }}
+            className={`p-3 rounded-lg bg-gray-100 ${favBtnClass} hover:bg-gray-200 transition-colors duration-200 cursor-pointer shadow-sm`}
             aria-label={isFav ? "Remove bookmark" : "Add bookmark"}
           >
-            <Bookmark className="w-5 h-5 fill-current"/>
+            <Bookmark className="w-5 h-5" />
           </button>
         )}
+
       </div>
     </div>
   );
@@ -481,13 +445,68 @@ const HeroCarousel = ({ images, setCurrentSlide }) => {
 };
 // ------------------------------------------
 
+// ฟังก์ชันคำนวณเวลา (Time Ago)
+const calculateTimeAgo = (dateString: string): string => {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days <= 0) return "วันนี้";
+  if (days === 1) return "1 วันที่แล้ว";
+  if (days < 7) return `${days} วันที่แล้ว`;
+  return "มากกว่า 1 สัปดาห์";
+};
+
+// ฟังก์ชันเลือก Icon ตามหมวดหมู่ (ดึงมาจาก JobList)
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "งานด้านวิชาการ / วิจัย / ผู้ช่วยวิจัย":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-6 w-6 text-primary-blue-500">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+        </svg>
+      );
+    case "งานพัฒนาเว็บไซต์ / แอปพลิเคชัน / ระบบต่าง ๆ":
+      return (
+        <svg className="h-6 w-6 text-primary-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16 18l6-6-6-6M8 6l-6 6 6 6" />
+        </svg>
+      );
+    // ... สามารถเพิ่มหมวดหมู่อื่นๆ ได้ตามความต้องการเหมือนในหน้า JobList ...
+    default:
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-6 w-6 text-primary-blue-500">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+        </svg>
+      );
+  }
+};
+
 // --- 4. Main Component ---
 export default function Home() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const currentSlideData = HERO_SLIDES[currentSlideIndex];
-  
+
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
+
   const primaryBtnClass = 'bg-primary-blue-500 text-white font-medium py-3 px-6 rounded-full shadow-lg transition-all hover:bg-primary-blue-600';
   const secondaryBtnClass = 'bg-transparent border border-gray-900 text-gray-900 font-medium py-3 px-6 rounded-full shadow-lg transition-all hover:bg-black/10';
+
+
+  useEffect(() => {
+    const fetchRecommendedJobs = async () => {
+      try {
+        const res = await axios.get("/api/jobs", {
+          params: { limit: 3, sort: "latest" } // ดึงแค่ 3 งานล่าสุด
+        });
+        setRecommendedJobs(res.data.jobs);
+      } catch (error) {
+        console.error("Failed to fetch jobs:", error);
+      } finally {
+        setLoadingJobs(false);
+      }
+    };
+    fetchRecommendedJobs();
+  }, []);
 
   return (
     <>
@@ -554,14 +573,34 @@ export default function Home() {
         <h2 className="text-xl font-bold text-primary-gray-500 text-start">
           งานแนะนำสำหรับนิสิต
         </h2>
-        {/* <p className="text-s text-gray-400 text-start">
-          งานที่ถูกคัดสรรมาแล้วตามความสนใจและวิชาเอกของคุณ
-        </p> */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4 px-4 sm:px-0">
-          {/* {RECOMMENDED_JOBS.map((job) => (
-            <JobCard key={job.id} data={job} />
-          ))} */}
-          
+          {loadingJobs ? (
+            <div className="col-span-full py-10"><Loading /></div>
+          ) : recommendedJobs.length > 0 ? (
+              recommendedJobs.map((job: any) => (
+              <JobCard 
+                key={job._id} 
+                isLoggedIn={false} 
+                data={{
+                  id: job._id,
+                  icon: getCategoryIcon(job.category),
+                  title: job.title,
+                  type: job.category,
+                  postedBy: job.owner,
+                  details: job.shortDescription,
+                  minCompensation: job.budgetMin.toLocaleString(), 
+                  maxCompensation: job.budgetMax ? job.budgetMax.toLocaleString() : null,
+                  currency: "บาท",
+                  timeAgo: calculateTimeAgo(job.postedDate),
+                  isFavorite: false,
+                  isVisible: true,
+                }} 
+              />
+            ))
+          ) : (
+            <p className="col-span-full text-gray-500">ยังไม่มีงานแนะนำในขณะนี้</p>
+          )}
         </div>
           
         {/* ปุ่มดูงานทั้งหมด */}
