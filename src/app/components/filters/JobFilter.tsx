@@ -216,7 +216,23 @@ const JobFilter: React.FC<JobFilterProps> = ({
         <div className="relative z-40 transition-all duration-300">
             <div className="p-2 flex justify-between items-center gap-3">
                 <h2 className="text-xl font-semibold text-gray-800 p-2 whitespace-nowrap">
-                    งานทั้งหมด
+                    <AnimatePresence mode="wait">
+                        <motion.span
+                        key={selectedMajor}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        transition={{ duration: 0.2 }}
+                        >
+                        {selectedMajor ? (
+                            <>
+                            งานใน <span className="text-primary-blue-500">{selectedMajor}</span>
+                            </>
+                        ) : (
+                            "งานทั้งหมด"
+                        )}
+                        </motion.span>
+                    </AnimatePresence>
                 </h2>
                 
                 <div className="flex gap-3 relative">
