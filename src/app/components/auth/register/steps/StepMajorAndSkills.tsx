@@ -15,6 +15,7 @@ function StepMajorAndSkills({
   skillOptions,
   jobOptions,
 }: StepMajorAndSkillsProps) {
+
   // Array of majors for dropdown
   const majors = [
     { value: "คอมพิวเตอร์เพื่อการสื่อสาร",label: "คอมพิวเตอร์เพื่อการสื่อสาร",},
@@ -23,6 +24,10 @@ function StepMajorAndSkills({
     { value: "การสื่อสารเพื่อการท่องเที่ยว",label: "การสื่อสารเพื่อการท่องเที่ยว",},
     { value: "การสื่อสารเพื่อสุขภาพ", label: "การสื่อสารเพื่อสุขภาพ" },
   ];
+
+  // --- State สำหรับแยกประเภทบุคลากร (เฉพาะ Role Teacher) ---
+  const [teacherType, setTeacherType] = useState<'academic' | 'staff'>('academic');
+
   // Icon สำหรับฟิลด์เอก
   const IconMajor = () => (
     <svg className="text-gray-400" width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -36,6 +41,22 @@ function StepMajorAndSkills({
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
     </svg>
   );
+
+  // จัดการค่า Major เมื่อเปลี่ยนประเภทบุคลากร ---
+  useEffect(() => {
+    if (data.role === 'teacher') {
+      if (teacherType === 'staff') {
+        // Auto-fill Major เป็น "สำนักงาน/เจ้าหน้าที่"
+        updateData({ major: "สำนักงาน/เจ้าหน้าที่" });
+      } else {
+        // ถ้ากลับมาเป็นอาจารย์ ให้เคลียร์ค่าเพื่อให้เลือกใหม่
+        if (data.major === "สำนักงาน/เจ้าหน้าที่") {
+          updateData({ major: "" });
+        }
+      }
+    }
+  }, [teacherType, data.role]);
+
 
   const handleMajorChange = (value: string) => {
     updateData({ major: value });
@@ -100,22 +121,72 @@ function StepMajorAndSkills({
     }
   };
 
+  const getTitle = () => {
+    if (data.role === 'alumni') return 'ข้อมูลการศึกษาและยืนยันตัวตน';
+    if (data.role === 'teacher') return 'ข้อมูลบุคลากร';
+    return 'วิชาเอกและทักษะ';
+  };
+  const getDescription = () => {
+    if (data.role === 'student') return 'ระบุวิชาเอก ทักษะ และงานที่คุณสนใจ';
+    if (data.role === 'alumni') return 'ระบุวิชาเอก อัปโหลดรูปภาพ และอีเมลอาจารย์์ที่ติดต่อได้';
+    if (data.role === 'teacher') return 'ระบุประเภทบุคลากรและวิชาเอก';
+    return '';
+  };
+
   return (
     <div className="flex flex-col gap-4 w-full items-center">
       <div className="w-full">
         <h2 className="text-lg font-medium text-gray-800"> 
-          {data.role === 'student' ? 'วิชาเอกและทักษะ' : 'ข้อมูลการศึกษา'}
+          {getTitle()}
         </h2>
         <p className="text-gray-500 text-sm">
-          {data.role === "student"
-            ? "ระบุวิชาเอก ทักษะ และงานที่คุณสนใจ"
-            : "ระบุวิชาเอกของคุณ อัปโหลดรูปภาพ และอีเมลอาจารย์ที่ติดต่อได้"}
+          {getDescription()}
         </p>
       </div>
 
+      {/*Teacher Type Selection*/}
+      {data.role === 'teacher' && (
+        <div className="w-full mb-2">
+          <label className="block text-gray-700 text-sm mb-3 font-medium">ประเภทบุคลากร</label>
+          
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Radio 1: Academic */}
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="teacherType"
+                value="academic"
+                checked={teacherType === 'academic'}
+                onChange={() => setTeacherType('academic')}
+                className="w-4 h-4 text-primary-blue-600 border-gray-300 focus:ring-primary-blue-500 cursor-pointer"
+              />
+              <span className={`text-sm ${teacherType === 'academic' ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
+                อาจารย์
+              </span>
+            </label>
+
+            {/* Radio 2: Staff */}
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="teacherType"
+                value="staff"
+                checked={teacherType === 'staff'}
+                onChange={() => setTeacherType('staff')}
+                className="w-4 h-4 text-primary-blue-600 border-gray-300 focus:ring-primary-blue-500 cursor-pointer"
+              />
+              <span className={`text-sm ${teacherType === 'staff' ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
+                สำนักงาน/เจ้าหน้าที่
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {(data.role !== 'teacher' || teacherType === 'academic') && (
       <div className="w-full relative z-20">
         <label htmlFor="major" className="block text-gray-700 text-sm mb-1">
-          วิชาเอก
+          วิชาเอก<span className="text-red-500">*</span>
         </label>
 
         <div className="relative">
@@ -130,10 +201,21 @@ function StepMajorAndSkills({
             onChange={handleMajorChange}
             placeholder="เลือกวิชาเอก"
             required
-            
           />
         </div>
       </div>
+      )}
+
+      {data.role === 'teacher' && teacherType === 'staff' && (
+        <div className="w-full p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
+          <p className="text-gray-600 text-sm">
+            คุณเลือก <strong>สำนักงาน/เจ้าหน้าที่</strong>
+          </p>
+          <p className="text-gray-400 text-xs mt-1">
+            ระบบจะบันทึกสังกัดของคุณเป็น สำนักงาน/เจ้าหน้าที่ โดยอัตโนมัติ
+          </p>
+        </div>
+      )}
 
       {data.role === "student" && (
         <div className="mt-2 w-full">

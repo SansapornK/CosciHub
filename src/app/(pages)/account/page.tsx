@@ -158,7 +158,7 @@ function AccountPage() {
                   <div className="mb-2">
                     <span className="text-sm text-gray-500">บทบาท</span>
                     <p className="font-medium">{userData.role === 'student' ? 'นิสิต' : 
-                                              userData.role === 'alumni' ? 'ศิษย์เก่า' : 'อาจารย์'}</p>
+                                              userData.role === 'alumni' ? 'ศิษย์เก่า' : 'อาจารย์/บุคลากร'}</p>
                   </div>
                   
                   <div className="mb-2">

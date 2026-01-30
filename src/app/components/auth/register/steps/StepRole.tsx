@@ -125,7 +125,7 @@ interface Step1_UserInfoProps {
 const roleOptions = [
   { value: 'student', label: 'นิสิต' },
   { value: 'alumni', label: 'ศิษย์เก่า' },
-  { value: 'teacher', label: 'อาจารย์' },
+  { value: 'teacher', label: 'อาจารย์/เจ้าหน้าที่' },
 ];
 // Icon สำหรับฟิลด์บทบาท
 const RoleIcon = () => (
