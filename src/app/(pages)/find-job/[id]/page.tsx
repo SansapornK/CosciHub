@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { 
   User, MapPin, Clock, Wallet, Users, 
@@ -10,6 +10,8 @@ import {
 import Link from 'next/link';
 import Loading from "../../../components/common/Loading";
 import { useSession } from "next-auth/react";
+import { calculateTimeAgo } from "@/app/components/utils/jobHelpers";
+
 
 interface JobDetail {
   _id: string;
@@ -27,20 +29,55 @@ interface JobDetail {
   capacity?: number;      
 }
 
-const JobDetailPage = () => {
-  const params = useParams();
-  const [job, setJob] = useState<JobDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const { status } = useSession();
+const DetailRow = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex gap-4 text-sm md:text-base mb-2">
+    <span className="font-bold text-gray-800 w-24 shrink-0">{label}</span>
+    <span className="text-gray-600">{value}</span>
+  </div>
+);
 
-  const isLoggedIn = status === "authenticated";
+const JobDetailPage = () => {
+    const params = useParams();
+    const [job, setJob] = useState<JobDetail | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const { status } = useSession();
+    const router = useRouter();
+
+    const isLoggedIn = status === "authenticated";
+  
+    const [isModalOpen, setIsModalOpen] = useState(false);
+  
+    const handleApplyClick = () => {
+    if (!isLoggedIn) {
+        // ✅ ระบุ URL ตามที่คุณแจ้งมา พร้อมส่ง callbackUrl เพื่อให้ login เสร็จแล้วกลับมาหน้าเดิม
+        const loginUrl = `/auth?state=login&callbackUrl=/find-job/${params.id}`;
+        router.push(loginUrl); 
+        
+        // ✅ สำคัญมาก: ต้องใส่ return เพื่อไม่ให้ setIsModalOpen(true) ทำงานต่อ
+        return; 
+        }
+
+        // จะทำงานเมื่อ isLoggedIn เป็น true เท่านั้น
+        setIsModalOpen(true);
+    };
+
+    const confirmApplication = async () => {
+        try {
+        console.log("กำลังส่งใบสมัครสำหรับงานไอดี:", job?._id);
+        // ตรงนี้คือจุดที่ต้องเชื่อมต่อ API ในอนาคต
+        
+        setIsModalOpen(false); // ปิด Popup
+        alert("ส่งใบสมัครเรียบร้อยแล้ว!"); // แจ้งเตือนผู้ใช้
+        } catch (err) {
+        console.error("สมัครงานไม่สำเร็จ", err);
+        }
+    };
 
   useEffect(() => {
     const fetchJobDetail = async () => {
       try {
         setLoading(true);
-        // เรียก API โดยส่ง ID ของงานไป
         const res = await axios.get(`/api/jobs/${params.id}`);
         setJob(res.data);
       } catch (err) {
@@ -94,7 +131,7 @@ const JobDetailPage = () => {
                 </div>
                 
                 <p className="text-blue-400 text-sm mb-10">
-                  โพสต์เมื่อ {new Date(job.postedDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    โพสต์เมื่อ {calculateTimeAgo(job.postedDate)}
                 </p>
 
                 {/* รายละเอียดงาน */}
@@ -130,9 +167,12 @@ const JobDetailPage = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <button className="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl text-lg transition-all active:scale-95 shadow-lg shadow-blue-100">
-                    สมัครงานนี้
-                  </button>
+                    <button 
+                        onClick={handleApplyClick}
+                        className="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl text-lg transition-all active:scale-95 shadow-lg shadow-blue-100"
+                        >
+                        สมัครงานนี้
+                    </button>
 
                   {isLoggedIn && (
                     <button 
@@ -143,6 +183,55 @@ const JobDetailPage = () => {
                     </button>
                   )}
                 </div>
+                <>
+                {/* Job Application Confirmation Modal */}
+                {isModalOpen && job && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-5xl overflow-hidden animate-in zoom-in duration-300">
+                    <div className="p-8 md:p-12 text-center">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">ยืนยันการสมัครงาน</h2>
+                        <p className="text-gray-500 mb-8 leading-relaxed">
+                        กรุณาตรวจสอบรายละเอียดงานให้ถูกต้องก่อนยืนยันการสมัคร<br />
+                        เมื่อยืนยันการสมัครแล้ว ระบบจะส่งข้อมูลของคุณไปยังผู้ว่าจ้างเพื่อพิจารณา
+                        </p>
+
+                        <div className="text-left bg-gray-50/80 rounded-[2rem] p-6 md:p-8 mb-8 border border-gray-100">
+                        <p className="text-lg mb-6">คุณกำลังสมัครงาน <span className="font-bold text-primary-blue-500">{job.title}</span></p>
+                        
+                        <div className="space-y-1">
+                            <DetailRow label="ชื่องาน" value={job.title} />
+                            <DetailRow label="ผู้ว่าจ้าง" value={job.owner} />
+                            <DetailRow label="รูปแบบงาน" value={`${job.jobType || "ออนไลน์"} / ${job.location || "ทำงานออนไลน์"}`} />
+                            <DetailRow label="ระยะเวลา" value={job.duration || "ตามตกลง"} />
+                            <DetailRow label="ค่าตอบแทน" value={`${job.budgetMin.toLocaleString()} บาท`} />
+                            <DetailRow label="จำนวนรับ" value={`${job.capacity || 1} คน`} />
+                            
+                            <div className="flex gap-4 mt-4">
+                            <span className="font-bold text-gray-800 w-24 shrink-0">คำอธิบายงาน</span>
+                            <span className="text-gray-600 line-clamp-2">{job.description}</span>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button 
+                            onClick={() => setIsModalOpen(false)}
+                            className="px-12 py-4 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-2xl transition-all active:scale-95 min-w-[160px]"
+                        >
+                            ยกเลิก
+                        </button>
+                        <button 
+                            onClick={confirmApplication}
+                            className="px-12 py-4 bg-[#5CB88A] hover:bg-[#4ea579] text-white font-bold rounded-2xl transition-all active:scale-95 shadow-lg shadow-green-100 min-w-[160px]"
+                        >
+                            ยืนยันการสมัคร
+                        </button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                )}
+                </>
 
               </div>
 

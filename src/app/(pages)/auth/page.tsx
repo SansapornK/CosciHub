@@ -24,7 +24,11 @@ import { useSearchParams } from 'next/navigation'
 
 function AuthPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [authState, setAuthState] = useState<'login' | 'register'>('login')
+
+  // ดึงค่า callbackUrl 
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
   
   useEffect(() => {
     // Default to login if no state is present initially
@@ -51,7 +55,10 @@ function AuthPage() {
       </Suspense>
       
       {authState === 'login' ? (
-        <LoginForm onRegisterClick={toggleAuthState} />
+        <LoginForm 
+          onRegisterClick={toggleAuthState} 
+          callbackUrl={callbackUrl}
+        />
       ) : (
         <RegisterForm onLoginClick={toggleAuthState} />
       )}

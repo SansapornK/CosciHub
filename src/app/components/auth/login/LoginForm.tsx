@@ -11,9 +11,10 @@ import { ChevronLeft } from "lucide-react";
 
 interface LoginFormProps {
   onRegisterClick: () => void;
+  callbackUrl?: string;
 }
 
-function LoginForm({ onRegisterClick }: LoginFormProps) {
+function LoginForm({ onRegisterClick, callbackUrl }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState(""); // เพิ่ม state สำหรับรหัสผ่าน
   const [isLoading, setIsLoading] = useState(false);
@@ -36,12 +37,12 @@ function LoginForm({ onRegisterClick }: LoginFormProps) {
         email: email,
         password: password,
         redirect: false, // ไม่ redirect อัตโนมัติ
-        callbackUrl: "/", // หน้าที่ต้องการไปหลังจากล็อกอินสำเร็จ
+        callbackUrl: callbackUrl || "/", // หน้าที่ต้องการไปหลังจากล็อกอินสำเร็จ
       });
 
       if (!result?.error) {
         // ล็อกอินสำเร็จ
-        window.location.href = "/"; // Redirect ไปหน้าหลัก
+       window.location.href = result.url || callbackUrl || "/";
       } else {
         // ล็อกอินไม่สำเร็จ
         setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง"); // ข้อความผิดพลาดทั่วไปเพื่อความปลอดภัย
