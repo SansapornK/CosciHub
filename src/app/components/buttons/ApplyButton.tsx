@@ -28,7 +28,7 @@ function ApplyButton({ projectId, projectTitle, alreadyApplied = false }: ApplyB
   }
 
   const handleApply = async () => {
-    // เปิด modal ยืนยันการสมัคร
+    // เปิด modal
     setIsModalOpen(true);
   };
 
