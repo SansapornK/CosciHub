@@ -14,7 +14,7 @@ const HERO_SLIDES = [
     title: "COSCI Hub แพลตฟอร์มหางานพิเศษ",
     subtitle: "สำหรับนิสิต อาจารย์ และศิษย์เก่าชาวนวัต",
     description: "แพลตฟอร์มหางานพิเศษ สำหรับนิสิตวิทยาลัยนวัตกรรมสื่อสารสังคม เพื่อเป็นช่องทางในการหารายได้เสริมระหว่างศึกษา รวมถึงแสดงผลงานและทักษะความสามารถเพื่อใช้ในการหางานในอนาคต",
-    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/project-board" },
+    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null, 
   },
   {
@@ -22,7 +22,7 @@ const HERO_SLIDES = [
     title: "ค้นหางานพิเศษที่ตรงใจ",
     subtitle: "เติมเต็มทักษะ สร้างรายได้เสริม",
     description: "สำรวจโอกาสงานพิเศษหลากหลายหมวดหมู่ ที่รอให้คุณมาโชว์ศักยภาพและเก็บประสบการณ์ก่อนก้าวสู่โลกการทำงานจริง",
-    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/project-board" },
+    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null, 
   },
   {
@@ -30,7 +30,7 @@ const HERO_SLIDES = [
     title: "โครงการพิเศษจากคณาจารย์",
     subtitle: "แหล่งรวมโปรเจกต์งานวิจัยและพัฒนา",
     description: "โอกาสในการร่วมงานกับคณาจารย์ในโครงการที่น่าสนใจ เพื่อเพิ่มพูนความรู้เฉพาะทาง และสร้างพอร์ตโฟลิโอที่แข็งแกร่ง",
-    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/project-board" },
+    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null, 
   },
 ];
