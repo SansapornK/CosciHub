@@ -59,6 +59,7 @@ export interface RegisterData {
   isOpen?: boolean;
   galleryImages?: File[];
   interestedJobs?: string[];
+  acceptedTerms: boolean;
 }
 
 interface ValidationState {
@@ -143,7 +144,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     password: "",        
     confirmPassword: "",  
     bio: "",
-    
+    acceptedTerms: false,
   });
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -368,10 +369,12 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         // ตรวจสอบ Email Error
         if (validation.email.error || validation.email.exists) return false;
         
-        // *** เพิ่ม: ตรวจสอบ Password ***
+        // เพิ่ม: ตรวจสอบ Password
         if (!registerData.password || registerData.password.length < 8) return false;
         if (registerData.password !== registerData.confirmPassword) return false;
         if (validation.password.error || validation.confirmPassword.error) return false;
+        
+        if (!registerData.acceptedTerms) return false;
         
         return true;
       case 5: // Profile (optional fields, always valid)
