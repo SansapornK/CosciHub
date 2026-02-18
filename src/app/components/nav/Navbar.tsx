@@ -266,7 +266,34 @@ function Navbar() {
                         <User className="w-4 h-4 mr-2" />
                         โปรไฟล์
                       </Link>
-                      
+
+                       <Link
+                        href="/project-board"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full transition-colors rounded-lg"
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        ลงประกาศงาน
+                      </Link>
+
+                       <Link
+                        href="/manage-projects"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full transition-colors rounded-lg"
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        โปรเจคบอร์ด
+                      </Link>
+
+                       <Link
+                        href="/account"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full transition-colors rounded-lg"
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        ตั้งค่า
+                      </Link>
+
                       <button
                         onClick={handleLogout}
                         className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left transition-colors rounded-lg mt-1 border-t border-gray-100 pt-2"
