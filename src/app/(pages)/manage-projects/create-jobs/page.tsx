@@ -10,19 +10,27 @@ import Link from "next/link";
 
 // --- Icon Imports ---
 // กำหนดไอคอนตามรูปภาพ (SquarePlus และ Pencil)
-import { SquarePlus, Pencil, ChevronLeft, ArrowRight, DollarSign, CalendarDays,LayoutDashboard } from 'lucide-react'; 
+import { SquarePlus, Pencil, ChevronLeft, ArrowRight, DollarSign, CalendarDays,LayoutDashboard,Users } from 'lucide-react'; 
 
 // --- Data Structure (ดึงจากโค้ดเดิมของคุณ) ---
-const skillCategories = {
-  "IT": ["Web Development", "UX/UI Design", "Data Analysis", "Mobile App Development", "Game Development", "AI/Machine Learning"],
-  "Graphic": ["Figma", "Adobe Photoshop", "Adobe Illustrator", "Adobe After Effects", "3D Modeling"],
-  "Business": ["Marketing", "Content Writing", "Business Analysis", "Project Management", "Financial Analysis"],
-  "Video": ["Video Editing", "Animation", "Motion Graphics", "Videography"],
-  "Audio": ["Sound Design", "Music Production", "Voice Over"]
+export const skillCategories = {
+  "IT": ["พัฒนาเว็บไซต์", "พัฒนาแอปพลิเคชัน", "วิเคราะห์ข้อมูล", "ออกแบบ UX/UI"],
+  "Public": ["เชียร์ขายสินค้า", "การประสานงาน","การแสดง", "การพูดในที่สาธารณะ"],
+  "Business": ["การตลาด", "การเขียนคอนเทนต์", "PR"],
+  "Photo/Video": ["ถ่ายภาพ/วิดีโอ", "อนิเมชัน", "โมชันกราฟฟิก", "ตัดต่อ","กราฟฟิกดีไซน์"],
+  "อื่นๆ": ["วิชาการ", "วิจัย", "แปลบทความ"]
 };
 
 // ข้อมูลจำลองสำหรับตัวเลือกอื่นๆ
-const jobTypes = ["Full-time", "Part-time", "Contract", "Freelance", "Internship"];
+const jobTypes = [  "งานด้านวิชาการ/วิจัย/ผู้ช่วย",
+  "งานกิจกรรม/อีเวนต์",
+  "งานพัฒนาออกแบบเว็บไซต์/แอปพลิเคชั่น/ระบบต่างๆ",
+  "งานสื่อมัลติมีเดีย",
+  "งานประชาสัมพันธ์/สื่อสาร",
+  "งานบริการ/ธุรการ",
+  "งานสอนพิเศษ",
+  "งานกองถ่าย/Extra"];
+const jobForms = [  "ออนไซต์","ออนไลน์","ทั้งออนไซต์และออนไลน์"];
 const toolsOptions = ["Adobe Suite", "Figma", "VS Code", "Microsoft Office", "Google Workspace", "Blender"];
 
 export default function CreateProjectPage() {
@@ -35,10 +43,14 @@ export default function CreateProjectPage() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    qualification: '',
     jobType: jobTypes[0], // เพิ่มประเภทงาน
+    jobForm: jobForms[0],
     requiredSkills: [] as string[],
     requiredTools: [] as string[], // เพิ่มเครื่องมือ
-    budget: 100,
+    minBudget: 100, // งบประมาณเริ่มต้น
+    maxBudget: 1000, // งบประมาณสูงสุด
+    quota: 1,
     deadline: '', // วันส่งงาน
     recruitmentDeadline: '', // เพิ่มวันสิ้นสุดรับสมัคร
   });
@@ -132,9 +144,8 @@ export default function CreateProjectPage() {
               <h2 className="text-xl font-bold text-gray-900">ข้อมูลรายละเอียดงาน</h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
               {/* ชื่อโปรเจกต์ */}
-              <InputField label="ชื่อโปรเจกต์" id="title">
+              <InputField label="ชื่องาน" id="title">
                 <input 
                   id="title"
                   type="text" 
@@ -146,6 +157,7 @@ export default function CreateProjectPage() {
                 />
               </InputField>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
               {/* ประเภทงาน (Job Type) */}
               <InputField label="ประเภทงาน" id="jobType">
                 <select 
@@ -159,18 +171,44 @@ export default function CreateProjectPage() {
                   ))}
                 </select>
               </InputField>
+
+              {/* รูปแบบงาน (Job form) */}
+              <InputField label="รูปแบบงาน" id="jobForm">
+                <select 
+                  id="jobForm"
+                  className="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-300 transition-all text-gray-800 appearance-none"
+                  value={formData.jobForm}
+                  onChange={(e) => setFormData({...formData, jobForm: e.target.value})}
+                >
+                  {jobForms.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </InputField>
               
-              {/* รายละเอียด (Description) - Full Width */}
+              {/* รายละเอียด,คุณสมบัติ (Description, Qualification) - Full Width */}
               <div className="md:col-span-2">
                 <InputField label="รายละเอียดงาน" id="description">
                   <textarea 
                     id="description"
-                    rows={7}
+                    rows={5}
                     required
                     className="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-300 transition-all text-gray-800 resize-none"
                     placeholder="อธิบายขอบเขตงาน ความต้องการ และผลลัพธ์ที่คาดหวัง..."
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  />
+                </InputField>
+
+                 <InputField label="คุณสมบัติผู้สมัคร" id="qualification">
+                  <textarea 
+                    id="qualification"
+                    rows={5}
+                    required
+                    className="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-300 transition-all text-gray-800 resize-none"
+                    placeholder="อธิบายคุณสมบัติพื้นฐานของผู้สมัครงานนี้"
+                    value={formData.qualification}
+                    onChange={(e) => setFormData({...formData, qualification: e.target.value})}
                   />
                 </InputField>
               </div>
@@ -247,20 +285,52 @@ export default function CreateProjectPage() {
               <DollarSign className="w-6 h-6 text-primary-blue-500" />
               <h2 className="text-xl font-bold text-gray-900">ค่าตอบแทนและระยะเวลา</h2>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* งบประมาณ (Budget) */}
-              <InputField label="งบประมาณ (บาท)" id="budget">
+            {/* งบประมาณ (Budget) */}
+            <InputField label="งบประมาณ (บาท)" id="minbudget">
                 <div className="relative">
                   <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input 
-                    id="budget"
+                    id="minbudget"
                     type="number" 
                     min="100"
                     required
                     className="w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-300 transition-all text-gray-800 font-semibold"
-                    value={formData.budget}
-                    onChange={(e) => setFormData({...formData, budget: parseInt(e.target.value)})}
+                    value={formData.minBudget}
+                    onChange={(e) => setFormData({...formData, minBudget: parseInt(e.target.value)})}
+                  />
+                </div>
+            </InputField>
+            <span className="text-gray-400">-</span>
+            <InputField label="งบประมาณ (บาท)" id="maxbudget">
+                <div className="relative">
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input 
+                    id="maxbudget"
+                    type="number" 
+                    min="1000"
+                    required
+                    className="w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-300 transition-all text-gray-800 font-semibold"
+                    value={formData.maxBudget}
+                    onChange={(e) => setFormData({...formData, maxBudget: parseInt(e.target.value)})}
+                  />
+                </div>
+            </InputField>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <InputField label="จำนวนรับ" id="quota">
+                <div className="relative">
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input 
+                    id="quota"
+                    type="number" 
+                    min="1"
+                    required
+                    className="w-full pl-12 pr-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-300 transition-all text-gray-800 font-semibold"
+                    value={formData.quota}
+                    onChange={(e) => setFormData({...formData, quota: parseInt(e.target.value)})}
                   />
                 </div>
               </InputField>
@@ -279,8 +349,9 @@ export default function CreateProjectPage() {
                   />
                 </div>
               </InputField>
+            </div>
 
-              {/* วันส่งงาน (Project Deadline) */}
+             {/* วันส่งงาน (Project Deadline) */}
               <InputField label="วันส่งงาน (กำหนดส่ง)" id="deadline">
                 <div className="relative">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -294,7 +365,6 @@ export default function CreateProjectPage() {
                   />
                 </div>
               </InputField>
-            </div>
           </div>
 
           {/* --- Footer / Submit Button --- */}
