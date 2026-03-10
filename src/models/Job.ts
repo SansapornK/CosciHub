@@ -8,7 +8,7 @@ const JobSchema = new mongoose.Schema({
   shortDescription: { type: String, required: true }, // คำอธิบายงาน (สรุปสั้น) *
   description: { type: String, required: true },      // รายละเอียดงาน (แบบละเอียด) *
   qualifications: { type: String, required: true },   // คุณสมบัติผู้สมัคร *
-  attachments: { type: String },                    // ไฟล์แนบ (เก็บเป็น URL ของไฟล์)
+  // attachments: { type: String },                    // ไฟล์แนบ (เก็บเป็น URL ของไฟล์)
 
   // --- ส่วนขวาของฟอร์ม ---
   jobType: { 
@@ -17,7 +17,7 @@ const JobSchema = new mongoose.Schema({
     enum: ["ออนไซต์", "ออนไลน์", "ทั้งออนไซต์และออนไลน์"] // รูปแบบงาน *
   },
   location: { type: String },                        // สถานที่ (ไม่บังคับถ้าเป็นออนไลน์ 100%)
-  duration: { type: String, required: true },        // ระยะเวลาการทำงาน *
+  // duration: { type: String, required: true },        // ระยะเวลาการทำงาน *
   deliveryDate: { type: Date },                      // วันครบกำหนดส่งงาน
   budgetMin: { type: Number, required: true },       // ค่าตอบแทน (เริ่มต้น) *
   budgetMax: { type: Number, required: true },       // ค่าตอบแทน (สูงสุด) *
