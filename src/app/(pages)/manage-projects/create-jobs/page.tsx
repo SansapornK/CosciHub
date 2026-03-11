@@ -403,7 +403,7 @@ import {
   LayoutDashboard,
   Users,
   MapPin,
-  Clock,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 /* ===================== Static Data ===================== */
@@ -462,6 +462,7 @@ export default function CreateJobPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDrafting, setIsDrafting] = useState(false);
   const [activeCategory, setActiveCategory] = useState(
     Object.keys(skillCategories)[0]
   );
@@ -495,28 +496,31 @@ export default function CreateJobPage() {
   }
 
   /* ---------- Submit ---------- */
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, submitStatus: "published" | "draft") => {
     e.preventDefault();
 
     // Validation
-    if (!formData.applicationDeadline) {
-      toast.error("กรุณาระบุวันสิ้นสุดการรับสมัคร");
-      return;
-    }
-    if (formData.budgetMin > formData.budgetMax) {
-      toast.error("ค่าตอบแทนเริ่มต้นต้องไม่มากกว่าค่าตอบแทนสูงสุด");
-      return;
+    if (submitStatus === "published") {
+        if (!formData.applicationDeadline) {
+        toast.error("กรุณาระบุวันสิ้นสุดการรับสมัคร");
+        return;
+        }
+        if (formData.budgetMin > formData.budgetMax) {
+        toast.error("ค่าตอบแทนเริ่มต้นต้องไม่มากกว่าค่าตอบแทนสูงสุด");
+        return;
+        }
     }
 
-    setIsSubmitting(true);
+     // ตั้ง loading state ให้ถูกปุ่ม
+    submitStatus === "draft" ? setIsDrafting(true) : setIsSubmitting(true);
     try {
       // Payload ตรงกับ Job Model ทุก field
       const payload = {
-        title: formData.title,
+        title: formData.title || "ร่างงาน",
         category: formData.category,
-        shortDescription: formData.shortDescription,
-        description: formData.description,
-        qualifications: formData.qualifications,
+        shortDescription: formData.shortDescription || "-",
+        description: formData.description || "-",
+        qualifications: formData.qualifications || "-",
         jobType: formData.jobType,
         location: formData.location || null,
         // duration:            formData.duration,
@@ -524,19 +528,26 @@ export default function CreateJobPage() {
         budgetMin: formData.budgetMin,
         budgetMax: formData.budgetMax,
         capacity: formData.capacity,
-        applicationDeadline: formData.applicationDeadline,
+        applicationDeadline: formData.applicationDeadline|| new Date().toISOString(),
+        status:   submitStatus,  
       };
 
-      // ✅ ส่งไปยัง /api/jobs (ถูกต้อง)
+      // ส่งไปยัง /api/jobs
       await axios.post("/api/jobs", payload);
+
+      if (submitStatus === "draft") {
+      toast.success("บันทึกร่างเรียบร้อยแล้ว");
+        } else {
       toast.success("ลงประกาศงานสำเร็จ! 🎉");
-      router.push("/manage-projects");
+        }
+      router.push("/manage-projects/my-jobs");
     } catch (error: any) {
       toast.error(
         error.response?.data?.error || "เกิดข้อผิดพลาดในการลงประกาศงาน"
       );
     } finally {
-      setIsSubmitting(false);
+        setIsDrafting(false);
+        setIsSubmitting(false);
     }
   };
 
@@ -573,14 +584,15 @@ export default function CreateJobPage() {
             </div>
           </div>
           <Link
-            href="/manage-projects"
-            className="px-6 py-2.5 rounded-full text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100"
-          >
-            ยกเลิก
-          </Link>
+  href="/manage-projects/my-jobs"
+  className="px-6 py-2.5 rounded-full text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100 flex items-center gap-2"
+>
+  <BriefcaseBusiness className="w-4 h-4" />
+  งานของฉัน
+</Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
           {/* ───── Section 1: รายละเอียดงาน ───── */}
           <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-8">
             <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
@@ -957,44 +969,59 @@ export default function CreateJobPage() {
             )}
           </div>
 
-          {/* ───── Submit Button ───── */}
-          <div className="flex justify-end pb-8">
+          {/* ───── Submit/Draft Button ───── */}
+            <div className="flex justify-end gap-3 pb-8">
+
+            {/* ปุ่มบันทึกร่าง */}
             <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-100 active:scale-95 flex items-center gap-3 text-base"
+                type="button"
+                disabled={isDrafting || isSubmitting || !formData.title}
+                onClick={(e) => handleSubmit(e as any, "draft")}
+                className="px-8 py-4 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold rounded-2xl transition-all border-2 border-gray-200 hover:border-gray-300 flex items-center gap-3 text-base"
             >
-              {isSubmitting ? (
+                {isDrafting ? (
                 <>
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8H4z"
-                    />
-                  </svg>
-                  กำลังลงประกาศ...
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    กำลังบันทึก...
                 </>
-              ) : (
+                ) : (
                 <>
-                  <SquarePlus className="w-5 h-5" />
-                  ลงประกาศงาน
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 3v4H8V3M12 12v6m-3-3h6" />
+                    </svg>
+                    บันทึกร่าง
                 </>
-              )}
+                )}
             </button>
-          </div>
+
+            {/* ปุ่มลงประกาศงาน */}
+            <button
+                type="button"
+                disabled={isSubmitting || isDrafting}
+                onClick={(e) => handleSubmit(e as any, "published")}
+                className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-100 active:scale-95 flex items-center gap-3 text-base"
+            >
+                {isSubmitting ? (
+                <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    กำลังลงประกาศ...
+                </>
+                ) : (
+                <>
+                    <SquarePlus className="w-5 h-5" />
+                    ลงประกาศงาน
+                </>
+                )}
+            </button>
+
+            </div>
         </form>
       </div>
     </div>

@@ -75,6 +75,8 @@ interface IJobFilter {
   title?: { $regex: string; $options: string };
   category?: { $in: string[] };
   budgetMin?: { $gte?: number; $lte?: number };
+  owner?:    string;                                 
+  status?:   "draft" | "published" | "closed";   
 }
 
 /* ===================== GET — ดึงรายการงาน ===================== */
@@ -92,11 +94,18 @@ export async function GET(req: Request) {
   const minPrice  = searchParams.get("minPrice");
   const maxPrice  = searchParams.get("maxPrice");
   const sort      = searchParams.get("sort");
+  const owner     = searchParams.get("owner");
+  const includeDraft = searchParams.get("includeDraft") === "true";
 
   const filter: IJobFilter = {};
 
   if (q)        filter.title    = { $regex: q, $options: "i" };
   if (jobTypes) filter.category = { $in: jobTypes.split(",") };
+  if (owner) filter.owner = owner;
+  // ถ้าไม่ได้ขอ draft ให้แสดงเฉพาะ published เท่านั้น
+  if (!includeDraft) {
+    filter.status = "published";
+  }
 
   if (minPrice || maxPrice) {
     filter.budgetMin = {};
@@ -150,17 +159,19 @@ export async function POST(req: Request) {
     // 3. รับและตรวจสอบข้อมูลจาก Body
     const data = await req.json();
 
-    const requiredFields = [
-      "title", "category", "shortDescription", "description",
-      "qualifications", "jobType",
-      "budgetMin", "budgetMax", "capacity", "applicationDeadline",
-    ];
-    const missing = requiredFields.filter((f) => !data[f]);
-    if (missing.length > 0) {
-      return NextResponse.json(
-        { error: `กรุณากรอกข้อมูลให้ครบ: ${missing.join(", ")}` },
-        { status: 400 }
-      );
+    if (data.status !== "draft") {
+      const requiredFields = [
+        "title", "category", "shortDescription", "description",
+        "qualifications", "jobType", "duration",
+        "budgetMin", "budgetMax", "capacity", "applicationDeadline",
+      ];
+      const missing = requiredFields.filter((f) => !data[f]);
+      if (missing.length > 0) {
+        return NextResponse.json(
+          { error: `กรุณากรอกข้อมูลให้ครบ: ${missing.join(", ")}` },
+          { status: 400 }
+        );
+      }
     }
 
     if (Number(data.budgetMin) < 100) {
@@ -175,6 +186,9 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const allowedStatus = ["published", "draft"];
+    const jobStatus = allowedStatus.includes(data.status) ? data.status : "published";
 
     // 4. สร้าง Job document
     const newJob = new Job({
@@ -193,7 +207,7 @@ export async function POST(req: Request) {
       capacity:            Number(data.capacity),
       applicationDeadline: new Date(data.applicationDeadline),
       owner:               user.name,
-      status:              "published",
+      status:              jobStatus,
       postedDate:          new Date(),
     });
     await newJob.save();
