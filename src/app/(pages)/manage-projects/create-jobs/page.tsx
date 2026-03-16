@@ -403,6 +403,7 @@ import {
   LayoutDashboard,
   Users,
   MapPin,
+  Clock,
   BriefcaseBusiness,
 } from "lucide-react";
 
@@ -476,7 +477,6 @@ export default function CreateJobPage() {
     qualifications: "",
     jobType: jobForms[0], // รูปแบบงาน → Job.jobType
     location: "", // สถานที่ (optional)
-    // duration:            "",                  // ระยะเวลา (ใหม่)
     deliveryDate: "", // วันครบกำหนดส่งงาน (optional)
     budgetMin: 100, // → Job.budgetMin
     budgetMax: 1000, // → Job.budgetMax
@@ -523,7 +523,6 @@ export default function CreateJobPage() {
         qualifications: formData.qualifications || "-",
         jobType: formData.jobType,
         location: formData.location || null,
-        // duration:            formData.duration,
         deliveryDate: formData.deliveryDate || null,
         budgetMin: formData.budgetMin,
         budgetMax: formData.budgetMax,
@@ -658,19 +657,6 @@ export default function CreateJobPage() {
                 </select>
               </InputField>
 
-              {/* ระยะเวลาการทำงาน → Job.duration */}
-              {/* <InputField label="ระยะเวลาการทำงาน" id="duration" required>
-                <div className="relative">
-                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    id="duration" type="text" required
-                    className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800"
-                    placeholder="เช่น 2 สัปดาห์, 1 เดือน"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  />
-                </div>
-              </InputField> */}
 
               {/* สถานที่ → Job.location (conditional) */}
               {requiresLocation && (

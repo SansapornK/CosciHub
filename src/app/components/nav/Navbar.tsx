@@ -31,20 +31,20 @@ const menuByRole = {
   teacher: [
     { name: 'โปรไฟล์', path: '/account', icon: User },
     { name: 'ลงประกาศงาน', path: '/manage-projects/create-jobs', icon: PlusSquare },
-    { name: 'โปรเจกต์บอร์ด', path: '/project-board', icon: LayoutDashboard },
+    { name: 'ติดตามงาน', path: '/manage-projects', icon: LayoutDashboard },
     { name: 'ตั้งค่า', path: '/settings', icon: Settings },
   ],
   alumni: [
     { name: 'โปรไฟล์', path: '/account', icon: User },
     { name: 'ลงประกาศงาน', path: '/manage-projects/create-jobs', icon: PlusSquare },
-    { name: 'โปรเจกต์บอร์ด', path: '/project-board', icon: LayoutDashboard },
+    { name: 'ติดตามงาน', path: '/manage-projects', icon: LayoutDashboard },
     { name: 'ตั้งค่า', path: '/settings', icon: Settings },
   ],
   student: [
     { name: 'โปรไฟล์', path: '/account', icon: User },
     { name: 'งานที่บันทึกไว้', path: '/saved-jobs', icon: Bookmark },
-    { name: 'แดชบอร์ด', path: '/dashboard', icon: PieChart },
-    { name: 'โปรเจกต์บอร์ด', path: '/project-board', icon: LayoutDashboard },
+    { name: 'สถานะใบสมัคร', path: '/dashboard', icon: PieChart },
+    { name: 'งานของฉัน', path: '/project-board', icon: LayoutDashboard },
     { name: 'ตั้งค่า', path: '/settings', icon: Settings },
   ],
 };

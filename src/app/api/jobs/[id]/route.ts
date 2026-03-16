@@ -62,7 +62,7 @@ export async function PATCH(
     if (data.status === "published") {
       const required = [
         "title", "category", "shortDescription", "description",
-        "qualifications", "jobType", "duration",
+        "qualifications", "jobType",
         "budgetMin", "budgetMax", "capacity", "applicationDeadline",
       ];
       const missing = required.filter((f) => !data[f]);
@@ -86,7 +86,6 @@ export async function PATCH(
           qualifications:      data.qualifications,
           jobType:             data.jobType,
           location:            data.location || null,
-          duration:            data.duration,
           deliveryDate:        data.deliveryDate ? new Date(data.deliveryDate) : null,
           budgetMin:           Number(data.budgetMin),
           budgetMax:           Number(data.budgetMax),

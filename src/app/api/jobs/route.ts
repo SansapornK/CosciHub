@@ -101,11 +101,12 @@ export async function GET(req: Request) {
 
   if (q)        filter.title    = { $regex: q, $options: "i" };
   if (jobTypes) filter.category = { $in: jobTypes.split(",") };
-  if (owner) filter.owner = owner;
-  // ถ้าไม่ได้ขอ draft ให้แสดงเฉพาะ published เท่านั้น
+    // ถ้าไม่ได้ขอ draft ให้แสดงเฉพาะ published เท่านั้น
   if (!includeDraft) {
     filter.status = "published";
   }
+  if (owner) filter.owner = owner;
+
 
   if (minPrice || maxPrice) {
     filter.budgetMin = {};
@@ -162,7 +163,7 @@ export async function POST(req: Request) {
     if (data.status !== "draft") {
       const requiredFields = [
         "title", "category", "shortDescription", "description",
-        "qualifications", "jobType", "duration",
+        "qualifications", "jobType",
         "budgetMin", "budgetMax", "capacity", "applicationDeadline",
       ];
       const missing = requiredFields.filter((f) => !data[f]);
@@ -200,7 +201,6 @@ export async function POST(req: Request) {
       attachments:         data.attachments || null,
       jobType:             data.jobType,
       location:            data.location || null,
-      // duration:            data.duration,
       deliveryDate:        data.deliveryDate ? new Date(data.deliveryDate) : null,
       budgetMin:           Number(data.budgetMin),
       budgetMax:           Number(data.budgetMax),

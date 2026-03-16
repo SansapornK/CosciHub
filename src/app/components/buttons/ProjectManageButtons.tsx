@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from 'react-hot-toast';
+import Link from "next/link";
 
 interface Project {
   id: string;
@@ -368,27 +369,22 @@ function ProjectManageButtons({ project, isFreelancer, userId }: ProjectManageBu
       }
       
       // Case 2: Owner has received freelancer applications
-      if (project.status === 'open' && project.requestingFreelancerId) {
-        // ในกรณีที่มีการแยกแสดงฟรีแลนซ์แต่ละคน ใช้ requestingFreelancerId ที่ระบุในการ์ดนั้นๆ
-        return (
-          <div className="flex gap-3">
-            <button 
-              className="btn-primary" 
-              onClick={() => handleAcceptFreelancer(project.requestingFreelancerId)}
-              disabled={isLoading}
-            >
-              {isLoading ? 'กำลังดำเนินการ...' : 'ยอมรับ'}
-            </button>
-            <button 
-              className="btn-danger" 
-              onClick={() => handleRejectFreelancer(project.requestingFreelancerId)}
-              disabled={isLoading}
-            >
-              {isLoading ? 'กำลังดำเนินการ...' : 'ปฏิเสธ'}
-            </button>
-          </div>
-        );
-      }
+      if (project.status === 'open' && project.freelancersRequested?.length > 0 && !project.requestToFreelancer) {
+  return (
+    <Link
+      href={`/manage-projects/${project.id}/applicants`}
+      className="btn-primary text-sm flex items-center gap-1.5"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      คัดเลือกผู้สมัคร
+    </Link>
+  );
+}
       
       // Case 3: Project is in progress or revision, owner can message freelancer
       if (project.status === 'in_progress' || project.status === 'revision') {

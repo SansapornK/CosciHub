@@ -61,7 +61,6 @@ export default function EditJobPage() {
     qualifications:      "",
     jobType:             jobForms[0],
     location:            "",
-    duration:            "",
     deliveryDate:        "",
     budgetMin:           100,
     budgetMax:           1000,
@@ -90,7 +89,6 @@ export default function EditJobPage() {
           qualifications:      job.qualifications      ?? "",
           jobType:             job.jobType             ?? jobForms[0],
           location:            job.location            ?? "",
-          duration:            job.duration            ?? "",
           deliveryDate:        toDateInput(job.deliveryDate),
           budgetMin:           job.budgetMin           ?? 100,
           budgetMax:           job.budgetMax           ?? 1000,
@@ -226,18 +224,6 @@ export default function EditJobPage() {
                   onChange={(e) => setFormData({ ...formData, jobType: e.target.value, location: "" })}>
                   {jobForms.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
-              </InputField>
-
-              <InputField label="ระยะเวลาการทำงาน" id="duration" required>
-                <div className="relative">
-                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input id="duration" type="text" required
-                    className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800"
-                    placeholder="เช่น 2 สัปดาห์, 1 เดือน"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  />
-                </div>
               </InputField>
 
               {requiresLocation && (

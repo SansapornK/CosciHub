@@ -1,3 +1,4 @@
+// src/app/(pages)/manage-projects/page.tsx
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -9,7 +10,8 @@ import { Toaster } from 'react-hot-toast';
 import { usePusher } from "../../../providers/PusherProvider";
 import Link from "next/link";
 
-// Define project interface
+// ─── Interfaces ───────────────────────────────────────────────────────────────
+
 interface Project {
   id: string;
   title: string;
@@ -27,12 +29,10 @@ interface Project {
   requestToFreelancer?: string;
   requestToFreelancerName?: string;
   freelancersRequested: string[];
-  // เพิ่มฟิลด์ใหม่สำหรับแสดงผลแยกการ์ด
   requestingFreelancerId?: string;
   requestingFreelancerName?: string;
 }
 
-// Define the interface for grouped projects
 interface ProjectGroups {
   waitingResponse: Project[];
   requests: Project[];
@@ -42,8 +42,42 @@ interface ProjectGroups {
   completed: Project[];
 }
 
+// ✅ ใหม่: งานที่นิสิตสมัครไว้
+interface JobApplication {
+  _id: string;
+  jobId: string;
+  jobTitle: string;
+  jobCategory: string;
+  jobBudgetMin: number;
+  jobBudgetMax: number;
+  jobOwner: string;
+  status: "pending" | "accepted" | "rejected";
+  appliedDate: string;
+}
+
+// ✅ ใหม่: งานของเจ้าของที่มีคนมาสมัคร
+interface OwnerJobWithApplicants {
+  _id: string;
+  title: string;
+  category: string;
+  budgetMin: number;
+  budgetMax: number;
+  pendingCount: number;
+  totalCount: number;
+  applications: {
+    _id: string;
+    applicantName: string;
+    status: string;
+    appliedDate: string;
+  }[];
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function ManageProjectsPage() {
   const { data: session, status } = useSession();
+
+  // Project states (เดิม)
   const [projects, setProjects] = useState<ProjectGroups>({
     waitingResponse: [],
     requests: [],
@@ -55,39 +89,33 @@ export default function ManageProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // เพิ่ม usePusher hook เพื่อใช้งาน Pusher
+  // ✅ ใหม่: Job Application states
+  const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
+  const [ownerJobs, setOwnerJobs] = useState<OwnerJobWithApplicants[]>([]);
+  const [jobAppLoading, setJobAppLoading] = useState(false);
+
   const { subscribeToUserEvents, subscribeToProjectList } = usePusher();
 
-  // Fetch projects when session is loaded
+  // ─── Effects ────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchProjects();
+      fetchJobApplications(); // ✅ เพิ่ม
     } else if (status === 'unauthenticated') {
       setLoading(false);
       setError("กรุณาเข้าสู่ระบบเพื่อจัดการโปรเจกต์");
     }
   }, [status]);
 
-  // Subscribe to real-time updates
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
-      // ลงทะเบียนรับการแจ้งเตือนเมื่อมีการอัปเดตโปรเจกต์ที่เกี่ยวข้องกับผู้ใช้
-      const unsubscribeUserEvents = subscribeToUserEvents(session.user.id, (data) => {
-        console.log('ได้รับการแจ้งเตือนสถานะโปรเจกต์:', data);
-        
-        // รีโหลดข้อมูลโปรเจกต์
+      const unsubscribeUserEvents = subscribeToUserEvents(session.user.id, () => {
         fetchProjects();
       });
-      
-      // ลงทะเบียนรับการอัปเดตรายการโปรเจกต์ทั้งหมด
-      const unsubscribeProjectList = subscribeToProjectList((data) => {
-        console.log('ได้รับการอัปเดตรายการโปรเจกต์:', data);
-        
-        // รีโหลดข้อมูลโปรเจกต์
+      const unsubscribeProjectList = subscribeToProjectList(() => {
         fetchProjects();
       });
-      
-      // ยกเลิกการลงทะเบียนเมื่อ component unmount
       return () => {
         unsubscribeUserEvents();
         unsubscribeProjectList();
@@ -95,138 +123,79 @@ export default function ManageProjectsPage() {
     }
   }, [status, session?.user?.id, subscribeToUserEvents, subscribeToProjectList]);
 
-  // ฟังก์ชันสำหรับดึงข้อมูลโปรเจกต์และสร้างการ์ดแยกสำหรับฟรีแลนซ์แต่ละคนที่ส่งคำขอ
+  // ─── Fetch Projects (เดิม) ──────────────────────────────────────────────────
+
   const fetchProjects = async () => {
     setLoading(true);
     setError("");
-
     try {
       const isFreelancer = session?.user?.role === 'student';
       const userId = session?.user?.id;
-
-      // Fetch all projects related to the user
       let response;
-      
+
       if (isFreelancer) {
-        // For freelancers, get projects where:
-        // 1. They are assigned to the project
-        // 2. They have been requested by project owners
-        // 3. They have requested to join
-        response = await axios.get('/api/projects', {
-          params: {
-            limit: 100, // Get more projects at once
-            status: 'all', // ดึงทุกสถานะ
-            assignedTo: userId, // Projects assigned to this freelancer
-            requestToFreelancer: userId, // Projects that requested this freelancer
-            freelancerRequested: userId, // Projects where freelancer requested to join
-            userRelatedOnly: 'true' // เพิ่มพารามิเตอร์พิเศษเพื่อใช้การค้นหาแบบ OR
-          }
-        });
-      } else {
-        // For teachers/alumni, get projects they own
         response = await axios.get('/api/projects', {
           params: {
             limit: 100,
-            status: 'all', // ดึงทุกสถานะ
-            owner: userId
+            status: 'all',
+            assignedTo: userId,
+            requestToFreelancer: userId,
+            freelancerRequested: userId,
+            userRelatedOnly: 'true'
           }
+        });
+      } else {
+        response = await axios.get('/api/projects', {
+          params: { limit: 100, status: 'all', owner: userId }
         });
       }
 
-      // ดึงข้อมูลฟรีแลนซ์เพิ่มเติมสำหรับโปรเจกต์ที่มีคำขอจากฟรีแลนซ์
       if (!isFreelancer) {
-        // ดึงรายชื่อฟรีแลนซ์ที่เกี่ยวข้องกับโปรเจกต์
-        const userIds = new Set();
-        
-        response.data.projects.forEach(project => {
-          // เก็บ ID ฟรีแลนซ์ที่เกี่ยวข้องทั้งหมด
-          if (project.requestToFreelancer) {
-            userIds.add(project.requestToFreelancer);
-          }
-          if (project.freelancersRequested) {
-            project.freelancersRequested.forEach(id => userIds.add(id));
-          }
-          if (project.assignedTo) {
-            userIds.add(project.assignedTo);
-          }
+        const userIds = new Set<string>();
+        response.data.projects.forEach((project: Project) => {
+          if (project.requestToFreelancer) userIds.add(project.requestToFreelancer);
+          if (project.freelancersRequested) project.freelancersRequested.forEach(id => userIds.add(id));
+          if (project.assignedTo) userIds.add(project.assignedTo);
         });
-        
-        // ถ้ามีฟรีแลนซ์ที่ส่งคำขอ ให้ดึงข้อมูลเพิ่มเติม
+
         if (userIds.size > 0) {
           try {
-            const userList = Array.from(userIds);
-            console.log('จำนวนฟรีแลนซ์ที่ต้องดึงข้อมูล:', userList.length);
-            
-            // สร้าง Map เก็บข้อมูลฟรีแลนซ์
-            const freelancerMap = {};
-            
-            // ดึงข้อมูลฟรีแลนซ์แต่ละคน
-            for (const freelancerId of userList as string[]) {
+            const freelancerMap: Record<string, { name: string; profileImageUrl: string | null }> = {};
+            for (const freelancerId of Array.from(userIds)) {
               try {
-                const freelancerResponse = await axios.get(`/api/freelancers/${freelancerId}`);
+                const res = await axios.get(`/api/freelancers/${freelancerId}`);
                 freelancerMap[freelancerId] = {
-                  name: freelancerResponse.data.name,
-                  profileImageUrl: freelancerResponse.data.profileImageUrl
+                  name: res.data.name,
+                  profileImageUrl: res.data.profileImageUrl
                 };
-              } catch (err) {
-                console.log(`ไม่สามารถดึงข้อมูลฟรีแลนซ์ ID ${freelancerId}:`, err);
+              } catch {
                 freelancerMap[freelancerId] = {
                   name: `ฟรีแลนซ์ ${freelancerId.substring(0, 5)}...`,
                   profileImageUrl: null
                 };
               }
             }
-            
-            // อัปเดตโปรเจกต์ด้วยข้อมูลฟรีแลนซ์
-            const projectsWithFreelancers = [];
-            
-            response.data.projects.forEach(project => {
-              // อัปเดตชื่อของฟรีแลนซ์ที่ได้รับการขอ
+
+            const projectsWithFreelancers: Project[] = [];
+            response.data.projects.forEach((project: Project) => {
               if (project.requestToFreelancer) {
-                const freelancer = freelancerMap[project.requestToFreelancer];
-                if (freelancer) {
-                  project.requestToFreelancerName = freelancer.name;
-                }
+                const f = freelancerMap[project.requestToFreelancer];
+                if (f) project.requestToFreelancerName = f.name;
               }
-              
-              // อัปเดตชื่อของฟรีแลนซ์ที่ได้รับมอบหมาย
               if (project.assignedTo) {
-                const freelancer = freelancerMap[project.assignedTo];
-                if (freelancer) {
-                  project.assignedFreelancerName = freelancer.name;
-                }
+                const f = freelancerMap[project.assignedTo];
+                if (f) project.assignedFreelancerName = f.name;
               }
-              
-              if (project.status === 'open' && project.freelancersRequested && project.freelancersRequested.length > 0) {
-                // สร้างการ์ดแยกสำหรับฟรีแลนซ์แต่ละคน
-                project.freelancersRequested.forEach(freelancerId => {
-                  const freelancerInfo = freelancerMap[freelancerId] || { 
-                    name: `ฟรีแลนซ์ ID: ${freelancerId.substring(0, 5)}...` 
-                  };
-                  
-                  // สร้างออบเจกต์โปรเจกต์ใหม่สำหรับแสดงการ์ดเฉพาะฟรีแลนซ์คนนี้
-                  const projectCopy = { ...project };
-                  projectCopy.requestingFreelancerId = freelancerId;
-                  projectCopy.requestingFreelancerName = freelancerInfo.name;
-                  
-                  projectsWithFreelancers.push(projectCopy);
-                });
-              } else {
-                // ถ้าไม่มีฟรีแลนซ์ส่งคำขอ หรือไม่ใช่โปรเจกต์เปิด ให้เพิ่มเข้าไปเลย
-                projectsWithFreelancers.push(project);
-              }
+              projectsWithFreelancers.push(project);
             });
-            
-            // แทนที่ projects ด้วยข้อมูลใหม่ที่มีการแยกการ์ดสำหรับแต่ละฟรีแลนซ์
+
             response.data.projects = projectsWithFreelancers;
-          } catch (error) {
-            console.error("ไม่สามารถดึงข้อมูลฟรีแลนซ์ได้:", error);
-            // ถึงแม้จะเกิดข้อผิดพลาด เรายังคงใช้ข้อมูลโปรเจกต์ที่มีอยู่ต่อไปได้
+          } catch (err) {
+            console.error("ไม่สามารถดึงข้อมูลฟรีแลนซ์ได้:", err);
           }
         }
       }
 
-      // Group projects based on their status and role
       groupProjects(response.data.projects, isFreelancer);
     } catch (err) {
       console.error("Error fetching projects:", err);
@@ -236,7 +205,29 @@ export default function ManageProjectsPage() {
     }
   };
 
-  // Function to group projects by status and role
+  // ─── ✅ Fetch Job Applications (ใหม่) ────────────────────────────────────────
+
+  const fetchJobApplications = async () => {
+    setJobAppLoading(true);
+    try {
+      const isFreelancer = session?.user?.role === 'student';
+
+      if (isFreelancer) {
+        const res = await axios.get("/api/applications", { params: { role: "student" } });
+        setJobApplications(res.data.applications || []);
+      } else {
+        const res = await axios.get("/api/applications", { params: { role: "owner" } });
+        setOwnerJobs(res.data.jobs || []);
+      }
+    } catch (err) {
+      console.error("Error fetching job applications:", err);
+    } finally {
+      setJobAppLoading(false);
+    }
+  };
+
+  // ─── Group Projects ──────────────────────────────────────────────────────────
+
   const groupProjects = (projectList: Project[], isFreelancer: boolean) => {
     const userId = session?.user?.id;
     const grouped: ProjectGroups = {
@@ -249,57 +240,36 @@ export default function ManageProjectsPage() {
     };
 
     projectList.forEach(project => {
-      // สำหรับฟรีแลนซ์ (นิสิต)
       if (isFreelancer) {
-        // Waiting Response: Projects where the freelancer has applied
         if (project.freelancersRequested.includes(userId) && project.status === 'open') {
           grouped.waitingResponse.push(project);
-        }
-        // Requests: Projects where the owner has requested this freelancer
-        else if (project.requestToFreelancer === userId && project.status === 'open') {
+        } else if (project.requestToFreelancer === userId && project.status === 'open') {
           grouped.requests.push(project);
-        }
-        // In Progress: Projects assigned to this freelancer with 'in_progress' status
-        else if (project.assignedTo === userId && project.status === 'in_progress') {
+        } else if (project.assignedTo === userId && project.status === 'in_progress') {
           grouped.in_progress.push(project);
-        }
-        // Revision: Projects assigned to this freelancer with 'revision' status
-        else if (project.assignedTo === userId && project.status === 'revision') {
+        } else if (project.assignedTo === userId && project.status === 'revision') {
           grouped.revision.push(project);
-        }
-        // Awaiting: Projects assigned to this freelancer with 'awaiting' status
-        else if (project.assignedTo === userId && project.status === 'awaiting') {
+        } else if (project.assignedTo === userId && project.status === 'awaiting') {
           grouped.awaiting.push(project);
-        }
-        // Completed: Projects assigned to this freelancer with 'completed' status
-        else if (project.assignedTo === userId && project.status === 'completed') {
+        } else if (project.assignedTo === userId && project.status === 'completed') {
           grouped.completed.push(project);
         }
-      } 
-      // สำหรับอาจารย์หรือศิษย์เก่า (เจ้าของโปรเจกต์)
-      else {
-        // Waiting Response: Projects where the owner has sent a request to a freelancer
+      } else {
         if (project.requestToFreelancer && project.status === 'open') {
           grouped.waitingResponse.push(project);
-        }
-        // Requests: Projects that have received requests from freelancers
-        else if (project.requestingFreelancerId && project.status === 'open') {
+        } else if (
+          project.freelancersRequested?.length > 0 &&
+          project.status === 'open' &&
+          !project.requestToFreelancer
+        ) {
           grouped.requests.push(project);
-        }
-        // In Progress: Owner's projects with 'in_progress' status
-        else if (project.status === 'in_progress') {
+        } else if (project.status === 'in_progress') {
           grouped.in_progress.push(project);
-        }
-        // Revision: Owner's projects with 'revision' status
-        else if (project.status === 'revision') {
+        } else if (project.status === 'revision') {
           grouped.revision.push(project);
-        }
-        // Awaiting: Owner's projects with 'awaiting' status
-        else if (project.status === 'awaiting') {
+        } else if (project.status === 'awaiting') {
           grouped.awaiting.push(project);
-        }
-        // Completed: Owner's projects with 'completed' status
-        else if (project.status === 'completed') {
+        } else if (project.status === 'completed') {
           grouped.completed.push(project);
         }
       }
@@ -308,26 +278,20 @@ export default function ManageProjectsPage() {
     setProjects(grouped);
   };
 
-  // Function to update project progress
+  // ─── Update Progress ─────────────────────────────────────────────────────────
+
   const updateProgress = async (projectId: string, newProgress: number) => {
     try {
-      // Ensure progress is within valid range
       if (newProgress < 0) newProgress = 0;
       if (newProgress > 100) newProgress = 100;
-
-      // Update progress via API
-      await axios.patch(`/api/projects/${projectId}`, {
-        progress: newProgress
-      });
-
-      // ไม่จำเป็นต้อง fetchProjects() ที่นี่ เพราะเราจะได้รับการอัปเดตผ่าน Pusher
-
+      await axios.patch(`/api/projects/${projectId}`, { progress: newProgress });
     } catch (error) {
       console.error("Error updating progress:", error);
     }
   };
 
-  // Show loading state
+  // ─── Render ───────────────────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-10 h-screen">
@@ -337,13 +301,12 @@ export default function ManageProjectsPage() {
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
         <p className="text-red-600">{error}</p>
         {status === 'unauthenticated' && (
-          <button 
+          <button
             onClick={() => window.location.href = '/auth?state=login'}
             className="mt-4 px-4 py-2 bg-primary-blue-500 text-white rounded-lg hover:bg-primary-blue-600"
           >
@@ -355,25 +318,27 @@ export default function ManageProjectsPage() {
   }
 
   const isFreelancer = session?.user?.role === 'student';
-  
+
+  // Status badge config สำหรับ job application
+  const appStatusConfig: Record<string, { label: string; className: string }> = {
+    pending:  { label: "รอการพิจารณา",     className: "bg-yellow-100 text-yellow-700" },
+    accepted: { label: "ผ่านการคัดเลือก",  className: "bg-green-100  text-green-700"  },
+    rejected: { label: "ไม่ผ่านการคัดเลือก", className: "bg-red-100  text-red-600"    },
+  };
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Toaster component for showing notifications */}
+    <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto w-full">
       <Toaster position="bottom-left" />
-      
-      {/* Header */}
+
+      {/* ── Header ── */}
       <section className="mt-6 p-6 flex flex-col gap-2 bg-primary-blue-500 rounded-xl">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="font-medium text-xl text-white">
-              จัดการโปรเจกต์
-            </h1>
+            <h1 className="font-medium text-xl text-white">จัดการโปรเจกต์</h1>
             <p className="text-white">
               จัดการทุกขั้นตอนในทุกโปรเจกต์ของคุณตั้งแต่รับงานจนถึงเสร็จงาน
             </p>
           </div>
-          
-          {/* เพิ่มปุ่มดูโปรเจกต์ทั้งหมด */}
           <Link href="/manage-projects/all-projects" className="btn-secondary flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -384,71 +349,187 @@ export default function ManageProjectsPage() {
           </Link>
         </div>
       </section>
-      
-      {/* Row 1: Waiting Response and Requests */}
+
+      {/* ── Row 1: Waiting Response & Requests ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ProjectManageList 
-          title={isFreelancer ? "คำขอของฉัน" : "รอการตอบรับ"} 
-          status="waitingResponse" 
+        <ProjectManageList
+          title={isFreelancer ? "คำขอของฉัน" : "รอการตอบรับ"}
+          status="waitingResponse"
           projects={projects.waitingResponse}
-          emptyMessage={isFreelancer ? "คุณยังไม่ได้ส่งคำขอร่วมงานโปรเจกต์ใด" : "ไม่มีคำขอที่รอการตอบรับจากฟรีแลนซ์"} 
+          emptyMessage={isFreelancer ? "คุณยังไม่ได้ส่งคำขอร่วมงานโปรเจกต์ใด" : "ไม่มีคำขอที่รอการตอบรับจากฟรีแลนซ์"}
           onUpdateProgress={updateProgress}
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
-        <ProjectManageList 
-          title={isFreelancer ? "คำขอร่วมงาน" : "คำขอฟรีแลนซ์"} 
-          status="requests" 
+        <ProjectManageList
+          title={isFreelancer ? "คำขอร่วมงาน" : "คำขอฟรีแลนซ์"}
+          status="requests"
           projects={projects.requests}
-          emptyMessage={isFreelancer ? "ไม่มีคำขอร่วมงานจากเจ้าของโปรเจกต์" : "ไม่มีฟรีแลนซ์ส่งคำขอร่วมงานกับคุณ"} 
+          emptyMessage={isFreelancer ? "ไม่มีคำขอร่วมงานจากเจ้าของโปรเจกต์" : "ไม่มีฟรีแลนซ์ส่งคำขอร่วมงานกับคุณ"}
           onUpdateProgress={updateProgress}
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
       </div>
-      
-      {/* Row 2: In Progress, Revision, Awaiting */}
+
+      {/* ── Row 2: In Progress, Revision, Awaiting ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <ProjectManageList 
-          title="กำลังดำเนินการ" 
-          status="in_progress" 
+        <ProjectManageList
+          title="กำลังดำเนินการ"
+          status="in_progress"
           projects={projects.in_progress}
-          emptyMessage="ไม่มีโปรเจกต์ที่กำลังดำเนินการ" 
+          emptyMessage="ไม่มีโปรเจกต์ที่กำลังดำเนินการ"
           onUpdateProgress={updateProgress}
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
-        <ProjectManageList 
-          title="กำลังแก้ไข" 
-          status="revision" 
+        <ProjectManageList
+          title="กำลังแก้ไข"
+          status="revision"
           projects={projects.revision}
-          emptyMessage="ไม่มีโปรเจกต์ที่กำลังแก้ไข" 
+          emptyMessage="ไม่มีโปรเจกต์ที่กำลังแก้ไข"
           onUpdateProgress={updateProgress}
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
-        <ProjectManageList 
-          title="รอการยืนยัน" 
-          status="awaiting" 
+        <ProjectManageList
+          title="รอการยืนยัน"
+          status="awaiting"
           projects={projects.awaiting}
-          emptyMessage="ไม่มีโปรเจกต์ที่รอการยืนยัน" 
+          emptyMessage="ไม่มีโปรเจกต์ที่รอการยืนยัน"
           onUpdateProgress={updateProgress}
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
       </div>
-      
-      {/* Row 3: Completed (เต็มความกว้าง) */}
+
+      {/* ── Row 3: Completed ── */}
       <div className="w-full">
-        <ProjectManageList 
-          title="เสร็จสิ้น" 
-          status="completed" 
+        <ProjectManageList
+          title="เสร็จสิ้น"
+          status="completed"
           projects={projects.completed}
-          emptyMessage="ไม่มีโปรเจกต์ที่เสร็จสิ้น" 
+          emptyMessage="ไม่มีโปรเจกต์ที่เสร็จสิ้น"
           onUpdateProgress={updateProgress}
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
+      </div>
+
+      {/* ── Row 4: ✅ Job Applications Section ── */}
+      <div className="w-full">
+        {isFreelancer ? (
+          // ── ฝั่งนิสิต: งานที่สมัครไว้ ──────────────────────────────────────
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-medium text-gray-700 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                งานพิเศษที่สมัครไว้
+              </h2>
+              <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                {jobApplications.length}
+              </span>
+            </div>
+
+            {jobAppLoading ? (
+              <div className="flex justify-center py-6">
+                <Loading size="small" color="primary" />
+              </div>
+            ) : jobApplications.length === 0 ? (
+              <div className="bg-white rounded-lg p-6 text-center text-gray-500 border border-dashed border-gray-300">
+                <p>คุณยังไม่ได้สมัครงานพิเศษใดๆ</p>
+                <Link href="/find-job" className="text-primary-blue-500 text-sm hover:underline mt-1 inline-block">
+                  ค้นหางานพิเศษ →
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {jobApplications.map((app) => {
+                  const s = appStatusConfig[app.status] ?? appStatusConfig.pending;
+                  return (
+                    <Link href={`/find-job/${app.jobId}`} key={app._id}>
+                      <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-primary-blue-200 transition-all">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p className="font-medium text-gray-800 line-clamp-2 text-sm flex-1">
+                            {app.jobTitle}
+                          </p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${s.className}`}>
+                            {s.label}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400 mb-2">{app.jobCategory}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-500">
+                            {app.jobBudgetMin.toLocaleString()}
+                            {app.jobBudgetMax ? ` – ${app.jobBudgetMax.toLocaleString()}` : ""} บาท
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(app.appliedDate).toLocaleDateString("th-TH")}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          // ── ฝั่งเจ้าของ: งานที่มีคนมาสมัคร ───────────────────────────────────
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-medium text-gray-700 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                ผู้สมัครงานพิเศษของฉัน
+              </h2>
+              <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                {ownerJobs.length} งาน
+              </span>
+            </div>
+
+            {jobAppLoading ? (
+              <div className="flex justify-center py-6">
+                <Loading size="small" color="primary" />
+              </div>
+            ) : ownerJobs.length === 0 ? (
+              <div className="bg-white rounded-lg p-6 text-center text-gray-500 border border-dashed border-gray-300">
+                <p>ยังไม่มีนิสิตสมัครงานพิเศษของคุณ</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {ownerJobs.map((job) => (
+                  <Link href={`/manage-projects/${job._id}/applicants`} key={job._id}>
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-primary-blue-200 transition-all group">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="font-medium text-gray-800 line-clamp-2 text-sm flex-1 group-hover:text-primary-blue-600 transition-colors">
+                          {job.title}
+                        </p>
+                        {job.pendingCount > 0 && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                            {job.pendingCount} รอพิจารณา
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mb-3">{job.category}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                          ผู้สมัครทั้งหมด {job.totalCount} คน
+                        </span>
+                        <span className="text-xs text-primary-blue-500 font-medium group-hover:underline">
+                          ดูผู้สมัคร →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

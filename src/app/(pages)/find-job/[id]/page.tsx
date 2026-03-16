@@ -21,8 +21,7 @@ interface JobDetail {
   postedDate: string;
   owner: string;
   jobType?: string;   
-  location?: string;       
-  duration?: string;       
+  location?: string;         
   budgetMin: number;
   budgetMax: number | null;
   capacity?: number;      
@@ -164,7 +163,6 @@ const JobDetailPage = () => {
                                 <div className="space-y-6 bg-gray-50/50 p-6 rounded-3xl border border-gray-50 mb-8">
                                     <SidebarItem icon={<User />} label={job.owner}/>
                                     <SidebarItem icon={<MapPin />} label={`${job.jobType || "ออนไลน์"} / ${job.location || "ทำงานออนไลน์" }`} iconColor="text-red-400" />
-                                    <SidebarItem icon={<Clock />} label={job.duration || "ตามตกลง"} iconColor="text-amber-500" />
                                     <SidebarItem icon={<Wallet />} label={`${job.budgetMin.toLocaleString()} ${job.budgetMax ? `- ${job.budgetMax.toLocaleString()}` : ""} บาท`} iconColor="text-emerald-500" />
                                     <SidebarItem icon={<Users />} label={`${job.capacity || 1} คน`} iconColor="text-indigo-500" />
                                 </div>

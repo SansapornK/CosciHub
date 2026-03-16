@@ -1,3 +1,6 @@
+// src/app/components/lists/ProjectManageList.tsx
+'use client';
+
 import React from "react";
 import ProjectManageCard from "../cards/ProjectManageCard";
 import Link from "next/link";
@@ -14,7 +17,6 @@ interface Project {
   requestToFreelancer?: string;
   requestToFreelancerName?: string;
   freelancersRequested: string[];
-  // เพิ่มฟิลด์ใหม่สำหรับแสดงผลแยกการ์ด
   requestingFreelancerId?: string;
   requestingFreelancerName?: string;
 }
@@ -30,125 +32,68 @@ interface ProjectManageListProps {
 }
 
 function ProjectManageList({ 
-  title, 
-  status, 
-  projects, 
-  emptyMessage, 
-  onUpdateProgress,
-  isFreelancer,
-  userId
+  title, status, projects, emptyMessage, 
+  onUpdateProgress, isFreelancer, userId 
 }: ProjectManageListProps) {
-  // Function to determine the display name
+
   const getDisplayName = (project: Project) => {
-    // For freelancers, show the project owner
-    if (isFreelancer) {
-      return project.ownerName;
-    } 
+    if (isFreelancer) return project.ownerName;
     
-    // สำหรับคำขอฟรีแลนซ์ ใช้ชื่อฟรีแลนซ์ที่ส่งคำขอมา
-    if (status === "requests" && project.requestingFreelancerId) {
-      return project.requestingFreelancerName || "ฟรีแลนซ์ไม่ระบุชื่อ";
+    // ✅ requests: แสดงจำนวนผู้สมัครแทนชื่อเดี่ยว
+    if (status === "requests") {
+      const count = project.freelancersRequested?.length || 0;
+      return `${count} คนรอการพิจารณา`;
     }
-    
-    // For project owners with assigned freelancer
-    if (project.assignedTo && project.assignedFreelancerName) {
-      return project.assignedFreelancerName;
-    } else if (project.assignedTo) {
-      return "ฟรีแลนซ์ที่รับงาน";
-    }
-    
-    // For project owners waiting for freelancer response
+    if (project.assignedTo && project.assignedFreelancerName) return project.assignedFreelancerName;
+    if (project.assignedTo) return "ฟรีแลนซ์ที่รับงาน";
     if (status === "waitingResponse" && project.requestToFreelancer) {
-      // ใช้ชื่อจริงของฟรีแลนซ์ที่เจ้าของโปรเจกต์ส่งคำขอไป
       return project.requestToFreelancerName || "รอการตอบรับจากฟรีแลนซ์";
     }
-    
-    // Default
     return "ไม่มีผู้รับผิดชอบ";
   };
 
-  // Function to determine the profile link target
   const getProfileLink = (project: Project) => {
-    // For freelancers, link to the project owner
-    if (isFreelancer) {
-      return `/user/customer/${project.owner}`;
-    }
-    
-    // สำหรับคำขอฟรีแลนซ์ ใช้ลิงก์ไปยังโปรไฟล์ของฟรีแลนซ์ที่ส่งคำขอมา
-    if (status === "requests" && project.requestingFreelancerId) {
-      return `/user/freelance/${project.requestingFreelancerId}`;
-    }
-    
-    // For project owners, link to the assigned freelancer if available
-    if (project.assignedTo) {
-      return `/user/freelance/${project.assignedTo}`;
-    }
-    
-    // For project owners waiting for a specific freelancer
+    if (isFreelancer) return `/user/customer/${project.owner}`;
+    if (status === "requests") return `/manage-projects/${project.id}/applicants`; // ✅ ลิงก์ไปหน้า applicants
+    if (project.assignedTo) return `/user/freelance/${project.assignedTo}`;
     if (status === "waitingResponse" && project.requestToFreelancer) {
       return `/user/freelance/${project.requestToFreelancer}`;
     }
-    
-    // Default, go to project page
     return `/project/${project.id}`;
   };
 
-  // Function to get the appropriate icon based on title and status
   const getSectionIcon = () => {
-    // เช็คชื่อหัวข้อก่อน
-    if (title.includes("กำลังดำเนินการ")) {
-      return (
+    switch(status) {
+      case 'in_progress': return (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
         </svg>
       );
-    } else if (title.includes("กำลังแก้ไข")) {
-      return (
+      case 'revision': return (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
         </svg>
       );
-    } else if (title.includes("กำลังรอการยืนยัน") || title.includes("รอการตอบรับ")) {
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      case 'completed': return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       );
-    }
-    
-    // ถ้าไม่มีชื่อที่ตรงกับที่กำหนด ให้ใช้สถานะแทน
-    switch(status) {
-      case 'active':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        );
-      case 'completed':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
-      case 'waitingResponse':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-          </svg>
-        );
-      case 'requests':
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-          </svg>
-        );
-      default:
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-          </svg>
-        );
+      case 'waitingResponse': return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        </svg>
+      );
+      case 'requests': return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+        </svg>
+      );
+      default: return (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+      );
     }
   };
 
@@ -167,19 +112,40 @@ function ProjectManageList({
       {projects.length > 0 ? (
         <div className={`${status === "completed" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-4"}`}>
           {projects.map((project) => (
-            <ProjectManageCard 
-              key={`${project.id}${project.requestingFreelancerId || ''}`} // ใช้ key ที่ไม่ซ้ำกัน
-              id={project.id}
-              title={project.title}
-              owner={getDisplayName(project)}
-              status={project.status}
-              progress={project.progress}
-              onUpdateProgress={onUpdateProgress}
-              isFreelancer={isFreelancer}
-              profileLink={getProfileLink(project)}
-              userId={userId}
-              project={project}
-            />
+            // ✅ ใช้ div wrapper เพื่อให้เพิ่ม element ต่อท้ายได้
+            <div key={`${project.id}${project.requestingFreelancerId || ''}`}>
+              <ProjectManageCard 
+                id={project.id}
+                title={project.title}
+                owner={getDisplayName(project)}
+                status={project.status}
+                progress={project.progress}
+                onUpdateProgress={onUpdateProgress}
+                isFreelancer={isFreelancer}
+                profileLink={getProfileLink(project)}
+                userId={userId}
+                project={project}
+              />
+
+              {/* ✅ ปุ่ม "ดูผู้สมัครทั้งหมด" — แสดงเฉพาะ owner + column requests */}
+              {!isFreelancer && status === 'requests' && (
+                <Link
+                  href={`/manage-projects/${project.id}/applicants`}
+                  className="mt-2 w-full flex items-center justify-center gap-2 text-sm 
+                             text-primary-blue-500 border border-primary-blue-200 
+                             bg-primary-blue-50 hover:bg-primary-blue-100 
+                             rounded-xl py-2 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  ดูผู้สมัครทั้งหมด ({project.freelancersRequested?.length || 0} คน)
+                </Link>
+              )}
+            </div>
           ))}
         </div>
       ) : (

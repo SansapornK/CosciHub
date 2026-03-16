@@ -1,5 +1,5 @@
 // src/app/api/auth/[...nextauth]/route.ts
-import NextAuth from 'next-auth';
+import NextAuth, { NextAuthOptions }  from 'next-auth';
 import EmailProvider from 'next-auth/providers/email';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
@@ -11,7 +11,7 @@ import connectToDatabase from '@/libs/mongodb';
 import bcrypt from 'bcryptjs';
 
 // Define NextAuth configuration with custom adapter for MongoDB
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(getMongoClient()) as Adapter,
   providers: [
     EmailProvider({
@@ -182,7 +182,8 @@ const handler = NextAuth({
     return token;
   }
   },
-  debug: process.env.NODE_ENV === 'development',
-});
+debug: process.env.NODE_ENV === 'development',
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
