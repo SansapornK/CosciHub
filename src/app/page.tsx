@@ -10,7 +10,7 @@ import Loading from "./components/common/Loading";
 // --- 1. Hero Slides Data ---
 const HERO_SLIDES = [
   {
-    image: "/images/heroImage1.png",
+    image: "/images/heroImage1.jpg",
     title: "COSCI Hub แพลตฟอร์มหางานพิเศษ",
     subtitle: "สำหรับนิสิต อาจารย์ และศิษย์เก่าชาวนวัต",
     description: "แพลตฟอร์มหางานพิเศษ สำหรับนิสิตวิทยาลัยนวัตกรรมสื่อสารสังคม เพื่อเป็นช่องทางในการหารายได้เสริมระหว่างศึกษา รวมถึงแสดงผลงานและทักษะความสามารถเพื่อใช้ในการหางานในอนาคต",
@@ -18,7 +18,7 @@ const HERO_SLIDES = [
     secondaryButton: null, 
   },
   {
-    image: "/images/heroImage2.png",
+    image: "/images/heroImage2.jpg",
     title: "ค้นหางานพิเศษที่ตรงใจ",
     subtitle: "เติมเต็มทักษะ สร้างรายได้เสริม",
     description: "สำรวจโอกาสงานพิเศษหลากหลายหมวดหมู่ ที่รอให้คุณมาโชว์ศักยภาพและเก็บประสบการณ์ก่อนก้าวสู่โลกการทำงานจริง",
@@ -26,7 +26,7 @@ const HERO_SLIDES = [
     secondaryButton: null, 
   },
   {
-    image: "/images/heroImage3.png",
+    image: "/images/heroImage3.jpg",
     title: "โครงการพิเศษจากคณาจารย์",
     subtitle: "แหล่งรวมโปรเจกต์งานวิจัยและพัฒนา",
     description: "โอกาสในการร่วมงานกับคณาจารย์ในโครงการที่น่าสนใจ เพื่อเพิ่มพูนความรู้เฉพาะทาง และสร้างพอร์ตโฟลิโอที่แข็งแกร่ง",
@@ -423,6 +423,7 @@ const HeroCarousel = ({ images, setCurrentSlide }) => {
             absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000
             ${index === currentIndex ? 'opacity-100' : 'opacity-0'}
           `}
+          style={{ objectPosition: 'center' }} 
         />
       ))}
       
