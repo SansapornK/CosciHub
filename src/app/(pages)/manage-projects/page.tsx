@@ -6,7 +6,7 @@ import ProjectManageList from "../../components/lists/ProjectManageList";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import Loading from "../../components/common/Loading";
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { usePusher } from "../../../providers/PusherProvider";
 import Link from "next/link";
 
@@ -63,6 +63,8 @@ interface OwnerJobWithApplicants {
   budgetMin: number;
   budgetMax: number;
   pendingCount: number;
+  acceptedCount: number; // ✅ เพิ่ม
+  capacity: number;      // ✅ เพิ่ม
   totalCount: number;
   applications: {
     _id: string;
@@ -469,7 +471,7 @@ export default function ManageProjectsPage() {
                 งานพิเศษที่สมัครไว้
               </h2>
               <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
-                {jobApplications.length}
+                {jobApplications.filter(a => a.status === "pending").length}
               </span>
             </div>
 
@@ -489,28 +491,50 @@ export default function ManageProjectsPage() {
                 {jobApplications.map((app) => {
                   const s = appStatusConfig[app.status] ?? appStatusConfig.pending;
                   return (
-                    <Link href={`/find-job/${app.jobId}`} key={app._id}>
-                      <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-primary-blue-200 transition-all">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="font-medium text-gray-800 line-clamp-2 text-sm flex-1">
-                            {app.jobTitle}
-                          </p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${s.className}`}>
-                            {s.label}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-400 mb-2">{app.jobCategory}</p>
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-gray-500">
-                            {app.jobBudgetMin.toLocaleString()}
-                            {app.jobBudgetMax ? ` – ${app.jobBudgetMax.toLocaleString()}` : ""} บาท
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {new Date(app.appliedDate).toLocaleDateString("th-TH")}
-                          </p>
-                        </div>
+                    <div key={app._id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-primary-blue-200 transition-all flex flex-col gap-2">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium text-gray-800 line-clamp-2 text-sm flex-1">
+                          {app.jobTitle}
+                        </p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${s.className}`}>
+                          {s.label}
+                        </span>
                       </div>
-                    </Link>
+
+                      {/* Category + Budget + Date */}
+                      <p className="text-xs text-gray-400">{app.jobCategory}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-500">
+                          {app.jobBudgetMin.toLocaleString()}
+                          {app.jobBudgetMax ? ` – ${app.jobBudgetMax.toLocaleString()}` : ""} บาท
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          สมัครเมื่อ {new Date(app.appliedDate).toLocaleDateString("th-TH")}
+                        </p>
+                      </div>
+
+                      {/* ✅ ปุ่ม "เริ่มงาน" — แสดงเฉพาะ accepted */}
+                      {app.status === "accepted" && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await axios.patch(`/api/applications/${app._id}`, {
+                                action: "updateProgress",
+                                progress: 0,
+                              });
+                              toast.success("เริ่มงานแล้ว!");
+                              await fetchJobApplications(); // รีโหลดทั้ง Row 4 และ Row 5
+                            } catch (err: any) {
+                              toast.error(err.response?.data?.error || "เกิดข้อผิดพลาด");
+                            }
+                          }}
+                          className="btn-primary text-sm py-2 rounded-full w-full mt-1"
+                        >
+                          เริ่มงาน
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -548,16 +572,25 @@ export default function ManageProjectsPage() {
                         <p className="font-medium text-gray-800 line-clamp-2 text-sm flex-1 group-hover:text-primary-blue-600 transition-colors">
                           {job.title}
                         </p>
-                        {job.pendingCount > 0 && (
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                            {job.pendingCount} รอพิจารณา
-                          </span>
-                        )}
+                        {/* แสดง badge ตามสถานะ */}
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          {job.acceptedCount >= job.capacity ? (
+                            // เต็มแล้ว — สีเขียว
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                              คัดเลือกครบแล้ว ✓
+                            </span>
+                          ) : job.pendingCount > 0 ? (
+                            // ยังมีคนรอพิจารณา — สีม่วง
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                              {job.pendingCount} รอพิจารณา
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <p className="text-xs text-gray-400 mb-3">{job.category}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">
-                          ผู้สมัครทั้งหมด {job.totalCount} คน
+                          ผู้สมัครทั้งหมด {job.totalCount} คน · รับแล้ว {job.acceptedCount}/{job.capacity}
                         </span>
                         <span className="text-xs text-primary-blue-500 font-medium group-hover:underline">
                           ดูผู้สมัคร →

@@ -129,7 +129,7 @@ export async function GET(req: Request) {
         job: { _id: job._id.toString(), title: job.title, category: job.category, capacity: job.capacity || 1, status: job.status },
         applications: result,
         pendingCount:  result.filter(a => a.status === "pending").length,
-        acceptedCount: result.filter(a => a.status === "accepted").length,
+        acceptedCount: result.filter(a => ["accepted", "in_progress", "submitted", "revision", "completed"].includes(a.status)).length,
       });
     }
 
@@ -137,7 +137,7 @@ export async function GET(req: Request) {
     // CASE 2: ?role=student&phase=inProgress
     // ══════════════════════════════════════════════════════
     if (role === "student" && phase === "inProgress") {
-      const ACTIVE = ["accepted", "in_progress", "submitted", "revision"];
+      const ACTIVE = ["in_progress", "submitted", "revision"];
 
       const applications = await Application.find({
         applicantEmail: session.user.email,
@@ -175,7 +175,7 @@ export async function GET(req: Request) {
       const user = await User.findOne({ email: session.user.email });
       if (!user) return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
 
-      const ACTIVE = ["accepted", "in_progress", "submitted", "revision"];
+      const ACTIVE = ["in_progress", "submitted", "revision"];
 
       const activeJobs = await (Job as any)
         .find({ owner: user.name, status: { $in: ["in_progress", "awaiting"] } })
@@ -263,7 +263,7 @@ export async function GET(req: Request) {
 
       const ownedJobs = await (Job as any)
         .find({ owner: user.name })
-        .select("_id title category budgetMin budgetMax applicationDeadline status")
+        .select("_id title category budgetMin budgetMax applicationDeadline status capacity")
         .lean();
 
       if (ownedJobs.length === 0) return NextResponse.json({ jobs: [] });
@@ -295,8 +295,11 @@ export async function GET(req: Request) {
           budgetMax:           j.budgetMax,
           applicationDeadline: j.applicationDeadline,
           jobStatus:           j.status,
+          capacity:     j.capacity || 1,         
           applications:        appMap[j._id.toString()] ?? [],
           pendingCount:        (appMap[j._id.toString()] ?? []).filter(a => a.status === "pending").length,
+          acceptedCount:       (appMap[j._id.toString()] ?? []) 
+                                .filter(a => ["accepted", "in_progress", "submitted", "revision", "completed"].includes(a.status)).length,
           totalCount:          (appMap[j._id.toString()] ?? []).length,
         }))
         .filter(j => j.totalCount > 0);

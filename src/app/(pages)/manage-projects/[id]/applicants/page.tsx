@@ -61,12 +61,16 @@ function ApplicantCard({
   onReject: (appId: string) => void;
   isLoading: boolean;
 }) {
-  const statusConfig = {
-    pending:  { label: "รอพิจารณา",          className: "bg-yellow-100 text-yellow-700" },
-    accepted: { label: "ผ่านการคัดเลือก",    className: "bg-green-100  text-green-700"  },
-    rejected: { label: "ไม่ผ่านการคัดเลือก", className: "bg-red-100    text-red-600"    },
-  };
-  const s = statusConfig[applicant.status];
+    const statusConfig: Record<string, { label: string; className: string }> = {
+    pending:     { label: "รอพิจารณา",          className: "bg-yellow-100 text-yellow-700"  },
+    accepted:    { label: "ผ่านการคัดเลือก",    className: "bg-green-100  text-green-700"   },
+    rejected:    { label: "ไม่ผ่านการคัดเลือก", className: "bg-red-100    text-red-600"     },
+    in_progress: { label: "กำลังทำงาน",         className: "bg-blue-100   text-blue-700"    },
+    submitted:   { label: "ส่งงานแล้ว",         className: "bg-purple-100 text-purple-700"  },
+    revision:    { label: "ขอแก้ไข",            className: "bg-orange-100 text-orange-700"  },
+    completed:   { label: "เสร็จสิ้น",          className: "bg-gray-100   text-gray-600"    },
+    };
+    const s = statusConfig[applicant.status] ?? { label: applicant.status, className: "bg-gray-100 text-gray-600" };
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow">
