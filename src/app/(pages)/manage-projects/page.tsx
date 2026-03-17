@@ -6,7 +6,7 @@ import ProjectManageList from "../../components/lists/ProjectManageList";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import Loading from "../../components/common/Loading";
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { usePusher } from "../../../providers/PusherProvider";
 import Link from "next/link";
 
@@ -55,7 +55,7 @@ interface JobApplication {
   appliedDate: string;
 }
 
-// ✅ ใหม่: งานของเจ้าของที่มีคนมาสมัคร
+// งานของเจ้าของที่มีคนมาสมัคร
 interface OwnerJobWithApplicants {
   _id: string;
   title: string;
@@ -63,12 +63,42 @@ interface OwnerJobWithApplicants {
   budgetMin: number;
   budgetMax: number;
   pendingCount: number;
+  acceptedCount: number; // ✅ เพิ่ม
+  capacity: number;      // ✅ เพิ่ม
   totalCount: number;
   applications: {
     _id: string;
     applicantName: string;
     status: string;
     appliedDate: string;
+  }[];
+}
+
+// ─── ใหม่: งานที่กำลังทำอยู่ (นิสิต) ──────────────
+interface ActiveApplication {
+  _id: string;
+  jobId: string;
+  jobTitle: string;
+  jobCategory: string;
+  jobOwner: string;
+  jobDeadline: string | null;
+  status: "accepted" | "in_progress" | "submitted" | "revision";
+  progress: number;
+}
+
+// ─── ใหม่: งานของเจ้าของที่กำลังดำเนินการ ─────────
+interface ActiveOwnerJob {
+  _id: string;
+  title: string;
+  category: string;
+  jobStatus: string;
+  capacity: number;
+  deliveryDate: string | null;
+  workers: {
+    _id: string;
+    applicantName: string;
+    status: string;
+    progress: number;
   }[];
 }
 
@@ -93,6 +123,8 @@ export default function ManageProjectsPage() {
   const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
   const [ownerJobs, setOwnerJobs] = useState<OwnerJobWithApplicants[]>([]);
   const [jobAppLoading, setJobAppLoading] = useState(false);
+  const [activeApplications, setActiveApplications] = useState<ActiveApplication[]>([]);
+  const [activeOwnerJobs, setActiveOwnerJobs]         = useState<ActiveOwnerJob[]>([]);
 
   const { subscribeToUserEvents, subscribeToProjectList } = usePusher();
 
@@ -123,8 +155,7 @@ export default function ManageProjectsPage() {
     }
   }, [status, session?.user?.id, subscribeToUserEvents, subscribeToProjectList]);
 
-  // ─── Fetch Projects (เดิม) ──────────────────────────────────────────────────
-
+  //─── Fetch Projects (เดิม) ──────────────────────────────────────────────────
   const fetchProjects = async () => {
     setLoading(true);
     setError("");
@@ -218,6 +249,17 @@ export default function ManageProjectsPage() {
       } else {
         const res = await axios.get("/api/applications", { params: { role: "owner" } });
         setOwnerJobs(res.data.jobs || []);
+      }
+      const activeRes = await axios.get("/api/applications", {
+        params: {
+          role: isFreelancer ? "student" : "owner",
+          phase: "inProgress",
+        },
+      });
+      if (isFreelancer) {
+        setActiveApplications(activeRes.data.applications || []);
+      } else {
+        setActiveOwnerJobs(activeRes.data.jobs || []);
       }
     } catch (err) {
       console.error("Error fetching job applications:", err);
@@ -429,7 +471,7 @@ export default function ManageProjectsPage() {
                 งานพิเศษที่สมัครไว้
               </h2>
               <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
-                {jobApplications.length}
+                {jobApplications.filter(a => a.status === "pending").length}
               </span>
             </div>
 
@@ -449,28 +491,50 @@ export default function ManageProjectsPage() {
                 {jobApplications.map((app) => {
                   const s = appStatusConfig[app.status] ?? appStatusConfig.pending;
                   return (
-                    <Link href={`/find-job/${app.jobId}`} key={app._id}>
-                      <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-primary-blue-200 transition-all">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="font-medium text-gray-800 line-clamp-2 text-sm flex-1">
-                            {app.jobTitle}
-                          </p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${s.className}`}>
-                            {s.label}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-400 mb-2">{app.jobCategory}</p>
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-gray-500">
-                            {app.jobBudgetMin.toLocaleString()}
-                            {app.jobBudgetMax ? ` – ${app.jobBudgetMax.toLocaleString()}` : ""} บาท
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {new Date(app.appliedDate).toLocaleDateString("th-TH")}
-                          </p>
-                        </div>
+                    <div key={app._id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-primary-blue-200 transition-all flex flex-col gap-2">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium text-gray-800 line-clamp-2 text-sm flex-1">
+                          {app.jobTitle}
+                        </p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${s.className}`}>
+                          {s.label}
+                        </span>
                       </div>
-                    </Link>
+
+                      {/* Category + Budget + Date */}
+                      <p className="text-xs text-gray-400">{app.jobCategory}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-500">
+                          {app.jobBudgetMin.toLocaleString()}
+                          {app.jobBudgetMax ? ` – ${app.jobBudgetMax.toLocaleString()}` : ""} บาท
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          สมัครเมื่อ {new Date(app.appliedDate).toLocaleDateString("th-TH")}
+                        </p>
+                      </div>
+
+                      {/* ✅ ปุ่ม "เริ่มงาน" — แสดงเฉพาะ accepted */}
+                      {app.status === "accepted" && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await axios.patch(`/api/applications/${app._id}`, {
+                                action: "updateProgress",
+                                progress: 0,
+                              });
+                              toast.success("เริ่มงานแล้ว!");
+                              await fetchJobApplications(); // รีโหลดทั้ง Row 4 และ Row 5
+                            } catch (err: any) {
+                              toast.error(err.response?.data?.error || "เกิดข้อผิดพลาด");
+                            }
+                          }}
+                          className="btn-primary text-sm py-2 rounded-full w-full mt-1"
+                        >
+                          เริ่มงาน
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -508,16 +572,25 @@ export default function ManageProjectsPage() {
                         <p className="font-medium text-gray-800 line-clamp-2 text-sm flex-1 group-hover:text-primary-blue-600 transition-colors">
                           {job.title}
                         </p>
-                        {job.pendingCount > 0 && (
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                            {job.pendingCount} รอพิจารณา
-                          </span>
-                        )}
+                        {/* แสดง badge ตามสถานะ */}
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          {job.acceptedCount >= job.capacity ? (
+                            // เต็มแล้ว — สีเขียว
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                              คัดเลือกครบแล้ว ✓
+                            </span>
+                          ) : job.pendingCount > 0 ? (
+                            // ยังมีคนรอพิจารณา — สีม่วง
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                              {job.pendingCount} รอพิจารณา
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                       <p className="text-xs text-gray-400 mb-3">{job.category}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">
-                          ผู้สมัครทั้งหมด {job.totalCount} คน
+                          ผู้สมัครทั้งหมด {job.totalCount} คน · รับแล้ว {job.acceptedCount}/{job.capacity}
                         </span>
                         <span className="text-xs text-primary-blue-500 font-medium group-hover:underline">
                           ดูผู้สมัคร →
@@ -531,6 +604,188 @@ export default function ManageProjectsPage() {
           </div>
         )}
       </div>
+              {/* ── Row 5: กำลังดำเนินการ ── */}
+        <div className="w-full">
+          {isFreelancer ? (
+            // ── ฝั่งนิสิต ──────────────────────────────────────────────────────────
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-medium text-gray-700 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  งานที่กำลังทำอยู่
+                </h2>
+                <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                  {activeApplications.length}
+                </span>
+              </div>
+
+              {activeApplications.length === 0 ? (
+                <div className="bg-white rounded-lg p-6 text-center text-gray-500 border border-dashed border-gray-300">
+                  <p>ยังไม่มีงานที่กำลังดำเนินการ</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {activeApplications.map((app) => {
+                    const statusConfig: Record<string, { label: string; color: string }> = {
+                      accepted:    { label: "รอเริ่มงาน",   color: "bg-blue-100 text-blue-700"   },
+                      in_progress: { label: "กำลังทำงาน",  color: "bg-yellow-100 text-yellow-700" },
+                      submitted:   { label: "ส่งงานแล้ว",  color: "bg-purple-100 text-purple-700" },
+                      revision:    { label: "แก้ไขงาน",    color: "bg-orange-100 text-orange-700" },
+                    };
+                    const s = statusConfig[app.status] ?? statusConfig.in_progress;
+
+                    return (
+                      <div key={app._id} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3">
+                        {/* Title + status */}
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-gray-800 text-sm line-clamp-2 flex-1">
+                            {app.jobTitle}
+                          </p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${s.color}`}>
+                            {s.label}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-gray-400">{app.jobCategory}</p>
+
+                        {/* Progress bar */}
+                        <div>
+                          <div className="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>ความคืบหน้า</span>
+                            <span className="font-medium">{app.progress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2">
+                            <div
+                              className="bg-primary-blue-500 h-2 rounded-full transition-all"
+                              style={{ width: `${app.progress}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Deadline */}
+                        {app.jobDeadline && (
+                          <p className="text-xs text-gray-400">
+                            กำหนดส่ง: {new Date(app.jobDeadline).toLocaleDateString("th-TH")}
+                          </p>
+                        )}
+
+                        {/* Buttons */}
+                        <Link
+                          href={`/manage-projects/${app.jobId}/work/${app._id}`}
+                          className="btn-primary text-sm text-center py-2 rounded-full"
+                        >
+                          {app.status === "submitted" ? "ดูสถานะ" : "จัดการงาน →"}
+                        </Link>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            // ── ฝั่งเจ้าของ ──────────────────────────────────────────────────────
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-medium text-gray-700 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  งานที่กำลังดำเนินการ
+                </h2>
+                <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
+                  {activeOwnerJobs.length} งาน
+                </span>
+              </div>
+
+              {activeOwnerJobs.length === 0 ? (
+                <div className="bg-white rounded-lg p-6 text-center text-gray-500 border border-dashed border-gray-300">
+                  <p>ยังไม่มีงานที่กำลังดำเนินการ</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {activeOwnerJobs.map((job) => {
+                    // คำนวณ avg progress
+                    const avgProgress = job.workers.length > 0
+                      ? Math.round(job.workers.reduce((sum, w) => sum + w.progress, 0) / job.workers.length)
+                      : 0;
+
+                    const jobStatusConfig: Record<string, { label: string; color: string }> = {
+                      in_progress: { label: "กำลังทำงาน",  color: "bg-yellow-100 text-yellow-700" },
+                      awaiting:    { label: "รอตรวจสอบ",   color: "bg-purple-100 text-purple-700" },
+                    };
+                    const js = jobStatusConfig[job.jobStatus] ?? jobStatusConfig.in_progress;
+
+                    return (
+                      <Link href={`/manage-projects/${job._id}/applicants`} key={job._id}>
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3 hover:shadow-md hover:border-primary-blue-200 transition-all group">
+                          {/* Title + job status */}
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium text-gray-800 text-sm line-clamp-2 flex-1 group-hover:text-primary-blue-600 transition-colors">
+                              {job.title}
+                            </p>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${js.color}`}>
+                              {js.label}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-gray-400">{job.category}</p>
+
+                          {/* Avg progress */}
+                          <div>
+                            <div className="flex justify-between text-xs text-gray-500 mb-1">
+                              <span>ความคืบหน้าเฉลี่ย</span>
+                              <span className="font-medium">{avgProgress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-2">
+                              <div
+                                className="bg-primary-blue-500 h-2 rounded-full transition-all"
+                                style={{ width: `${avgProgress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Workers list */}
+                          <div className="flex flex-col gap-1">
+                            {job.workers.map((w) => {
+                              const wStatusColor: Record<string, string> = {
+                                accepted:    "bg-blue-100 text-blue-700",
+                                in_progress: "bg-yellow-100 text-yellow-700",
+                                submitted:   "bg-purple-100 text-purple-700",
+                                revision:    "bg-orange-100 text-orange-700",
+                              };
+                              return (
+                                <div key={w._id} className="flex items-center justify-between text-xs">
+                                  <span className="text-gray-600 truncate flex-1">{w.applicantName}</span>
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <span className="text-gray-400">{w.progress}%</span>
+                                    <span className={`px-1.5 py-0.5 rounded-full ${wStatusColor[w.status] || "bg-gray-100 text-gray-600"}`}>
+                                      {w.status === "submitted" ? "ส่งแล้ว" :
+                                      w.status === "in_progress" ? "ทำอยู่" :
+                                      w.status === "revision" ? "แก้ไข" : "รอเริ่ม"}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Deadline */}
+                          {job.deliveryDate && (
+                            <p className="text-xs text-gray-400">
+                              กำหนดส่ง: {new Date(job.deliveryDate).toLocaleDateString("th-TH")}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
     </div>
   );
 }
