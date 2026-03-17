@@ -43,7 +43,7 @@ const menuByRole = {
   student: [
     { name: 'โปรไฟล์', path: '/account', icon: User },
     { name: 'งานที่บันทึกไว้', path: '/saved-jobs', icon: Bookmark },
-    { name: 'สถานะใบสมัคร', path: '/dashboard', icon: PieChart },
+    { name: 'สถานะใบสมัคร', path: '/manage-projects', icon: PieChart },
     { name: 'งานของฉัน', path: '/project-board', icon: LayoutDashboard },
     { name: 'ตั้งค่า', path: '/settings', icon: Settings },
   ],

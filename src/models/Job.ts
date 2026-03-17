@@ -32,7 +32,7 @@ const JobSchema = new mongoose.Schema({
     type: String,
     enum: [
       "draft",
-      "published",   // ✅ data เดิมใน DB
+      "published", 
       "in_progress",
       "revision",
       "awaiting",

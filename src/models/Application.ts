@@ -6,8 +6,8 @@ export interface IApplication extends Document {
   applicantId?:   mongoose.Types.ObjectId;   // ✅ optional — backward compat
   applicantEmail: string;
   applicantName:  string;
-  status:         "pending" | "accepted" | "rejected";
-  rejectionNote?: string;
+  status: "pending" | "accepted" | "in_progress" | "submitted" | "revision" | "completed" | "rejected";  rejectionNote?: string;
+  progress:       number;
   appliedDate:    Date;
   updatedAt?:     Date;
 }
@@ -30,8 +30,14 @@ const ApplicationSchema: Schema = new Schema({
 
   status: {
     type: String,
-    enum: ["pending", "accepted", "rejected"],
+    enum: ["pending", "accepted", "in_progress", "submitted", "revision", "completed", "rejected"],
     default: "pending",
+  },
+  progress: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0,
   },
   rejectionNote: { type: String, default: null },
   appliedDate:   { type: Date, default: Date.now },
@@ -42,6 +48,7 @@ const ApplicationSchema: Schema = new Schema({
 ApplicationSchema.index({ jobId: 1, applicantEmail: 1 }, { unique: true });
 ApplicationSchema.index({ jobId: 1, status: 1 });
 ApplicationSchema.index({ applicantEmail: 1, appliedDate: -1 });
+ApplicationSchema.index({ applicantEmail: 1, status: 1 });
 // ✅ เพิ่ม index ใหม่สำหรับ applicantId (sparse = ข้าม null)
 ApplicationSchema.index(
   { jobId: 1, applicantId: 1 },

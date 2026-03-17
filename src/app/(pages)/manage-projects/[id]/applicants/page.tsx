@@ -21,7 +21,7 @@ interface Applicant {
   bio: string;
   profileImageUrl: string | null;
   major: string;
-  basePrice: number;
+//   basePrice: number;
 }
 
 interface JobInfo {
@@ -99,7 +99,7 @@ function ApplicantCard({
         <p className="text-sm text-gray-500 line-clamp-2">{applicant.bio}</p>
       )}
 
-      {/* Base Price */}
+      {/* Base Price
       {applicant.basePrice > 0 && (
         <p className="text-sm font-medium text-gray-700">
           ราคาเริ่มต้น:{' '}
@@ -107,7 +107,7 @@ function ApplicantCard({
             {applicant.basePrice.toLocaleString()} บาท
           </span>
         </p>
-      )}
+      )} */}
 
       {/* Skills */}
       {applicant.skills.length > 0 && (
