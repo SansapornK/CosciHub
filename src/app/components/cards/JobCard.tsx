@@ -2,6 +2,8 @@
 import React from "react";
 import Link from "next/link";
 import { Bookmark, DollarSign, User, Tag, Briefcase } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 export interface JobCardData {
   id: string;
@@ -43,23 +45,42 @@ const JobCard: React.FC<JobCardProps> = ({
   
 
   return (
-    <div className="bg-white shadow-lg rounded-xl p-6 flex flex-col border border-gray-200 transition-shadow duration-300 relative hover:shadow-xl h-full">
-      <div className="absolute top-4 right-6 text-xs text-blue-400">
-        โพสต์เมื่อ {data.timeAgo}
+    <motion.div 
+      whileHover={{ y: -8 }}
+      className="bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-2xl hover:shadow-gray-500/30 rounded-[2rem] p-5 flex flex-col border border-white transition-all duration-500 relative h-full group"
+    >
+      {/* <div className="absolute -top-3 left-8 z-10">
+        <div className="bg-blue-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-full shadow-lg shadow-blue-200 flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-100 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+          </span>
+          งานแนะนำ
+        </div>
+      </div> */}
+
+      <div className="flex justify-end items-end">
+        <div className="text-[11px] font-medium text-blue-400 bg-blue-50/50 px-3 py-1 rounded-full">
+          โพสต์เมื่อ {data.timeAgo}
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-3 mt-4">
-        {data.icon}
-        <h3 className="text-lg font-semibold text-gray-800 text-left">
+      <div className="flex justify-start items-center gap-2 mb-2 mt-0">
+        <div className="p-3 rounded-2xl bg-blue-50/50 group-hover:scale-110 transition-transform duration-500">
+           {data.icon}
+        </div>
+        <h3 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
           {data.title}
         </h3>
       </div>
 
-      <div className="flex flex-col items-start mb-4">
-        <span className="text-xs font-medium text-primary-blue-700 bg-gray-100 px-3 py-1 rounded-full mb-1">
-          {data.type}
-        </span>
-        <p className="text-sm text-blue-400 mt-1">โดย {data.postedBy}</p>
+      <div className="space-y-2 mb-4">
+        <div className="flex flex-col items-start gap-2">
+          <span className="text-xs font-medium text-primary-blue-700 bg-gray-100 px-3 py-1 rounded-full mb-1">
+            {data.type}
+          </span>
+          <span className="text-sm text-blue-400 mt-1">โดย {data.postedBy}</span>
+        </div>
       </div>
 
       <div className="mb-4">
@@ -98,7 +119,7 @@ const JobCard: React.FC<JobCardProps> = ({
           </button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
