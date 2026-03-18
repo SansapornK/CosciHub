@@ -97,6 +97,7 @@ interface ActiveOwnerJob {
   workers: {
     _id: string;
     applicantName: string;
+    profileImageUrl: string | null;
     status: string;
     progress: number;
   }[];
@@ -393,7 +394,7 @@ export default function ManageProjectsPage() {
       </section>
 
       {/* ── Row 1: Waiting Response & Requests ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ProjectManageList
           title={isFreelancer ? "คำขอของฉัน" : "รอการตอบรับ"}
           status="waitingResponse"
@@ -412,10 +413,10 @@ export default function ManageProjectsPage() {
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
-      </div>
+      </div> */}
 
       {/* ── Row 2: In Progress, Revision, Awaiting ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <ProjectManageList
           title="กำลังดำเนินการ"
           status="in_progress"
@@ -443,10 +444,10 @@ export default function ManageProjectsPage() {
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
-      </div>
+      </div> */}
 
       {/* ── Row 3: Completed ── */}
-      <div className="w-full">
+      {/* <div className="w-full">
         <ProjectManageList
           title="เสร็จสิ้น"
           status="completed"
@@ -456,7 +457,7 @@ export default function ManageProjectsPage() {
           isFreelancer={isFreelancer}
           userId={session?.user?.id}
         />
-      </div>
+      </div> */}
 
       {/* ── Row 4: ✅ Job Applications Section ── */}
       <div className="w-full">
@@ -471,7 +472,7 @@ export default function ManageProjectsPage() {
                 งานพิเศษที่สมัครไว้
               </h2>
               <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
-                {jobApplications.filter(a => a.status === "pending").length}
+                {jobApplications.filter(a => a.status === "pending" || a.status === "rejected").length} งาน
               </span>
             </div>
 
@@ -488,9 +489,10 @@ export default function ManageProjectsPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {jobApplications.map((app) => {
+                {jobApplications.filter(a => a.status === "pending" || a.status === "rejected" || a.status === "accepted").map((app) => {
                   const s = appStatusConfig[app.status] ?? appStatusConfig.pending;
                   return (
+                    <Link href={`/find-job/${app.jobId}`} key={app.jobId}>
                     <div key={app._id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md hover:border-primary-blue-200 transition-all flex flex-col gap-2">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-2">
@@ -514,10 +516,12 @@ export default function ManageProjectsPage() {
                         </p>
                       </div>
 
-                      {/* ✅ ปุ่ม "เริ่มงาน" — แสดงเฉพาะ accepted */}
+                      {/* ปุ่ม "เริ่มงาน" — แสดงเฉพาะ accepted */}
                       {app.status === "accepted" && (
                         <button
-                          onClick={async () => {
+                          onClick={async (e) => {
+                            e.preventDefault();      
+                            e.stopPropagation();
                             try {
                               await axios.patch(`/api/applications/${app._id}`, {
                                 action: "updateProgress",
@@ -535,6 +539,7 @@ export default function ManageProjectsPage() {
                         </button>
                       )}
                     </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -577,14 +582,14 @@ export default function ManageProjectsPage() {
                           {job.acceptedCount >= job.capacity ? (
                             // เต็มแล้ว — สีเขียว
                             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                              คัดเลือกครบแล้ว ✓
+                              คัดเลือกครบแล้ว
                             </span>
                           ) : job.pendingCount > 0 ? (
                             // ยังมีคนรอพิจารณา — สีม่วง
                             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-                              {job.pendingCount} รอพิจารณา
+                              รอพิจารณา {job.pendingCount}
                             </span>
-                          ) : null}
+                          ) : job.acceptedCount >= job.capacity}
                         </div>
                       </div>
                       <p className="text-xs text-gray-400 mb-3">{job.category}</p>
@@ -617,7 +622,7 @@ export default function ManageProjectsPage() {
                   งานที่กำลังทำอยู่
                 </h2>
                 <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
-                  {activeApplications.length}
+                  {activeApplications.length} งาน
                 </span>
               </div>
 
@@ -706,79 +711,103 @@ export default function ManageProjectsPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {activeOwnerJobs.map((job) => {
-                    // คำนวณ avg progress
                     const avgProgress = job.workers.length > 0
                       ? Math.round(job.workers.reduce((sum, w) => sum + w.progress, 0) / job.workers.length)
                       : 0;
 
-                    const jobStatusConfig: Record<string, { label: string; color: string }> = {
-                      in_progress: { label: "กำลังทำงาน",  color: "bg-yellow-100 text-yellow-700" },
-                      awaiting:    { label: "รอตรวจสอบ",   color: "bg-purple-100 text-purple-700" },
-                    };
-                    const js = jobStatusConfig[job.jobStatus] ?? jobStatusConfig.in_progress;
+                    const hasSubmitted = job.workers.some(w => w.status === "submitted");
+                    const submittedCount = job.workers.filter(w => w.status === "submitted").length;
 
                     return (
-                      <Link href={`/manage-projects/${job._id}/applicants`} key={job._id}>
-                        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3 hover:shadow-md hover:border-primary-blue-200 transition-all group">
-                          {/* Title + job status */}
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="font-medium text-gray-800 text-sm line-clamp-2 flex-1 group-hover:text-primary-blue-600 transition-colors">
-                              {job.title}
-                            </p>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${js.color}`}>
-                              {js.label}
+                      <div
+                        key={job._id}
+                        className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3 hover:border-primary-blue-300 transition-colors"
+                      >
+                        {/* Title + badge */}
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-gray-800 text-sm flex-1 line-clamp-2">
+                            {job.title}
+                          </p>
+                          {hasSubmitted ? (
+                            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0">
+                              {submittedCount} รอตรวจ
                             </span>
-                          </div>
-
-                          <p className="text-xs text-gray-400">{job.category}</p>
-
-                          {/* Avg progress */}
-                          <div>
-                            <div className="flex justify-between text-xs text-gray-500 mb-1">
-                              <span>ความคืบหน้าเฉลี่ย</span>
-                              <span className="font-medium">{avgProgress}%</span>
-                            </div>
-                            <div className="w-full bg-gray-100 rounded-full h-2">
-                              <div
-                                className="bg-primary-blue-500 h-2 rounded-full transition-all"
-                                style={{ width: `${avgProgress}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Workers list */}
-                          <div className="flex flex-col gap-1">
-                            {job.workers.map((w) => {
-                              const wStatusColor: Record<string, string> = {
-                                accepted:    "bg-blue-100 text-blue-700",
-                                in_progress: "bg-yellow-100 text-yellow-700",
-                                submitted:   "bg-purple-100 text-purple-700",
-                                revision:    "bg-orange-100 text-orange-700",
-                              };
-                              return (
-                                <div key={w._id} className="flex items-center justify-between text-xs">
-                                  <span className="text-gray-600 truncate flex-1">{w.applicantName}</span>
-                                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                                    <span className="text-gray-400">{w.progress}%</span>
-                                    <span className={`px-1.5 py-0.5 rounded-full ${wStatusColor[w.status] || "bg-gray-100 text-gray-600"}`}>
-                                      {w.status === "submitted" ? "ส่งแล้ว" :
-                                      w.status === "in_progress" ? "ทำอยู่" :
-                                      w.status === "revision" ? "แก้ไข" : "รอเริ่ม"}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Deadline */}
-                          {job.deliveryDate && (
-                            <p className="text-xs text-gray-400">
-                              กำหนดส่ง: {new Date(job.deliveryDate).toLocaleDateString("th-TH")}
-                            </p>
+                          ) : (
+                            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0">
+                              กำลังทำงาน
+                            </span>
                           )}
                         </div>
-                      </Link>
+
+                        {/* Progress bar */}
+                        <div>
+                          <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                            <span>ความคืบหน้าเฉลี่ย</span>
+                            <span className="font-medium text-gray-700">{avgProgress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-1.5">
+                            <div
+                              className="bg-primary-blue-500 h-1.5 rounded-full transition-all"
+                              style={{ width: `${avgProgress}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Avatar stack + deadline */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            {job.workers.slice(0, 5).map((w, i) => (
+                              <div
+                                key={w._id}
+                                title={w.applicantName}
+                                style={{
+                                  width: 26, height: 26,
+                                  borderRadius: "50%",
+                                  background: "#e5e7eb",
+                                  flexShrink: 0,
+                                  marginLeft: i > 0 ? -6 : 0,
+                                  border: "2px solid white",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                {w.profileImageUrl ? (
+                                  <img
+                                    src={w.profileImageUrl}
+                                    alt={w.applicantName}
+                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                  />
+                                ) : (
+                                  <div style={{
+                                    width: "100%", height: "100%",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: 11, fontWeight: 500, color: "#6b7280",
+                                  }}>
+                                    {w.applicantName?.charAt(0) || "?"}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            <span className="text-xs text-gray-500 ml-1.5">
+                              {job.workers.length} คน
+                            </span>
+                          </div>
+                          {job.deliveryDate && (
+                            <span className="text-xs text-gray-400">
+                              กำหนดส่ง {new Date(job.deliveryDate).toLocaleDateString("th-TH", {
+                                day: "numeric", month: "short", year: "2-digit"
+                              })}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Button */}
+                        <Link
+                          href={`/manage-projects/${job._id}/applicants`}
+                          className="btn-primary text-sm text-center py-2 rounded-full w-full"
+                        >
+                          ดูรายละเอียด
+                        </Link>
+                      </div>
                     );
                   })}
                 </div>

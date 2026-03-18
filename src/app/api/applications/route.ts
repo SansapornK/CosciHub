@@ -175,45 +175,66 @@ export async function GET(req: Request) {
       const user = await User.findOne({ email: session.user.email });
       if (!user) return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
 
-      const ACTIVE = ["in_progress", "submitted", "revision"];
+      const ACTIVE = ["accepted", "in_progress", "submitted", "revision"];
 
-      const activeJobs = await (Job as any)
-        .find({ owner: user.name, status: { $in: ["in_progress", "awaiting"] } })
+      // ดึงงานทั้งหมดของ owner ไม่กรอง status
+      const allOwnedJobs = await (Job as any)
+        .find({ owner: user.name })
         .select("_id title category budgetMin budgetMax deliveryDate status capacity")
         .lean();
 
-      if (activeJobs.length === 0) return NextResponse.json({ jobs: [] });
+      if (allOwnedJobs.length === 0) return NextResponse.json({ jobs: [] });
 
-      const activeJobIds = activeJobs.map((j: any) => j._id);
+      const allJobIds = allOwnedJobs.map((j: any) => j._id);
+
+      // ดึง applications ที่อยู่ใน ACTIVE status
       const applications = await Application.find({
-        jobId: { $in: activeJobIds },
+        jobId: { $in: allJobIds },
         status: { $in: ACTIVE },
       }).sort({ updatedAt: -1 }).lean();
+
+      if (applications.length === 0) return NextResponse.json({ jobs: [] });
+
+      // หา jobIds ที่มี active applications จริงๆ
+      const activeJobIdSet = new Set(applications.map((a: any) => a.jobId.toString()));
+
+      const emails = applications.map((a: any) => a.applicantEmail);
+      const userProfiles = await User.find({ email: { $in: emails } })
+        .select("email profileImageUrl")
+        .lean();
+
+      const profileMap: Record<string, string | null> = {};
+      userProfiles.forEach((u: any) => {
+        profileMap[u.email] = u.profileImageUrl || null;
+      });
 
       const appMap: Record<string, any[]> = {};
       applications.forEach((a: any) => {
         const key = a.jobId.toString();
         if (!appMap[key]) appMap[key] = [];
         appMap[key].push({
-          _id:           a._id.toString(),
-          applicantName: a.applicantName,
-          status:        a.status,
-          progress:      a.progress || 0,
-          updatedAt:     a.updatedAt,
+          _id:             a._id.toString(),
+          applicantName:   a.applicantName,
+          applicantEmail:  a.applicantEmail,
+          profileImageUrl: profileMap[a.applicantEmail] || null,
+          status:          a.status,
+          progress:        a.progress || 0,
+          updatedAt:       a.updatedAt,
         });
       });
 
-      const result = activeJobs.map((j: any) => ({
-        _id:          j._id.toString(),
-        title:        j.title,
-        category:     j.category,
-        budgetMin:    j.budgetMin,
-        budgetMax:    j.budgetMax,
-        deliveryDate: j.deliveryDate,
-        jobStatus:    j.status,
-        capacity:     j.capacity || 1,
-        workers:      appMap[j._id.toString()] ?? [],
-      }));
+      // กรองเฉพาะงานที่มี active worker จริง
+      const result = allOwnedJobs
+        .filter((j: any) => activeJobIdSet.has(j._id.toString()))
+        .map((j: any) => ({
+          _id:          j._id.toString(),
+          title:        j.title,
+          category:     j.category,
+          deliveryDate: j.deliveryDate,
+          jobStatus:    j.status,
+          capacity:     j.capacity || 1,
+          workers:      appMap[j._id.toString()] ?? [],
+        }));
 
       return NextResponse.json({ jobs: result });
     }
