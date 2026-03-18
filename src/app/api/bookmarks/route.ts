@@ -4,6 +4,29 @@ import dbConnect from "@/libs/mongodb";
 import Bookmark from "@/models/Bookmark";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import Job from "@/models/Job";
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ bookmarks: [] });
+    }
+
+    await dbConnect();
+
+    const bookmarks = await Bookmark.find({ userEmail: session.user.email })
+      .populate("jobId") 
+      .sort({ createdAt: -1 }); 
+    const savedJobs = bookmarks
+      .filter((b) => b.jobId !== null)
+      .map((b) => b.jobId);
+
+    return NextResponse.json({ bookmarks: savedJobs });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -19,7 +42,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Job ID is required" }, { status: 400 });
     }
 
-    // ค้นหาว่าเคยบันทึกไว้หรือยัง
     const existing = await Bookmark.findOne({ 
       jobId, 
       userEmail: session.user.email 

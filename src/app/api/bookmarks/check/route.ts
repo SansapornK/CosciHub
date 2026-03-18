@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   }
 
   await dbConnect();
-  // ค้นหาใน Collection Bookmark ว่ามีคู่ของ User + Job นี้หรือไม่
+  // ค้นหาใน Collection Bookmark
   const found = await Bookmark.findOne({ jobId, userEmail: session.user.email });
   return NextResponse.json({ isBookmarked: !!found });
 }
