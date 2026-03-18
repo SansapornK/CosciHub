@@ -39,7 +39,6 @@ interface JobCardData {
   details: string;
   currency: string;
   timeAgo: string;
-  isFavorite: boolean;
   isVisible: boolean;
 }
 
@@ -69,6 +68,7 @@ function JobList({
   onResetFilters,
 }: JobListProps) {
   const { status } = useSession();
+  const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -84,6 +84,40 @@ function JobList({
   const [totalItems, setTotalItems] = useState(0);
 
   const isLoggedIn = status === "authenticated";
+
+  /* ------------- bookmark ------------- */
+  useEffect(() => {
+      const fetchSavedIds = async () => {
+          if (status === "authenticated") {
+              try {
+                  // สร้าง API นี้เพื่อดึงเฉพาะ ID ของงานที่บันทึกไว้มาเป็น Array
+                  const res = await axios.get("/api/bookmarks/ids");
+                  setSavedJobIds(res.data.ids); // สมมติว่าคืนค่า { ids: ['id1', 'id2'] }
+              } catch (err) {
+                  console.error("Error fetching saved job IDs", err);
+              }
+          }
+      };
+      fetchSavedIds();
+  }, [status]);
+
+  const handleToggleBookmark = async (jobId: string) => {
+      if (status !== "authenticated") {
+          router.push("/auth?state=login");
+          return;
+      }
+      try {
+          const res = await axios.post("/api/bookmarks", { jobId });
+          if (res.data.isBookmarked) {
+              setSavedJobIds(prev => [...prev, jobId]);
+          } else {
+              setSavedJobIds(prev => prev.filter(id => id !== jobId));
+          }
+      } catch (err) {
+          alert("ไม่สามารถดำเนินการได้");
+      }
+  };
+  
 
   /* ---------- Fetch from API ---------- */
   const fetchJobs = async () => {
@@ -182,6 +216,8 @@ function JobList({
           <JobCard
             key={job._id}
             isLoggedIn={isLoggedIn}
+            isBookmarked={savedJobIds.includes(job._id)} 
+            onToggleBookmark={() => handleToggleBookmark(job._id)}
             data={{
               id: job._id,
               icon: getCategoryIcon(job.category),
@@ -195,7 +231,6 @@ function JobList({
                 : null,
               currency: "บาท",
               timeAgo: calculateTimeAgo(job.postedDate),
-              isFavorite: false,
               isVisible: true,
             }}
           />

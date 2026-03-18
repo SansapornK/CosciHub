@@ -202,7 +202,6 @@ export default function MyJobsPage() {
     maxCompensation: job.budgetMax ? job.budgetMax.toLocaleString() : null,
     currency: "บาท",
     timeAgo: calculateTimeAgo(job.postedDate),
-    isFavorite: false,
     isVisible: true,
   }}
   actionButton={

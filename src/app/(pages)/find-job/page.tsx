@@ -7,38 +7,68 @@ import axios from "axios";
 import Loading from "../../components/common/Loading";
 import JobList from "../../components/lists/JobList";
 import JobFilter, { MAJOR_JOB_MAPPING } from "../../components/filters/JobFilter";
+import { motion } from "framer-motion";
+import { Search, Sparkles } from "lucide-react";
 
 // ================= SearchInput =================
-const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => (
-  <div className="w-full flex justify-center">
-    <div className="relative w-full md:w-1/2">
-      <input
-        type="text"
-        placeholder="ค้นหางานพิเศษที่นิสิตสนใจ"
-        value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && onApplyFilters()}
-        className="w-full p-2 pl-12 bg-white border border-gray-200 rounded-full
-                   focus:ring-2 focus:ring-primary-blue-300 focus:outline-none
-                   placeholder:text-primary-blue-300"
-      />
+const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => {
+  const [isFocused, setIsFocused] = useState(false);
 
-      <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-5 h-5 text-primary-blue-300"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
+  return (
+    <div className="w-full flex justify-center">
+      <motion.div 
+        initial={false}
+        animate={{ 
+          scale: isFocused ? 1.02 : 1,
+          boxShadow: isFocused 
+            ? "0 20px 25px -5px rgba(37, 99, 235, 0.1), 0 10px 10px -5px rgba(37, 99, 235, 0.04)" 
+            : "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+        }}
+        className="relative w-full md:w-3/5 lg:w-1/2 group"
+      >
+        {/* Background Gradient Glow (ปรากฏเมื่อ focus) */}
+        <div className={`absolute -inset-1 bg-gradient-to-r from-primary-blue-400 to-indigo-400 rounded-full blur opacity-0 transition duration-500 ${isFocused ? 'opacity-30' : 'group-hover:opacity-10'}`} />
+
+        <input
+          type="text"
+          placeholder="ค้นหางานพิเศษที่นิสิตสนใจ..."
+          value={searchQuery}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onChange={(e) => onSearchChange(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onApplyFilters()}
+          className="relative w-full p-4 pl-14 bg-white border border-gray-100 rounded-full
+                     focus:outline-none text-gray-700 placeholder:text-gray-400
+                     transition-all duration-300"
+        />
+
+        {/* Search Icon Animation */}
+        <motion.div 
+          animate={{ 
+            x: isFocused ? 5 : 0,
+            color: isFocused ? "#2563EB" : "#94A3B8" 
+          }}
+          className="absolute inset-y-0 left-0 flex items-center pl-5 pointer-events-none"
         >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-      </div>
+          <Search className="w-6 h-6" />
+        </motion.div>
+
+        {/* "Enter" Hint - จะค่อยๆ Fade in เมื่อมีการพิมพ์ */}
+        {searchQuery && (
+          <motion.div 
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="absolute inset-y-0 right-4 flex items-center"
+          >
+            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-md border border-gray-200">
+              ENTER
+            </span>
+          </motion.div>
+        )}
+      </motion.div>
     </div>
-  </div>
-);
+  );
+};
 // ==============================================
 
 const FindJobPage = () => {
@@ -123,7 +153,9 @@ function FindJobPageContent() {
 
   return (
     <div className="flex flex-col gap-6 bg-gray-50/30 min-h-screen">
-      <section className="bg-blue-50/50 py-16 px-10 text-center rounded-b-[4rem]">
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white py-20 px-10 text-center rounded-b-[4rem]">
+        <div className="absolute top-0 left-1/4 w-64 h-64 bg-blue-200/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-purple-100/30 rounded-full blur-3xl" />
         <SearchInput
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

@@ -12,6 +12,7 @@ import Loading from "../../../components/common/Loading";
 import { useSession } from "next-auth/react";
 import { calculateTimeAgo } from "@/app/components/utils/jobHelpers";
 
+
 interface JobDetail {
   _id: string;
   title: string;
@@ -102,6 +103,20 @@ const JobDetailPage = () => {
     };
 
     /* ---------- Logic: Bookmark ---------- */
+    useEffect(() => {
+        const checkBookmarkStatus = async () => {
+            if (status === "authenticated" && params.id) {
+                try {
+                    const res = await axios.get(`/api/bookmarks/check?jobId=${params.id}`);
+                    setIsBookmarked(res.data.isBookmarked);
+                } catch (err) {
+                    console.error("Error checking bookmark:", err);
+                }
+            }
+        };
+        checkBookmarkStatus();
+    }, [params.id, status]);
+
     const toggleBookmark = async () => {
         if (!isLoggedIn) {
             router.push(`/auth?state=login&callbackUrl=/find-job/${params.id}`);
@@ -111,7 +126,8 @@ const JobDetailPage = () => {
             const res = await axios.post("/api/bookmarks", { jobId: job?._id });
             setIsBookmarked(res.data.isBookmarked);
         } catch (err) {
-            alert("ไม่สามารถดำเนินการบันทึกงานได้");
+            alert("ไม่สามารถดำเนินการบันทึกงานได้"); 
+            console.error(err); 
         }
     };
 

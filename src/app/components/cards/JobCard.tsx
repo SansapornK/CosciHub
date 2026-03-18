@@ -14,29 +14,33 @@ export interface JobCardData {
   details: string;
   currency: string;
   timeAgo: string;
-  isFavorite: boolean;
   isVisible: boolean;
 }
 
 interface JobCardProps {
   data: JobCardData;
   isLoggedIn: boolean;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
   actionButton?: React.ReactNode;
 }
 
 const JobCard: React.FC<JobCardProps> = ({
   data,
   isLoggedIn,
+  isBookmarked = false,
+  onToggleBookmark,
   actionButton,
 }) => {
   const compensation = data.maxCompensation
     ? `${data.minCompensation} - ${data.maxCompensation}`
     : `${data.minCompensation}+`;
 
-  const isFav = data.isFavorite;
-  const favBtnClass = isFav
-    ? "text-primary-blue-500 fill-current"
-    : "text-gray-400";
+  const favBtnClass = isBookmarked
+    ? "text-primary-blue-500 fill-current bg-blue-50 border-blue-200"
+    : "text-gray-400 bg-gray-100 border-transparent";
+    
+  
 
   return (
     <div className="bg-white shadow-lg rounded-xl p-6 flex flex-col border border-gray-200 transition-shadow duration-300 relative hover:shadow-xl h-full">
@@ -76,7 +80,6 @@ const JobCard: React.FC<JobCardProps> = ({
 
       <div className="flex justify-between items-center gap-3">
         {actionButton ?? (
-          // ปุ่มเดิมที่แสดงเมื่อไม่มี actionButton ถูกส่งเข้ามา
           <Link href={`/find-job/${data.id}`} className="flex-grow">
             <button className="bg-primary-blue-500 text-white text-base py-3 px-4 rounded-lg w-full hover:bg-primary-blue-600 transition-colors">
               ดูรายละเอียดงาน
@@ -85,9 +88,13 @@ const JobCard: React.FC<JobCardProps> = ({
         )}
         {isLoggedIn && !actionButton && (
           <button
-            className={`p-3 rounded-lg bg-gray-100 ${favBtnClass} hover:bg-gray-200 transition-colors cursor-pointer shadow-sm`}
-          >
-            <Bookmark className="w-5 h-5" />
+            onClick={(e) => {
+              e.preventDefault(); 
+              onToggleBookmark?.(); 
+            }}
+            className={`p-3 rounded-lg border transition-all duration-200 cursor-pointer ${favBtnClass} hover:opacity-80`}
+            >
+            <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
           </button>
         )}
       </div>
