@@ -1,29 +1,38 @@
 // scr/app/api/jobs/[id]/route.ts
 import { NextResponse } from "next/server";
-import dbConnect from "@/libs/mongodb"; // ไฟล์เชื่อมต่อ DB ของคุณ
-import Job from "@/models/Job"; // Model ของงาน
-import { getServerSession } from "next-auth";
+import dbConnect from "@/libs/mongodb"; 
+import Application from "@/models/Application";
+import Job from "@/models/Job";
 import User from "@/models/User";
+import { getServerSession } from "next-auth";
+import mongoose from "mongoose";
+
+
 
 /* ── GET ── */
 export async function GET(
-  request: Request,
+  req: Request, 
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await dbConnect();
-    const { id } = await params;
+    const { id } = await params; 
 
-    const job = await (Job as any).findById(id).lean().exec();
-    if (!job) {
-      return NextResponse.json({ message: "ไม่พบข้อมูลงาน" }, { status: 404 });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "ID ไม่ถูกต้อง" }, { status: 400 });
     }
-    return NextResponse.json(job, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json(
-      { message: "เกิดข้อผิดพลาดในการดึงข้อมูล", error: error.message },
-      { status: 500 }
-    );
+
+    const job = await Job.findById(id).lean(); 
+
+    if (!job) {
+      return NextResponse.json({ error: "ไม่พบข้อมูลงาน" }, { status: 404 });
+    }
+
+    return NextResponse.json(job); 
+    
+  } catch (error) {
+    console.error("GET Error:", error);
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
 
