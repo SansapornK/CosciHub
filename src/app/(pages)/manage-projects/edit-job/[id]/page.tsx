@@ -24,7 +24,11 @@ const jobCategories = [
   "งานสอนพิเศษ",
   "งานกองถ่าย/Extra",
 ];
-const jobForms = ["ออนไซต์", "ออนไลน์", "ทั้งออนไซต์และออนไลน์"];
+const jobForms = [
+  { value: "online",        label: "ออนไลน์"              },
+  { value: "onsite",        label: "ออนไซต์"              },
+  { value: "onsite-online", label: "ทั้งออนไซต์และออนไลน์" },
+];
 
 /* ── InputField (ต้องอยู่นอก component) ── */
 const InputField = ({
@@ -59,7 +63,7 @@ export default function EditJobPage() {
     shortDescription:    "",
     description:         "",
     qualifications:      "",
-    jobType:             jobForms[0],
+    jobType:             "online",
     location:            "",
     deliveryDate:        "",
     budgetMin:           100,
@@ -87,7 +91,7 @@ export default function EditJobPage() {
           shortDescription:    job.shortDescription    ?? "",
           description:         job.description         ?? "",
           qualifications:      job.qualifications      ?? "",
-          jobType:             job.jobType             ?? jobForms[0],
+          jobType:             job.jobType             ?? "online",
           location:            job.location            ?? "",
           deliveryDate:        toDateInput(job.deliveryDate),
           budgetMin:           job.budgetMin           ?? 100,
@@ -107,8 +111,8 @@ export default function EditJobPage() {
   }, [jobId]);
 
   const requiresLocation =
-    formData.jobType === "ออนไซต์" ||
-    formData.jobType === "ทั้งออนไซต์และออนไลน์";
+    formData.jobType === "online" ||
+    formData.jobType === "online-onsite";
 
   /* ── Submit (PATCH) ── */
   const handleSubmit = async (submitStatus: "published" | "draft") => {
@@ -222,7 +226,7 @@ export default function EditJobPage() {
                   className="w-full px-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 appearance-none"
                   value={formData.jobType}
                   onChange={(e) => setFormData({ ...formData, jobType: e.target.value, location: "" })}>
-                  {jobForms.map((f) => <option key={f} value={f}>{f}</option>)}
+                  {jobForms.map((f) => <option key={f.value} value={f.value}> {f.label} </option>)}
                 </select>
               </InputField>
 

@@ -101,6 +101,15 @@ interface ActiveOwnerJob {
     status: string;
     progress: number;
   }[];
+  statusCounts: {
+    waitingToStart: number;
+    inProgress: number;
+    submitted: number;
+    revision: number;
+    completed: number;
+  };
+  aggregateBadge: { label: string; color: string };
+  avgProgress: number;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -634,7 +643,6 @@ export default function ManageProjectsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {activeApplications.map((app) => {
                     const statusConfig: Record<string, { label: string; color: string }> = {
-                      accepted:    { label: "รอเริ่มงาน",   color: "bg-blue-100 text-blue-700"   },
                       in_progress: { label: "กำลังทำงาน",  color: "bg-yellow-100 text-yellow-700" },
                       submitted:   { label: "ส่งงานแล้ว",  color: "bg-purple-100 text-purple-700" },
                       revision:    { label: "แก้ไขงาน",    color: "bg-orange-100 text-orange-700" },
@@ -711,102 +719,106 @@ export default function ManageProjectsPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {activeOwnerJobs.map((job) => {
-                    const avgProgress = job.workers.length > 0
-                      ? Math.round(job.workers.reduce((sum, w) => sum + w.progress, 0) / job.workers.length)
-                      : 0;
 
-                    const hasSubmitted = job.workers.some(w => w.status === "submitted");
-                    const submittedCount = job.workers.filter(w => w.status === "submitted").length;
+                    // Badge color map
+                    const badgeColorMap: Record<string, { badge: string; bar: string }> = {
+                      red:    { badge: "bg-red-100 text-red-800",    bar: "#E24B4A" },
+                      orange: { badge: "bg-orange-100 text-orange-800", bar: "#EF9F27" },
+                      yellow: { badge: "bg-yellow-100 text-yellow-800", bar: "#EF9F27" },
+                      blue:   { badge: "bg-blue-100 text-blue-800",  bar: "#378ADD" },
+                      green:  { badge: "bg-green-100 text-green-800", bar: "#639922" },
+                    };
+                    const colors = badgeColorMap[job.aggregateBadge.color] ?? badgeColorMap.blue;
+
+                    // Mini breakdown pills
+                    const breakdownItems = [
+                      { count: job.statusCounts.submitted,   label: "รอตรวจ",    cls: "bg-red-50 text-red-700"    },
+                      { count: job.statusCounts.revision,    label: "แก้ไข",     cls: "bg-orange-50 text-orange-700" },
+                      { count: job.statusCounts.inProgress,  label: "กำลังทำ",  cls: "bg-yellow-50 text-yellow-700" },
+                      { count: job.statusCounts.waitingToStart, label: "รอเริ่ม", cls: "bg-blue-50 text-blue-700"  },
+                      { count: job.statusCounts.completed,   label: "เสร็จ",     cls: "bg-green-50 text-green-700" },
+                    ].filter((item) => item.count > 0);
 
                     return (
                       <div
                         key={job._id}
-                        className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3 hover:border-primary-blue-300 transition-colors"
-                      >
-                        {/* Title + badge */}
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="font-medium text-gray-800 text-sm flex-1 line-clamp-2">
-                            {job.title}
-                          </p>
-                          {hasSubmitted ? (
-                            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0">
-                              {submittedCount} รอตรวจ
+                        className="bg-white rounded-xl border border-gray-200 flex flex-col gap-3 overflow-hidden">
+                        <div className="p-4 flex flex-col gap-3">
+                          {/* Title + Aggregate Badge */}
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium text-gray-800 text-sm flex-1 line-clamp-2">
+                              {job.title}
+                            </p>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap flex-shrink-0 ${colors.badge}`}>
+                              {job.aggregateBadge.label}
                             </span>
-                          ) : (
-                            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0">
-                              กำลังทำงาน
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Progress bar */}
-                        <div>
-                          <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-                            <span>ความคืบหน้าเฉลี่ย</span>
-                            <span className="font-medium text-gray-700">{avgProgress}%</span>
                           </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div
-                              className="bg-primary-blue-500 h-1.5 rounded-full transition-all"
-                              style={{ width: `${avgProgress}%` }}
-                            />
-                          </div>
-                        </div>
+                          <p className="text-xs text-gray-400">{job.category}</p>
 
-                        {/* Avatar stack + deadline */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            {job.workers.slice(0, 5).map((w, i) => (
+                          {/* Average Progress Bar */}
+                          <div>
+                            <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                              <span>ความคืบหน้าเฉลี่ย</span>
+                              <span className="font-medium text-gray-700">{job.avgProgress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                               <div
-                                key={w._id}
-                                title={w.applicantName}
-                                style={{
-                                  width: 26, height: 26,
-                                  borderRadius: "50%",
-                                  background: "#e5e7eb",
-                                  flexShrink: 0,
-                                  marginLeft: i > 0 ? -6 : 0,
-                                  border: "2px solid white",
-                                  overflow: "hidden",
-                                }}
-                              >
-                                {w.profileImageUrl ? (
-                                  <img
-                                    src={w.profileImageUrl}
-                                    alt={w.applicantName}
-                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                  />
-                                ) : (
-                                  <div style={{
-                                    width: "100%", height: "100%",
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    fontSize: 11, fontWeight: 500, color: "#6b7280",
-                                  }}>
-                                    {w.applicantName?.charAt(0) || "?"}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                            <span className="text-xs text-gray-500 ml-1.5">
-                              {job.workers.length} คน
-                            </span>
+                                className="h-1.5 rounded-full transition-all duration-500"
+                                style={{ width: `${job.avgProgress}%`, background: colors.bar }}
+                              />
+                            </div>
                           </div>
-                          {job.deliveryDate && (
-                            <span className="text-xs text-gray-400">
-                              กำหนดส่ง {new Date(job.deliveryDate).toLocaleDateString("th-TH", {
-                                day: "numeric", month: "short", year: "2-digit"
-                              })}
-                            </span>
-                          )}
-                        </div>
 
-                        {/* Button */}
+                          {/* Avatar Stack + Deadline */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex">
+                                {job.workers.slice(0, 5).map((w, i) => (
+                                  <div
+                                    key={w._id}
+                                    title={w.applicantName}
+                                    className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden flex items-center justify-center text-[10px] font-medium text-gray-600 flex-shrink-0"
+                                    style={{ marginLeft: i > 0 ? "-6px" : "0", zIndex: 5 - i }}
+                                  >
+                                    {w.profileImageUrl ? (
+                                      <img src={w.profileImageUrl} alt={w.applicantName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      w.applicantName?.charAt(0) || "?"
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                              <span className="text-xs text-gray-500">{job.workers.length} คน</span>
+                            </div>
+                            {job.deliveryDate && (
+                              <span className="text-xs text-gray-400">
+                                ส่งงาน {new Date(job.deliveryDate).toLocaleDateString("th-TH", {
+                                  day: "numeric", month: "short",
+                                })}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Mini Breakdown */}
+                          {breakdownItems.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-100">
+                              {breakdownItems.map((item) => (
+                                <span
+                                  key={item.label}
+                                  className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${item.cls}`}
+                                >
+                                  {item.count} {item.label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        {/* ดูรายละเอียดงาน button */}
                         <Link
                           href={`/manage-projects/${job._id}/applicants`}
-                          className="btn-primary text-sm text-center py-2 rounded-full w-full"
-                        >
-                          ดูรายละเอียด
+                          className="btn-primary text-sm text-center py-2 rounded-full w-full">
+                          ดูรายละเอียดงาน ↗
                         </Link>
+                        </div>
                       </div>
                     );
                   })}

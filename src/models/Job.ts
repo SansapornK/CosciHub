@@ -8,11 +8,10 @@ const JobSchema = new mongoose.Schema({
   shortDescription: { type: String, required: true },
   description:      { type: String, required: true },
   qualifications:   { type: String, required: true },
-  attachments:      { type: String },
   jobType: {
     type: String,
     required: true,
-    enum: ["ออนไซต์", "ออนไลน์", "ทั้งออนไซต์และออนไลน์"],
+    enum: ["online", "onsite", "onsite-online"],
   },
   location:            { type: String },
   deliveryDate:        { type: Date },
@@ -26,8 +25,6 @@ const JobSchema = new mongoose.Schema({
   owner:     { type: String, required: true },
   ownerName: { type: String },
 
-  // ─── Status ──────────────────────────────────────
-  // ✅ ต้องเก็บ "published" ไว้เพื่อ data เดิม
   status: {
     type: String,
     enum: [
@@ -39,7 +36,7 @@ const JobSchema = new mongoose.Schema({
       "completed",
       "closed",
     ],
-    default: "open",
+    default: "published",
   },
 
   // ─── ผู้สมัครและการมอบหมาย ───────────────────────
