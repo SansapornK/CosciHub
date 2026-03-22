@@ -6,18 +6,18 @@ import Job from "@/models/Job";
 import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { constructFrom } from "date-fns";
 
 export async function GET(
   req: Request, 
-  { params }: { params: Promise<{ id: string }> } // เปลี่ยนเป็น Promise
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   try {
     await dbConnect();
-    const { id } = await params; // ✅ ต้อง await params ก่อนนำ id ไปใช้
+    const { id } = await params; 
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.Types?.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "ID ไม่ถูกต้อง" }, { status: 400 });
     }
 
@@ -36,6 +36,47 @@ export async function GET(
   }
 }
 
+// ─── Helper สำหรับอัปเดต Job Progress ───
+async function updateJobAverageProgress(jobId: string) {
+  const applications = await Application.find({
+    jobId: jobId,
+    status: { $in: ["accepted", "in_progress", "submitted", "revision", "completed"] }
+  });
+
+  if (applications.length > 0) {
+    const totalProgress = applications.reduce((sum, app) => sum + (app.progress || 0), 0);
+    const avgProgress = Math.round(totalProgress / applications.length);
+
+    await (Job as any).findByIdAndUpdate(jobId, { progress: avgProgress });
+  }
+}
+
+// ───  Helper ───────────────────────────────────
+async function syncJobParticipants(jobId: string) {
+  await dbConnect();
+  const cleanJobId = jobId.trim();
+
+  if (!mongoose.isValidObjectId(cleanJobId)) return;
+
+  const allApplications = await Application.find({ jobId: cleanJobId }).lean();
+  
+  const allApplicantIds = [...new Set(allApplications.map((app: any) => app.applicantId))];
+  
+  const assignedWorkerIds = [...new Set(allApplications
+    .filter((app: any) => 
+      ["accepted", "in_progress", "submitted", "revision", "completed"].includes(app.status)
+    )
+    .map((app: any) => app.applicantId))];
+
+  const JobModel = (mongoose.models.Job || Job) as any;
+
+  await JobModel.findByIdAndUpdate(cleanJobId, {
+    $set: {
+      applicants: allApplicantIds,
+      assignedTo: assignedWorkerIds
+    }
+  });
+}
 
 export async function PATCH(
   req: Request,
@@ -99,6 +140,8 @@ export async function PATCH(
         $set: { status: "accepted", updatedAt: new Date() },
       });
 
+      await syncJobParticipants(application.jobId.toString());
+
       const newAcceptedCount = acceptedCount + 1;
       const isFull = newAcceptedCount >= capacity;
 
@@ -128,6 +171,8 @@ export async function PATCH(
         },
       });
 
+      await syncJobParticipants(application.jobId.toString());
+
       return NextResponse.json({ success: true, message: "ปฏิเสธใบสมัครแล้ว" });
     }
 
@@ -139,10 +184,14 @@ export async function PATCH(
       await Application.findByIdAndUpdate(id, {
         $set: { 
           status: "completed", 
+          progress: 100,
           feedback: feedback,
           updatedAt: new Date() 
         },
       });
+
+      await updateJobAverageProgress(application.jobId.toString());
+      await syncJobParticipants(application.jobId.toString());
 
       // ตรวจสอบว่า job ทุก application เสร็จหมดไหม
       const remainingActive = await Application.countDocuments({
@@ -183,10 +232,12 @@ export async function PATCH(
       await Application.findByIdAndUpdate(id, {
         $set: {
           progress: newProgress,
-          status: "in_progress", // ✅ เริ่มทำงานแล้ว
+          status: "in_progress", // เริ่มทำงาน
           updatedAt: new Date(),
         },
       });
+      await updateJobAverageProgress(application.jobId.toString());
+
       return NextResponse.json({ success: true, progress: newProgress });
     }
 
@@ -209,6 +260,8 @@ export async function PATCH(
       await (Job as any).findByIdAndUpdate(application.jobId, {
         $set: { status: "awaiting" },
       });
+
+      await updateJobAverageProgress(application.jobId.toString());
 
       return NextResponse.json({ success: true, message: "ส่งงานเรียบร้อยแล้ว รอเจ้าของตรวจสอบ" });
     }

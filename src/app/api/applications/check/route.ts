@@ -13,14 +13,12 @@ export async function GET(req: Request) {
 
     const session = await getServerSession(authOptions);
 
-    // ถ้าไม่ได้ login หรือไม่มี jobId → ตอบ false เฉยๆ ไม่ error
     if (!session?.user?.email || !jobId) {
       return NextResponse.json({ hasApplied: false });
     }
 
     await connectToDatabase();
 
-    // ✅ ค้นหาด้วย email (รองรับทั้ง doc เก่าและใหม่)
     const alreadyApplied = await Application.findOne({
       jobId,
       applicantEmail: session.user.email,
@@ -29,7 +27,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ hasApplied: !!alreadyApplied });
 
   } catch (error: any) {
-    // ✅ มี try/catch ป้องกัน 500
     console.error("[GET /api/applications/check] Error:", error);
     return NextResponse.json({ hasApplied: false }); // fail gracefully
   }

@@ -6,6 +6,33 @@ import Job from "@/models/Job";
 import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import mongoose, { Types } from "mongoose";
+
+// ─── Helper: Sync รายชื่อ ────────────────────────────────
+async function syncJobParticipants(jobId: string) {
+  await dbConnect();
+
+  const cleanId = jobId.trim();
+  if (!mongoose.isValidObjectId(cleanId)) return;
+
+  const allApplications = await Application.find({ jobId: cleanId }).lean();
+  
+  const allApplicantIds = [...new Set(allApplications.map((app: any) => app.applicantId))];
+  
+  const assignedWorkerIds = [...new Set(allApplications
+    .filter((app: any) => 
+      ["accepted", "in_progress", "submitted", "revision", "completed"].includes(app.status)
+    )
+    .map((app: any) => app.applicantId))];
+
+  const JobModel = (mongoose.models.Job || Job) as any;
+  await JobModel.findByIdAndUpdate(cleanId, {
+    $set: {
+      applicants: allApplicantIds,    
+      assignedTo: assignedWorkerIds  
+    }
+  });
+}
 
 // ─── POST: นิสิตสมัครงาน ──────────────────────────────────────────────────────
 export async function POST(req: Request) {
@@ -23,16 +50,17 @@ export async function POST(req: Request) {
     }
 
     const { jobId } = await req.json();
-    if (!jobId) {
-      return NextResponse.json({ error: "กรุณาระบุรหัสงาน" }, { status: 400 });
+    const safeJobId = jobId?.toString().trim();
+
+    if (!safeJobId || !mongoose.isValidObjectId(safeJobId)) {
+      return NextResponse.json({ error: "รหัสงานไม่ถูกต้อง" }, { status: 400 });
     }
 
-    const job = await (Job as any).findById(jobId).lean().exec();
+    const job = await (Job as any).findById(safeJobId).lean().exec();
     if (!job) {
       return NextResponse.json({ error: "ไม่พบข้อมูลงานนี้" }, { status: 404 });
     }
 
-    // ตรวจสอบว่าไม่ใช่งานของตัวเอง
     if (job.owner === user.name) {
       return NextResponse.json(
         { error: "คุณไม่สามารถสมัครงานที่คุณเป็นเจ้าของได้" },
@@ -40,14 +68,21 @@ export async function POST(req: Request) {
       );
     }
 
+    // สร้างใบสมัครใหม่
     const newApplication = await Application.create({
-      jobId:          jobId,
-      applicantId: user._id,
+      jobId:          safeJobId,
+      applicantId:    user._id,
       applicantEmail: user.email,
       applicantName:  user.name,
       status:         "pending",
       appliedDate:    new Date(),
     });
+
+    try {
+      await syncJobParticipants(safeJobId);
+    } catch (syncError) {
+      console.error("Sync Error:", syncError);
+    }
 
     return NextResponse.json(
       { message: "ส่งใบสมัครเรียบร้อยแล้ว", application: newApplication },
@@ -56,18 +91,10 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("[POST /api/applications] Error:", error);
-
     if (error.code === 11000) {
-      return NextResponse.json(
-        { error: "คุณได้ส่งใบสมัครงานนี้ไปแล้ว" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "คุณได้ส่งใบสมัครงานนี้ไปแล้ว" }, { status: 400 });
     }
-
-    return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", details: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" }, { status: 500 });
   }
 }
 
@@ -196,7 +223,7 @@ export async function GET(req: Request) {
 
       if (applications.length === 0) return NextResponse.json({ jobs: [] });
 
-      // หา jobIds ที่มี active applications จริงๆ
+      // ค้นหา jobIds ที่มี active applications
       const activeJobIdSet = new Set(applications.map((a: any) => a.jobId.toString()));
 
       const emails = applications.map((a: any) => a.applicantEmail);
@@ -224,13 +251,12 @@ export async function GET(req: Request) {
         });
       });
 
-      // กรองเฉพาะงานที่มี active worker จริง
+      // กรองเฉพาะงานที่มี active worker
       const result = allOwnedJobs
         .filter((j: any) => activeJobIdSet.has(j._id.toString()))
         .map((j: any) => {
           const workers = appMap[j._id.toString()] ?? [];
           
-          // คำนวณ aggregate badge ตาม priority
           const statusCounts = {
             waitingToStart: workers.filter((w: any) => w.status === "accepted").length,
             inProgress:     workers.filter((w: any) => w.status === "in_progress").length,
@@ -239,7 +265,6 @@ export async function GET(req: Request) {
             completed:      workers.filter((w: any) => w.status === "completed").length,
           };
 
-          // Aggregate badge ตาม priority สูงสุด
           let aggregateBadge: { label: string; color: string };
           if (statusCounts.submitted > 0) {
             aggregateBadge = {
@@ -268,7 +293,6 @@ export async function GET(req: Request) {
             };
           }
 
-          // Average progress
           const avgProgress =
             workers.length > 0
               ? Math.round(

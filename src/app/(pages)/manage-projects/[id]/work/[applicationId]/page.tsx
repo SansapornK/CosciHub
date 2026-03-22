@@ -19,6 +19,7 @@ import {
   Briefcase,
   History,
   Info,
+  MapPin,
 } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -37,6 +38,8 @@ interface ApplicationDetail {
     budgetMax: number;
     deadline: string;
     jobType: string;
+    location: string;
+    owner: string;
   };
   applicantId: {
     _id: string;
@@ -191,8 +194,17 @@ export default function WorkManagementPage() {
             </div>
             
             <div className="text-left md:text-right">
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">ผู้ปฏิบัติงาน</p>
-              <p className="text-lg font-bold text-gray-800">{workData.applicantId?.name}</p>
+
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">
+                {isFreelancer ? "ผู้ว่าจ้าง / เจ้าของงาน" : "นิสิตผู้ปฏิบัติงาน"}
+              </p>
+              
+              <p className="text-lg font-bold text-gray-800">
+                {isFreelancer 
+                  ? (workData.jobId?.owner || "ไม่พบข้อมูลเจ้าของงาน") 
+                  : (workData.applicantId?.name || "ไม่พบข้อมูลผู้ปฏิบัติงาน")
+                }
+              </p>
             </div>
           </div>
         </div>
@@ -285,7 +297,7 @@ export default function WorkManagementPage() {
                 <FileText className="text-purple-500" size={20} /> รายละเอียดการส่งงาน
               </h2>
               <div className="flex gap-2">
-                {/* ✅ เพิ่ม Tag เงื่อนไขงาน */}
+                {/* เงื่อนไขงาน */}
                 {(workData.jobId?.jobType?.toLowerCase().trim().includes("ออนไลน์") || workData.jobId?.jobType?.toLowerCase().trim().includes("online")) ? (
                 <span className="text-[10px] font-bold bg-red-50 text-red-500 px-2 py-1 rounded-md border border-red-100 uppercase tracking-wider">
                   Required
@@ -438,9 +450,9 @@ export default function WorkManagementPage() {
               background: 'linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)' 
             }}
           >
-            {/* <div className="absolute top-0 right-0 p-4 opacity-20 transform translate-x-4 -translate-y-4">
-              <Briefcase size={120} />
-            </div> */}
+            <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+              <Briefcase size={100} />
+            </div>
 
             <h3 className="text-s font-bold text-white uppercase tracking-widest mb-4">
               ข้อมูลโปรเจกต์
@@ -455,35 +467,75 @@ export default function WorkManagementPage() {
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-white/20">
-                <p className="text-[10px] text-blue-100/70 font-bold uppercase mb-2">
-                  <Info className="text-indigo-500" size={20} /> คำอธิบายงาน
-                </p>
-                <p className="text-xs text-blue-50/90 leading-relaxed line-clamp-6 font-medium">
-                  {workData.jobId?.description}
+              <div className="pt-5 border-t border-gray-50">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info size={14} className="text-white" />
+                  <p className="text-[10px] text-white font-black uppercase tracking-widest">
+                    รายละเอียดงานโดยสังเขป
+                  </p>
+                </div>
+                
+                <p className="text-sm text-white leading-relaxed font-medium">
+                  {workData.jobId?.description || "ไม่มีรายละเอียดเพิ่มเติม"}
                 </p>
               </div>
             </div>
           </section>
 
-          <section className="bg-indigo-50 p-6 rounded-2xl text-black shadow-xl text-left relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Briefcase size={80} />
+          <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-left relative overflow-hidden group hover:shadow-md transition-all">
+            {/* แถบสีด้านข้างเพื่อบ่งบอกหมวดหมู่ (Accent Bar) */}
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500 opacity-80" />
+            
+            <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
+              <Briefcase size={100} />
             </div>
-            <h3 className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4">รูปแบบการทำงาน</h3>
-            <div className="space-y-4 relative z-10">
+
+            <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+              รูปแบบการทำงาน
+            </h3>
+
+            <div className="space-y-5 relative z-10">
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase">งบประมาณที่ตกลง</p>
-                <p className="text-xl font-black">
-                  {workData.jobId?.jobType}
-                </p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-2xl font-black text-gray-900 tracking-tight">
+                    {workData.jobId?.jobType || "ไม่ได้ระบุ"}
+                  </p>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 uppercase">
+                    {workData.jobId?.jobType}
+                  </span>
+                </div>
               </div>
-              <div className="pt-4 border-t border-gray-800">
-                <p className="text-[10px] text-gray-400 font-bold uppercase mb-2">คำอธิบายงาน</p>
-                <p className="text-xs text-gray-400 leading-relaxed line-clamp-6">
-                  {workData.jobId?.description}
+
+              {!(workData.jobId?.jobType?.toLowerCase().trim().includes("ออนไลน์") || 
+                workData.jobId?.jobType?.toLowerCase().trim().includes("online")) && (
+                  <>
+                <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100/50 flex items-start gap-3 transition-all hover:bg-orange-50">
+                  <div className="p-2 bg-white rounded-xl text-orange-500 shadow-sm">
+                    <MapPin size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mb-0.5">สถานที่ปฏิบัติงาน</p>
+                    <p className="text-sm text-gray-700 font-bold leading-tight">
+                      {workData.jobId?.location || "ติดต่อผู้ว่าจ้างเพื่อสอบถามสถานที่"}
+                    </p>
+                  </div>
+                </div>
+                </>
+              )}
+
+              {/* ส่วนคำอธิบายงาน
+              <div className="pt-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Info size={14} className="text-gray-400" />
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                    รายละเอียดเพิ่มเติม
+                  </p>
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-3">
+                  {workData.jobId?.description || "ไม่มีรายละเอียดเพิ่มเติม"}
                 </p>
-              </div>
+              </div> */}
             </div>
           </section>
         </div>
