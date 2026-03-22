@@ -52,6 +52,8 @@ const JobDetailPage = () => {
 
     useEffect(() => {
         const fetchJobData = async () => {
+            if (!params?.id) return;
+
             try {
                 setLoading(true);
                 const res = await axios.get(`/api/jobs/${params.id}`);
@@ -69,7 +71,7 @@ const JobDetailPage = () => {
             }
         };
 
-        if (params.id) fetchJobData();
+        fetchJobData();
     }, [params.id, status]);
 
     const handleApplyClick = () => {

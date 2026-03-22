@@ -42,6 +42,7 @@ export async function POST(req: Request) {
 
     const newApplication = await Application.create({
       jobId:          jobId,
+      applicantId: user._id,
       applicantEmail: user.email,
       applicantName:  user.name,
       status:         "pending",

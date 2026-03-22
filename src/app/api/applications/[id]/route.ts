@@ -9,6 +9,34 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import mongoose from "mongoose";
 import { constructFrom } from "date-fns";
 
+export async function GET(
+  req: Request, 
+  { params }: { params: Promise<{ id: string }> } // เปลี่ยนเป็น Promise
+) {
+  try {
+    await dbConnect();
+    const { id } = await params; // ✅ ต้อง await params ก่อนนำ id ไปใช้
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "ID ไม่ถูกต้อง" }, { status: 400 });
+    }
+
+    const application = await Application.findById(id)
+      .populate("jobId")      
+      .populate("applicantId")
+      .lean(); 
+
+    if (!application) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ application: application });
+  } catch (error) {
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
+  }
+}
+
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -45,7 +73,7 @@ export async function PATCH(
     const isStudent = application.applicantEmail === user.email;
 
 
-    const { action, progress, rejectionNote } = await req.json();
+    const { action, progress, rejectionNote, workLink, note, feedback } = await req.json();
 
     if (!isOwner && !isStudent) {
       return NextResponse.json({ error: "ไม่มีสิทธิ์อัปเดตใบสมัครนี้" }, { status: 403 });
@@ -109,7 +137,11 @@ export async function PATCH(
         return NextResponse.json({ error: "งานยังไม่ถูกส่ง" }, { status: 400 });
       }
       await Application.findByIdAndUpdate(id, {
-        $set: { status: "completed", updatedAt: new Date() },
+        $set: { 
+          status: "completed", 
+          feedback: feedback,
+          updatedAt: new Date() 
+        },
       });
 
       // ตรวจสอบว่า job ทุก application เสร็จหมดไหม
@@ -134,7 +166,7 @@ export async function PATCH(
       await Application.findByIdAndUpdate(id, {
         $set: {
           status: "revision",
-          rejectionNote: rejectionNote || null,
+          feedback: feedback,
           updatedAt: new Date(),
         },
       });
@@ -164,7 +196,13 @@ export async function PATCH(
         return NextResponse.json({ error: "ไม่สามารถส่งงานได้ในสถานะนี้" }, { status: 400 });
       }
       await Application.findByIdAndUpdate(id, {
-        $set: { status: "submitted", progress: 100, updatedAt: new Date() },
+        $set: { 
+          status: "submitted", 
+          progress: 100, 
+          workLink: workLink, 
+          note: note,         
+          updatedAt: new Date() 
+        },
       });
 
       // Job → awaiting เมื่อมีคนส่งงาน
