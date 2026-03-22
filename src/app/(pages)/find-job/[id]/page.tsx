@@ -186,7 +186,7 @@ const JobDetailPage = () => {
                                     <SidebarItem icon={<User />} label={job.owner}/>
                                     <SidebarItem icon={<MapPin />} label={`${jobTypeLabel[job.jobType] ?? job.jobType} / ${job.location || "ทำงานออนไลน์"}`} iconColor="text-red-400" />
                                     <SidebarItem icon={<Wallet />} label={`${job.budgetMin.toLocaleString()} ${job.budgetMax ? `- ${job.budgetMax.toLocaleString()}` : ""} บาท`} iconColor="text-emerald-500" />
-                                    <SidebarItem icon={<Users />} label={`${job.capacity || 1} คน`} iconColor="text-indigo-500" />
+                                    <SidebarItem icon={<Users />} label={`จำนวนรับ ${job.capacity || 1} คน`} iconColor="text-indigo-500" />
                                 </div>
 
                                 <div className="flex items-center gap-3">

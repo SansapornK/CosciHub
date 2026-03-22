@@ -104,7 +104,7 @@ export default function MyJobsPage() {
     <div className="bg-gray-50/50 min-h-screen">
       <Toaster position="top-center" />
 
-      <div className="max-w-6xl mx-auto p-4 md:p-8 pt-6">
+      <div className="max-w-6xl mx-auto p-4 md:p-7 pt-6">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-10 pb-4 border-b border-gray-100">

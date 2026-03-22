@@ -111,8 +111,8 @@ export default function EditJobPage() {
   }, [jobId]);
 
   const requiresLocation =
-    formData.jobType === "online" ||
-    formData.jobType === "online-onsite";
+    formData.jobType === "onsite" ||
+    formData.jobType === "onsite-online";
 
   /* ── Submit (PATCH) ── */
   const handleSubmit = async (submitStatus: "published" | "draft") => {
@@ -151,14 +151,14 @@ export default function EditJobPage() {
     }
   };
 
-  const handleSkillToggle = (skill: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      requiredSkills: prev.requiredSkills.includes(skill)
-        ? prev.requiredSkills.filter((s) => s !== skill)
-        : [...prev.requiredSkills, skill],
-    }));
-  };
+  // const handleSkillToggle = (skill: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     requiredSkills: prev.requiredSkills.includes(skill)
+  //       ? prev.requiredSkills.filter((s) => s !== skill)
+  //       : [...prev.requiredSkills, skill],
+  //   }));
+  // };
 
   if (status === "loading" || loading) {
     return <div className="h-screen flex items-center justify-center"><Loading /></div>;
@@ -230,19 +230,21 @@ export default function EditJobPage() {
                 </select>
               </InputField>
 
+            <div className="md:col-span-2">
               {requiresLocation && (
                 <InputField label="สถานที่ทำงาน" id="location" required>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input id="location" type="text" required
                       className="w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800"
-                      placeholder="เช่น อาคาร IT ห้อง 301"
+                      placeholder="เช่น อาคาร XX ห้อง 301"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     />
                   </div>
                 </InputField>
               )}
+             </div>
 
               <div className="md:col-span-2">
                 <InputField label="คำอธิบายงานสั้น (แสดงบนการ์ด)" id="shortDescription" required>
@@ -309,6 +311,7 @@ export default function EditJobPage() {
                   />
                 </div>
               </InputField>
+            </div>
 
               <InputField label="จำนวนรับ (คน)" id="capacity" required>
                 <div className="relative">
@@ -321,6 +324,7 @@ export default function EditJobPage() {
                 </div>
               </InputField>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
               <InputField label="วันสิ้นสุดรับสมัคร" id="applicationDeadline" required>
                 <div className="relative">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -346,7 +350,7 @@ export default function EditJobPage() {
           </div>
 
           {/* Section 3: ทักษะ */}
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-6">
+          {/* <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-6">
             <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
               <SquarePlus className="w-6 h-6 text-purple-500" />
               <h2 className="text-xl font-bold text-gray-900">ทักษะที่ต้องการ</h2>
@@ -386,7 +390,7 @@ export default function EditJobPage() {
                 );
               })}
             </div>
-          </div>
+          </div> */}
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 pb-8">

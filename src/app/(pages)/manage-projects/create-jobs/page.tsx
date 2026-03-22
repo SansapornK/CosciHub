@@ -230,7 +230,7 @@ export default function CreateJobPage() {
               />
             </InputField>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
               {/* ประเภทงาน → Job.category */}
               <InputField label="ประเภทงาน" id="category" required>
                 <select
@@ -275,6 +275,7 @@ export default function CreateJobPage() {
 
 
               {/* สถานที่ → Job.location (conditional) */}
+             <div className="md:col-span-2">
               {requiresLocation && (
                 <InputField label="สถานที่ทำงาน" id="location" required>
                   <div className="relative">
@@ -293,6 +294,7 @@ export default function CreateJobPage() {
                   </div>
                 </InputField>
               )}
+            </div>
 
               {/* คำอธิบายงานสั้น → Job.shortDescription */}
               <div className="md:col-span-2">
@@ -424,6 +426,7 @@ export default function CreateJobPage() {
                   />
                 </div>
               </InputField>
+            </div>
 
               {/* จำนวนรับ */}
               <InputField label="จำนวนรับ (คน)" id="capacity" required>
@@ -447,6 +450,7 @@ export default function CreateJobPage() {
               </InputField>
 
               {/* วันสิ้นสุดรับสมัคร → Job.applicationDeadline */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
               <InputField
                 label="วันสิ้นสุดรับสมัคร"
                 id="applicationDeadline"
@@ -489,7 +493,7 @@ export default function CreateJobPage() {
           </div>
 
           {/* ───── Section 3: ทักษะที่ต้องการ ───── */}
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-6">
+          {/* <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-6">
             <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
               <LayoutDashboard className="w-6 h-6 text-purple-500" />
               <h2 className="text-xl font-bold text-gray-900">
@@ -500,10 +504,10 @@ export default function CreateJobPage() {
                   เลือกแล้ว {formData.requiredSkills.length} ทักษะ
                 </span>
               )}
-            </div>
+            </div> */}
 
             {/* Category Tabs */}
-            <div className="flex flex-wrap gap-2">
+            {/* <div className="flex flex-wrap gap-2">
               {Object.keys(skillCategories).map((cat) => (
                 <button
                   key={cat}
@@ -518,10 +522,10 @@ export default function CreateJobPage() {
                   {cat}
                 </button>
               ))}
-            </div>
+            </div> */}
 
             {/* Skill Chips */}
-            <div className="flex flex-wrap gap-2.5">
+            {/* <div className="flex flex-wrap gap-2.5">
               {skillCategories[
                 activeCategory as keyof typeof skillCategories
               ].map((skill) => {
@@ -542,10 +546,10 @@ export default function CreateJobPage() {
                   </button>
                 );
               })}
-            </div>
+            </div> */}
 
             {/* Selected Skills Preview */}
-            {formData.requiredSkills.length > 0 && (
+            {/* {formData.requiredSkills.length > 0 && (
               <div className="bg-gray-50 rounded-2xl p-4">
                 <p className="text-xs text-gray-500 font-semibold mb-2">
                   ทักษะที่เลือก:
@@ -569,7 +573,7 @@ export default function CreateJobPage() {
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* ───── Submit/Draft Button ───── */}
             <div className="flex justify-end gap-3 pb-8">
