@@ -48,6 +48,12 @@ const JobDetailPage = () => {
     const [applying, setApplying] = useState(false); // Loading 
     const [isBookmarked, setIsBookmarked] = useState(false);
 
+    const jobTypeLabel: Record<string, string> = {
+    "online":        "ออนไลน์",
+    "onsite":        "ออนไซต์",
+    "onsite-online": "ทั้งออนไซต์และออนไลน์",
+    };
+
     const isLoggedIn = status === "authenticated";
 
     useEffect(() => {
@@ -180,9 +186,9 @@ const JobDetailPage = () => {
                             <div className="w-full lg:w-80 shrink-0">
                                 <div className="space-y-6 bg-gray-50/50 p-6 rounded-3xl border border-gray-50 mb-8">
                                     <SidebarItem icon={<User />} label={job.owner}/>
-                                    <SidebarItem icon={<MapPin />} label={`${job.jobType || "ออนไลน์"} / ${job.location || "ทำงานออนไลน์" }`} iconColor="text-red-400" />
+                                    <SidebarItem icon={<MapPin />} label={`${jobTypeLabel[job.jobType] ?? job.jobType} / ${job.location || "ทำงานออนไลน์"}`} iconColor="text-red-400" />
                                     <SidebarItem icon={<Wallet />} label={`${job.budgetMin.toLocaleString()} ${job.budgetMax ? `- ${job.budgetMax.toLocaleString()}` : ""} บาท`} iconColor="text-emerald-500" />
-                                    <SidebarItem icon={<Users />} label={`${job.capacity || 1} คน`} iconColor="text-indigo-500" />
+                                    <SidebarItem icon={<Users />} label={`จำนวนรับ ${job.capacity || 1} คน`} iconColor="text-indigo-500" />
                                 </div>
 
                                 <div className="flex items-center gap-3">

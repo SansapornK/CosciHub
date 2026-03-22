@@ -227,15 +227,69 @@ export async function GET(req: Request) {
       // กรองเฉพาะงานที่มี active worker จริง
       const result = allOwnedJobs
         .filter((j: any) => activeJobIdSet.has(j._id.toString()))
-        .map((j: any) => ({
-          _id:          j._id.toString(),
-          title:        j.title,
-          category:     j.category,
-          deliveryDate: j.deliveryDate,
-          jobStatus:    j.status,
-          capacity:     j.capacity || 1,
-          workers:      appMap[j._id.toString()] ?? [],
-        }));
+        .map((j: any) => {
+          const workers = appMap[j._id.toString()] ?? [];
+          
+          // คำนวณ aggregate badge ตาม priority
+          const statusCounts = {
+            waitingToStart: workers.filter((w: any) => w.status === "accepted").length,
+            inProgress:     workers.filter((w: any) => w.status === "in_progress").length,
+            submitted:      workers.filter((w: any) => w.status === "submitted").length,
+            revision:       workers.filter((w: any) => w.status === "revision").length,
+            completed:      workers.filter((w: any) => w.status === "completed").length,
+          };
+
+          // Aggregate badge ตาม priority สูงสุด
+          let aggregateBadge: { label: string; color: string };
+          if (statusCounts.submitted > 0) {
+            aggregateBadge = {
+              label: `${statusCounts.submitted} รอตรวจ`,
+              color: "red",
+            };
+          } else if (statusCounts.revision > 0) {
+            aggregateBadge = {
+              label: `${statusCounts.revision} แก้ไขงาน`,
+              color: "orange",
+            };
+          } else if (statusCounts.inProgress > 0) {
+            aggregateBadge = {
+              label: `${statusCounts.inProgress} กำลังทำงาน`,
+              color: "yellow",
+            };
+          } else if (statusCounts.waitingToStart > 0) {
+            aggregateBadge = {
+              label: `${statusCounts.waitingToStart} รอเริ่มงาน`,
+              color: "blue",
+            };
+          } else {
+            aggregateBadge = {
+              label: `${statusCounts.completed} เสร็จสิ้น`,
+              color: "green",
+            };
+          }
+
+          // Average progress
+          const avgProgress =
+            workers.length > 0
+              ? Math.round(
+                  workers.reduce((sum: number, w: any) => sum + (w.progress || 0), 0) /
+                    workers.length
+                )
+              : 0;
+
+          return {
+            _id:            j._id.toString(),
+            title:          j.title,
+            category:       j.category,
+            deliveryDate:   j.deliveryDate,
+            jobStatus:      j.status,
+            capacity:       j.capacity || 1,
+            workers,
+            statusCounts,
+            aggregateBadge,
+            avgProgress,
+          };
+        });
 
       return NextResponse.json({ jobs: result });
     }
