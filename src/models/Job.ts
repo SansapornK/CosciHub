@@ -56,6 +56,15 @@ const JobSchema = new mongoose.Schema({
   postedDate:  { type: Date, default: Date.now },
   updatedAt:   { type: Date },
   completedAt: { type: Date },
+
+  allSubmissions: [{
+    applicationId:   { type: mongoose.Schema.Types.ObjectId, ref: "Application" },
+    applicantName:   String,
+    status:          String,
+    hasLink:         { type: Boolean, default: false },
+    hasFiles:        { type: Boolean, default: false },
+    lastSubmittedAt: { type: Date }
+  }],
 });
 
 JobSchema.index({ status: 1 });

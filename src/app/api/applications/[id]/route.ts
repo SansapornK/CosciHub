@@ -9,6 +9,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import mongoose, { Types } from "mongoose";
 import { constructFrom } from "date-fns";
 
+
 export async function GET(
   req: Request, 
   { params }: { params: Promise<{ id: string }> } 
@@ -78,6 +79,25 @@ async function syncJobParticipants(jobId: string) {
   });
 }
 
+// ─── เพิ่ม Helper สำหรับสรุปงานไปที่ Job ──────────────────────
+async function syncJobSubmissions(jobId: string) {
+  const apps = await Application.find({ jobId }).lean();
+  
+  const submissionsSummary = apps.map((a: any) => ({
+    applicationId:   a._id,
+    applicantName:   a.applicantName,
+    status:          a.status,
+    hasLink:         !!a.workLink,
+    hasFiles:        (a.attachments?.length || 0) > 0,
+    lastSubmittedAt: a.updatedAt
+  }));
+
+  const JobModel = (mongoose.models.Job || Job) as any;
+  await JobModel.findByIdAndUpdate(jobId, {
+    $set: { allSubmissions: submissionsSummary }
+  });
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -114,7 +134,8 @@ export async function PATCH(
     const isStudent = application.applicantEmail === user.email;
 
 
-    const { action, progress, rejectionNote, workLink, note, feedback } = await req.json();
+    // const { action, progress, rejectionNote, workLink, note, feedback } = await req.json();
+    const { action, progress, rejectionNote, workLink, note, feedback, attachments } = await req.json();
 
     if (!isOwner && !isStudent) {
       return NextResponse.json({ error: "ไม่มีสิทธิ์อัปเดตใบสมัครนี้" }, { status: 403 });
@@ -185,7 +206,7 @@ export async function PATCH(
         $set: { 
           status: "completed", 
           progress: 100,
-          feedback: feedback,
+          feedback: feedback || "ทำงานได้ยอดเยี่ยมมาก!",
           updatedAt: new Date() 
         },
       });
@@ -215,7 +236,7 @@ export async function PATCH(
       await Application.findByIdAndUpdate(id, {
         $set: {
           status: "revision",
-          feedback: feedback,
+          feedback: feedback || "รบกวนติดต่อกลับเพื่อรับ feedback",
           updatedAt: new Date(),
         },
       });
@@ -243,15 +264,29 @@ export async function PATCH(
 
     // ── submit (นิสิตส่งงาน) ───────────────
     if (action === "submit" && isStudent) {
-      if (!["in_progress", "revision"].includes(application.status)) {
+
+      await Application.findByIdAndUpdate(id, {
+      $set: { 
+        status: "submitted", 
+        progress: 100, 
+        workLink: workLink, 
+        attachments: attachments || [], // รับ Array ของไฟล์มาเก็บ
+        // note: note,         
+        updatedAt: new Date() 
+      },
+    });
+
+
+      if (!["in_progress", "revision", "accepted", "submitted"].includes(application.status)) {
         return NextResponse.json({ error: "ไม่สามารถส่งงานได้ในสถานะนี้" }, { status: 400 });
       }
+
       await Application.findByIdAndUpdate(id, {
         $set: { 
           status: "submitted", 
           progress: 100, 
           workLink: workLink, 
-          note: note,         
+          attachments: attachments || [], 
           updatedAt: new Date() 
         },
       });
@@ -261,6 +296,10 @@ export async function PATCH(
         $set: { status: "awaiting" },
       });
 
+        // 3. ✅ Sync ข้อมูลสรุปไปที่ Job เพื่อ Dashboard ของเจ้าของงาน
+      await syncJobSubmissions(application.jobId.toString());
+      
+      // 4. Sync progress และรายชื่อตามเดิม
       await updateJobAverageProgress(application.jobId.toString());
 
       return NextResponse.json({ success: true, message: "ส่งงานเรียบร้อยแล้ว รอเจ้าของตรวจสอบ" });

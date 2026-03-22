@@ -20,10 +20,13 @@ import {
   History,
   Info,
   MapPin,
+  X,
+  Pencil,
 } from "lucide-react";
 import toast, { Toaster } from 'react-hot-toast';
 
 import Loading from "../../../../../components/common/Loading";
+
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -40,6 +43,7 @@ interface ApplicationDetail {
     jobType: string;
     location: string;
     owner: string;
+    deliveryDate: string;
   };
   applicantId: {
     _id: string;
@@ -49,9 +53,10 @@ interface ApplicationDetail {
   status: "accepted" | "in_progress" | "submitted" | "revision" | "completed";
   progress: number;
   workLink?: string;
-  note?: string;
+  // note?: string;
   feedback?: string;
   updatedAt: string;
+  attachments?: { fileName: string; fileUrl: string; fileSize: number }[];
 }
 
 export default function WorkManagementPage() {
@@ -65,13 +70,16 @@ export default function WorkManagementPage() {
   
   const [newProgress, setNewProgress] = useState(0);
   const [workLink, setWorkLink] = useState("");
-  const [studentNote, setStudentNote] = useState("");
+  // const [studentNote, setStudentNote] = useState("");
   const [ownerFeedback, setOwnerFeedback] = useState("");
 
   const [isEditingSubmission, setIsEditingSubmission] = useState(false);
 
   const isFreelancer = session?.user?.role === 'student';
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const [existingFiles, setExistingFiles] = useState<{ fileName: string; fileUrl: string; fileSize: number }[]>([]);
 
   useEffect(() => {
     if (authStatus === 'authenticated' && applicationId) {
@@ -89,8 +97,9 @@ export default function WorkManagementPage() {
       if (data) {
         setNewProgress(data.progress || 0);
         setWorkLink(data.workLink || "");
-        setStudentNote(data.note || "");
+        // setStudentNote(data.note || "");
         setOwnerFeedback(data.feedback || "");
+        setExistingFiles(data.attachments || []);
       }
     } catch (err) {
       toast.error("ไม่สามารถโหลดข้อมูลการทำงานได้");
@@ -99,41 +108,106 @@ export default function WorkManagementPage() {
     }
   };
 
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+
   const handleUpdateWork = async (action: "updateProgress" | "submit" | "approve" | "requestRevision") => {
   try {
     const payload: any = { action };
+    const readFileAsBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file); 
+      });
+    };
+
     if (action === "updateProgress") {
       payload.progress = newProgress;
     }
-    
+
     if (action === "submit") {
-      const isOnlineJob = (workData.jobId?.jobType?.toLowerCase().trim().includes("ออนไลน์") || workData.jobId?.jobType?.toLowerCase().trim().includes("online"));
-      
-      // if (!workLink.trim() && !selectedFile) {
-      //   toast.error("กรุณาแนบลิงก์งานหรืออัปโหลดไฟล์อย่างน้อย 1 ช่องทาง");
-      //   return;
-      // }
-      
-      if (isOnlineJob && !workLink.trim() && !selectedFile) {
-        toast.error("งานออนไลน์จำเป็นต้องแนบลิงก์งานหรือไฟล์อย่างน้อย 1 ช่องทาง");
+      const isOnlineJob = workData.jobId?.jobType?.toLowerCase().trim().includes("ออนไลน์") || 
+                         workData.jobId?.jobType?.toLowerCase().trim().includes("online");
+  
+      if (isOnlineJob && !workLink.trim() && selectedFiles.length === 0) {
+        toast.error("กรุณาแนบลิงก์งานหรือไฟล์อย่างน้อย 1 ช่องทาง");
         return;
       }
 
-      if (selectedFile && selectedFile.size > 25 * 1024 * 1024) {
-        toast.error("ขนาดไฟล์ห้ามเกิน 25MB");
+      if (existingFiles.length + selectedFiles.length > 3) {
+        toast.error("จำนวนไฟล์รวมต้องไม่เกิน 3 ไฟล์");
         return;
       }
 
-      payload.workLink = workLink;
-      payload.note = studentNote;
+      const duplicateFile = selectedFiles.find(newFile => 
+        existingFiles.some(oldFile => oldFile.fileName === newFile.name)
+      );
+
+      if (duplicateFile) {
+        toast.error(`ไฟล์ "${duplicateFile.name}" มีอยู่ในระบบแล้ว ไม่ต้องอัปโหลดซ้ำ`);
+        return;
+      }
+
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; 
+      const oversizedFile = selectedFiles.find(file => file.size > MAX_FILE_SIZE);
+
+      if (oversizedFile) {
+        toast.error(`ไฟล์ "${oversizedFile.name}" ใหญ่เกิน 10MB`);
+        return;
+      }
+      
+      setLoading(true);
+      const uploadToast = toast.loading("กำลังอัปโหลดไฟล์...");
+      setUploadProgress({}); // Reset progress
+      
+
+
+      try {
+        const uploadedAttachments = await Promise.all(
+          selectedFiles.map(async (file) => {
+            const base64 = await readFileAsBase64(file);
+            const res = await axios.post("/api/upload", 
+              { fileStr: base64, fileName: file.name, jobId: workData.jobId._id },
+              {
+                // ✅ เพิ่ม Progress Bar Logic
+                onUploadProgress: (progressEvent) => {
+                  const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+                  setUploadProgress(prev => ({ ...prev, [file.name]: percentCompleted }));
+                }
+              }
+            );
+            return { fileName: file.name, fileUrl: res.data.url, fileSize: file.size };
+          })
+        );
+
+        payload.workLink = workLink;
+        payload.attachments = [...existingFiles, ...uploadedAttachments]; 
+        toast.dismiss(uploadToast);
+      } catch (uploadError) {
+        toast.dismiss(uploadToast);
+        toast.error("อัปโหลดไฟล์ล้มเหลว กรุณาลองใหม่อีกครั้ง");
+        setLoading(false);
+        return;
+      }
     }
 
+    if (action === "approve" || action === "requestRevision") {
+      payload.feedback = ownerFeedback;
+    }
+
+    // 2. ส่ง Payload ทั้งหมดไปบันทึกลง Application Collection
     await axios.patch(`/api/applications/${applicationId}`, payload);
-    toast.success("ส่งงานเรียบร้อยแล้ว!");
+    
+    toast.success(action === "submit" ? "ส่งงานเรียบร้อยแล้ว!" : "บันทึกข้อมูลสำเร็จ");
     setIsEditingSubmission(false);
+    setSelectedFiles([]); // ล้างไฟล์ที่เลือกไว้หลังส่งสำเร็จ
+    setUploadProgress({});
     fetchWorkDetail();
   } catch (err: any) {
     toast.error(err.response?.data?.error || "เกิดข้อผิดพลาด");
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -166,150 +240,248 @@ export default function WorkManagementPage() {
 
   const currentStatus = statusLabel[workData.status] || statusLabel.in_progress;
 
+  const confetti = [...Array(12)]; 
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-white pb-20">
+    <div className="min-h-screen bg-gray-50/30 pb-20 selection:bg-blue-100 selection:text-blue-600">
       <Toaster position="top-right" />
       
       {/* ── Header Area ── */}
-      <section className="bg-white border-b border-gray-100 pt-10 pb-6 px-6 md:px-12">
-        <div className="max-w-5xl mx-auto">
+      <motion.section 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white border-b border-gray-100 pt-12 pb-8 px-6 md:px-12 sticky top-0 z-30 backdrop-blur-md bg-white/80"
+      >
+        <div className="max-w-6xl mx-auto">
           <button 
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors mb-6 text-sm font-medium"
+            className="group flex items-center gap-2 text-gray-400 hover:text-blue-600 transition-all mb-6 text-sm font-bold"
           >
-            <ArrowLeft size={18} /> ย้อนกลับ
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> 
+            ย้อนกลับ
           </button>
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">{workData.jobId?.title}</h1>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+              <motion.h1 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight"
+              >
+                {workData.jobId?.title}
+              </motion.h1>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* <span className="bg-gray-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest shadow-lg shadow-gray-200">
+                  {workData.jobId?.category || "ทั่วไป"}
+                </span> */}
+                <span className="bg-gray-100 text-gray-600 text-[12px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
                   {workData.jobId?.category || "ทั่วไป"}
                 </span>
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${statusLabel[workData.status]?.class}`}>
+
+                {/* <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border-2 ${statusLabel[workData.status]?.class.replace('bg-', 'border-').replace('text-', 'text-')}`}>
+                  {statusLabel[workData.status]?.text}
+                </span> */}
+
+                <span className={`text-[12px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${statusLabel[workData.status]?.class}`}>
                   {statusLabel[workData.status]?.text}
                 </span>
+
+
+                {workData.jobId?.deliveryDate && (
+                  // <span className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[10px] font-black px-3 py-1.5 rounded-lg border border-red-100 uppercase tracking-widest">
+                  //   <Clock size={14} />
+                  //   Deadline: {new Date(workData.jobId.deliveryDate).toLocaleDateString('th-TH')}
+                  // </span>
+                  <span className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[12px] font-black px-2.5 py-1 rounded-full border border-red-100 uppercase tracking-wider">
+                    <Clock size={12} />
+                    ส่งงานภายใน: {new Date(workData.jobId.deliveryDate).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
+                  </span>
+
+                )}
               </div>
             </div>
             
-            <div className="text-left md:text-right">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white p-3 md:p-4 rounded-[1.5rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-4 w-full md:w-auto"
+            >
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-black text-lg md:text-xl shrink-0">
+                {isFreelancer ? workData.jobId?.owner?.[0] : workData.applicantId?.name?.[0]}
+              </div>
 
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">
-                {isFreelancer ? "ผู้ว่าจ้าง / เจ้าของงาน" : "นิสิตผู้ปฏิบัติงาน"}
-              </p>
-              
-              <p className="text-lg font-bold text-gray-800">
-                {isFreelancer 
-                  ? (workData.jobId?.owner || "ไม่พบข้อมูลเจ้าของงาน") 
-                  : (workData.applicantId?.name || "ไม่พบข้อมูลผู้ปฏิบัติงาน")
-                }
-              </p>
-            </div>
+              <div className="min-w-0 flex-1 md:flex-none">
+                <p className="text-[9px] md:text-[10px] text-gray-400 font-black uppercase tracking-widest mb-0.5 truncate">
+                  {isFreelancer ? "ผู้ว่าจ้าง / เจ้าของงาน" : "นิสิตผู้ปฏิบัติงาน"}
+                </p>
+                <p className="text-xs md:text-sm font-black text-gray-800 truncate max-w-[150px] md:max-w-none">
+                  {isFreelancer ? workData.jobId?.owner : workData.applicantId?.name}
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      <main className="max-w-5xl mx-auto p-6 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-6xl mx-auto p-6 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
         
-        <div className="lg:col-span-2 space-y-8">
-          {/* Progress Tracker */}
-          <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
-            <div className="flex justify-between items-end mb-6">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <Clock className="text-blue-500" size={20} /> ความคืบหน้างาน
-              </h2>
-              <span className="text-3xl font-black text-blue-600">{workData.progress}%</span>
-            </div>
-            
-            <div className="w-full bg-gray-100 rounded-full h-4 mb-8 overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${workData.progress}%` }}
-                className="h-full bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"
-              />
-            </div>
+        {/* ── Left Column ── */}
+        <div className="lg:col-span-2 space-y-10">
+          {/* ── Progress Tracker Card ── */}
+          <section className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100 relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="flex justify-between items-center mb-10">
+                <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+                  <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
+                    <Clock size={20} />
+                  </div>
+                  ความคืบหน้างาน
+                </h2>
+                
+                <div className="relative">
+                  <motion.span 
+                    key={newProgress}
+                    animate={{ scale: newProgress === 100 ? [1, 1.2, 1] : 1 }}
+                    className="text-5xl font-black text-blue-600 tabular-nums block relative z-10"
+                  >
+                    {newProgress}<span className="text-xl ml-1">%</span>
+                  </motion.span>
 
-            {isFreelancer && workData.status !== "completed" && (
-            <div className="space-y-6 bg-gray-50 p-8 rounded-[2rem] border border-gray-100 shadow-inner">
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                  <p className="text-sm font-bold text-gray-600">เลื่อนเพื่ออัปเดตความคืบหน้า</p>
+                  <AnimatePresence>
+                    {newProgress === 100 && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        {confetti.map((_, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ scale: 0, x: 0, y: 0 }}
+                            animate={{ 
+                              scale: [0, 1, 0], 
+                              x: Math.cos(i * 30 * (Math.PI / 180)) * 65, 
+                              y: Math.sin(i * 30 * (Math.PI / 180)) * 65 
+                            }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            className="absolute w-2 h-2 bg-blue-500 rounded-full"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <motion.div 
-                  key={newProgress}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-2xl font-black text-blue-600 tabular-nums"
+              </div>
+
+              {isFreelancer && workData.status !== "completed" && (
+                <div className="space-y-6 bg-gray-50 p-8 rounded-[2rem] border border-gray-100 shadow-inner">
+                <div className="flex justify-between items-center px-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">เลื่อนเพื่ออัปเดตสถานะ</p>
+                  </div>
+                  <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-black">
+                    {newProgress}%
+                  </div>
+                </div>
+
+                <div className="relative flex items-center w-full h-8 group px-2">
+                  <div className="absolute left-2 right-2 h-2 bg-gray-200 rounded-full" />
+                  <motion.div 
+                    className="absolute left-2 h-2 bg-blue-600 rounded-full pointer-events-none z-10 shadow-[0_0_12px_rgba(37,99,235,0.3)]"
+                    initial={false}
+                    animate={{ 
+                      width: `calc(${newProgress}% - ${(newProgress / 100) * 8}px)`
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    step="1"
+                    value={newProgress}
+                    onChange={(e) => setNewProgress(parseInt(e.target.value))}
+                    className="absolute left-0 w-full h-8 bg-transparent appearance-none cursor-pointer z-20 
+                              [&::-webkit-slider-thumb]:appearance-none 
+                              [&::-webkit-slider-thumb]:w-6 
+                              [&::-webkit-slider-thumb]:h-6 
+                              [&::-webkit-slider-thumb]:rounded-full 
+                              [&::-webkit-slider-thumb]:bg-white 
+                              [&::-webkit-slider-thumb]:border-[3px] 
+                              [&::-webkit-slider-thumb]:border-blue-600 
+                              [&::-webkit-slider-thumb]:shadow-lg 
+                              [&::-webkit-slider-thumb]:transition-all 
+                              [&::-webkit-slider-thumb]:active:scale-125
+                              [&::-webkit-slider-thumb]:hover:scale-110"
+                  />
+                </div>
+                <button 
+                  onClick={() => handleUpdateWork("updateProgress")}
+                  className="w-full py-4 bg-white border-2 border-blue-600 text-blue-600 font-black rounded-2xl hover:bg-blue-600 hover:text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm shadow-blue-50"
                 >
-                  {newProgress}%
-                </motion.div>
+                  <CheckCircle2 size={20} />
+                  บันทึกความคืบหน้าเป็น {newProgress}%
+                </button>
               </div>
-
-              {/* Custom Range Slider Container */}
-              <div className="relative flex items-center w-full h-6 group">
-                <div className="absolute w-full h-2 bg-gray-200 rounded-full" />
-
-                <div 
-                  className="absolute left-0 h-2 bg-blue-600 rounded-full pointer-events-none transition-all duration-75 ease-out shadow-[0_0_12px_rgba(37,99,235,0.3)]"
-                  style={{ width: `${newProgress}%` }} 
-                />
-
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  step="1"
-                  value={newProgress}
-                  onChange={(e) => setNewProgress(parseInt(e.target.value))}
-                  className="absolute w-full h-6 bg-transparent appearance-none cursor-pointer z-20 
-                            [&::-webkit-slider-thumb]:appearance-none 
-                            [&::-webkit-slider-thumb]:w-6 
-                            [&::-webkit-slider-thumb]:h-6 
-                            [&::-webkit-slider-thumb]:rounded-full 
-                            [&::-webkit-slider-thumb]:bg-white 
-                            [&::-webkit-slider-thumb]:border-[3px] 
-                            [&::-webkit-slider-thumb]:border-blue-600 
-                            [&::-webkit-slider-thumb]:shadow-lg
-                            [&::-webkit-slider-thumb]:transition-transform
-                            [&::-webkit-slider-thumb]:active:scale-125
-                            [&::-webkit-slider-thumb]:hover:scale-110"
-                />
-              </div>
-
-              {/*ปุ่มบันทึกความคืบหน้า */}
-              <button 
-                onClick={() => handleUpdateWork("updateProgress")}
-                className="w-full py-4 bg-white border-2 border-blue-100 text-blue-600 font-black rounded-2xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 group"
-              >
-                <CheckCircle2 size={18} className="group-hover:scale-110 transition-transform" />
-                บันทึกความคืบหน้าเป็น {newProgress}%
-              </button>
+              )}
             </div>
-          )}
           </section>
+
 
           {/* ── Submission Form ── */}
           <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-left">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <FileText className="text-purple-500" size={20} /> รายละเอียดการส่งงาน
-              </h2>
-              <div className="flex gap-2">
-                {/* เงื่อนไขงาน */}
-                {(workData.jobId?.jobType?.toLowerCase().trim().includes("ออนไลน์") || workData.jobId?.jobType?.toLowerCase().trim().includes("online")) ? (
-                <span className="text-[10px] font-bold bg-red-50 text-red-500 px-2 py-1 rounded-md border border-red-100 uppercase tracking-wider">
-                  Required
-                </span>
-                ) : (
-                  <span className="text-[10px] font-bold bg-gray-50 text-gray-400 px-2 py-1 rounded-md border border-gray-100 uppercase">
-                    Optional
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              {/* ฝั่งซ้าย: ไอคอน และ ชื่อหัวข้อ */}
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-purple-600 rounded-xl text-white shadow-lg shadow-purple-100 shrink-0">
+                  <FileText size={20} />
+                </div>
+                <h2 className="text-xl font-black text-gray-900 tracking-tight">
+                  รายละเอียดการส่งงาน
+                </h2>
+              </div>
+
+              {/* ฝั่งขวา: กลุ่ม Badge และ ปุ่มควบคุม */}
+              <div className="flex items-center flex-wrap gap-2 sm:justify-end">
+                {/* Badge เงื่อนไขงาน */}
+                <div className="flex gap-2">
+                  {(workData.jobId?.jobType?.toLowerCase().trim().includes("ออนไลน์") || 
+                    workData.jobId?.jobType?.toLowerCase().trim().includes("online")) ? (
+                    <span className="text-[10px] font-black bg-red-500 text-white px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-sm shadow-red-100">
+                      Required
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-black bg-gray-100 text-gray-400 px-2.5 py-1 rounded-lg uppercase tracking-widest">
+                      Optional
+                    </span>
+                  )}
+                  <span className="text-[10px] font-black bg-gray-50 text-black px-2.5 py-1 rounded-lg border border-gray-100 uppercase tracking-widest">
+                    Max 10MB
                   </span>
+                </div>
+
+                {/* ปุ่มแก้ไข (โชว์เฉพาะนิสิตเมื่อส่งแล้ว) */}
+                {isFreelancer && workData.status === "submitted" && !isEditingSubmission && (
+                  <button 
+                    onClick={() => setIsEditingSubmission(true)}
+                    className="group flex items-center gap-2 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl border border-blue-100 transition-all hover:bg-blue-600 hover:text-white active:scale-95 shadow-sm"
+                  >
+                    <Pencil size={14} />
+                    <span className="text-[10px] font-black uppercase tracking-widest hidden xs:block">
+                      แก้ไขงาน
+                    </span>
+                  </button>
                 )}
-                <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded-md border border-blue-100 uppercase tracking-tighter">
-                  Max 25MB
-                </span>
+
+                {/* ปุ่มยกเลิกการแก้ไข */}
+                {isEditingSubmission && (
+                  <button 
+                    onClick={() => setIsEditingSubmission(false)}
+                    className="group flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-red-500 transition-all active:scale-95"
+                  >
+                    <X size={14} className="group-hover:rotate-90 transition-transform" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">ยกเลิก</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -341,58 +513,185 @@ export default function WorkManagementPage() {
                   <div className="flex-grow border-t border-gray-100"></div>
                 </div>
 
-                {/* Option 2: แนบไฟล์ */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">2. อัปโหลดไฟล์งาน (PDF, ZIP, JPG)</label>
+                {/* Option 2: แนบไฟล์ (แทนที่ก้อนเดิมในโค้ดคุณ) */}
+                <div className="space-y-4">
+                  {/* <label className="block text-sm font-bold text-gray-700 mb-2">2. อัปโหลดไฟล์งาน (PDF, ZIP, JPG)</label> */}
+                  <label className="block text-sm font-bold text-gray-700 mb-2">ไฟล์งานของคุณ</label>
+  
+                  {/* ส่วนที่ 1: แสดงไฟล์เดิมจาก Database */}
+                  <AnimatePresence>
+                    {existingFiles.length > 0 && (
+                      <div className="space-y-2 mb-4">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ไฟล์ที่ส่งแล้ว</p>
+                        {existingFiles.map((file, idx) => (
+                          <motion.div 
+                            key={`existing-${idx}`}
+                            className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <FileText className="text-blue-500 shrink-0" size={18} />
+                              <div className="truncate">
+                                <p className="text-xs font-bold text-blue-700 truncate">{file.fileName}</p>
+                                <p className="text-[10px] text-blue-400">{(file.fileSize / (1024 * 1024)).toFixed(2)} MB</p>
+                              </div>
+                            </div>
+                            {/* ปุ่มลบไฟล์เดิมออกจากรายการ (ยังไม่ลบใน DB จนกว่าจะกดบันทึก) */}
+                            <button 
+                              onClick={() => setExistingFiles(prev => prev.filter((_, i) => i !== idx))}
+                              className="p-1.5 text-blue-300 hover:text-red-500 transition-colors"
+                            >
+                              <X size={16} />
+                            </button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </AnimatePresence>
                   <div className={`relative border-2 border-dashed rounded-2xl p-6 transition-all text-center
-                    ${selectedFile ? 'border-blue-500 bg-blue-50/30' : 'border-gray-200 hover:border-blue-300'}`}>
+                    ${selectedFiles.length > 0 ? 'border-blue-500 bg-blue-50/30' : 'border-gray-200 hover:border-blue-300'}`}>
+                    
                     <input 
+                      id="file-upload"
                       type="file" 
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                      multiple 
+                      disabled={loading || (existingFiles.length + selectedFiles.length >= 3)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed" 
                       onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file && file.size > 25 * 1024 * 1024) {
-                          toast.error("ไฟล์ใหญ่เกิน 25MB!");
-                          e.target.value = ""; // reset
-                        } else {
-                          setSelectedFile(file || null);
-                        }
+                        const files = Array.from(e.target.files || []);
+                        const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+                        const currentTotal = existingFiles.length + selectedFiles.length;
+                          if (currentTotal + files.length > 3) {
+                            toast.error("คุณสามารถอัปโหลดไฟล์ได้สูงสุด 3 ไฟล์เท่านั้น");
+                            e.target.value = ""; 
+                            return;
+                          }
+
+                        const validFiles = files.filter(file => {
+                          if (file.size > MAX_SIZE) {
+                            toast.error(`ไฟล์ ${file.name} ใหญ่เกิน 10MB`);
+                            return false;
+                          }
+                          return true;
+                        });
+
+                        setSelectedFiles(prev => [...prev, ...validFiles]);
+                        e.target.value = ""; 
                       }}
                     />
                     <div className="flex flex-col items-center gap-2">
-                      {selectedFile ? (
-                        <>
-                          <CheckCircle2 className="text-blue-600" size={32} />
-                          <p className="text-sm font-bold text-blue-700 truncate max-w-[200px]">{selectedFile.name}</p>
-                          <p className="text-[10px] text-blue-500">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
-                        </>
-                      ) : (
-                        <>
-                          <div className="p-3 bg-gray-100 rounded-full text-gray-400"><Send size={24} /></div>
-                          <p className="text-sm font-medium text-gray-500">คลิกหรือลากไฟล์มาวางที่นี่</p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">ไม่เกิน 25MB</p>
-                        </>
-                      )}
+                      <div className={`p-3 rounded-full ${existingFiles.length + selectedFiles.length >= 3 ? 'bg-gray-50 text-gray-300' : 'bg-gray-100 text-gray-400'}`}>
+                        <Send size={24} />
+                      </div>
+                      <p className="text-sm font-medium text-gray-500">
+                        {existingFiles.length + selectedFiles.length >= 3 
+                          ? "คุณอัปโหลดไฟล์ครบจำนวนจำกัดแล้ว (3 ไฟล์)" 
+                          : "คลิกเพื่อเพิ่มไฟล์งาน"}
+                      </p>
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">
+                        {existingFiles.length + selectedFiles.length} / 3 ไฟล์
+                      </p>
                     </div>
                   </div>
+
+                  {/* ✅ แสดงรายการไฟล์ที่เลือกพร้อม Progress Bar ในก้อนเดียว */}
+                  <AnimatePresence>
+                    {selectedFiles.length > 0 && (
+                      <motion.div layout className="space-y-2">
+                        {selectedFiles.map((file, idx) => (
+                          <motion.div 
+                            key={`${file.name}-${idx}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <FileText className="text-blue-500 shrink-0" size={18} />
+                                <div className="truncate">
+                                  <p className="text-xs font-bold text-gray-700 truncate">{file.name}</p>
+                                  <p className="text-[10px] text-gray-400">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                </div>
+                              </div>
+                              {!loading && (
+                                <button 
+                                  onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                                  className="p-1 hover:bg-red-50 text-red-500 rounded-full transition-colors"
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
+                            </div>
+                            
+                            {/* Progress Bar */}
+                            {loading && uploadProgress[file.name] !== undefined && (
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-[10px] font-black text-blue-600 uppercase">
+                                  <span>{uploadProgress[file.name] === 100 ? 'เสร็จสมบูรณ์' : 'กำลังอัปโหลด...'}</span>
+                                  <span>{uploadProgress[file.name]}%</span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                  <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${uploadProgress[file.name]}%` }}
+                                    className="h-full bg-blue-600 rounded-full"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <button 
                   onClick={() => handleUpdateWork("submit")}
                   className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                 >
-                  <Send size={18} /> ยืนยันการส่งงาน
+                  <Send size={18} /> {isEditingSubmission ? "บันทึกการแก้ไข" : "ยืนยันการส่งงาน"}
                 </button>
               </div>
             ) : (
               /* ── ส่วนแสดงผล Read-only ── */
               <div className="space-y-4">
-                {workData.workLink ? (
-                  <a href={workData.workLink} target="_blank" className="flex items-center justify-between p-5 bg-blue-50 rounded-2xl border border-blue-100">
-                      <span className="font-bold text-blue-700 truncate">{workData.workLink}</span>
-                      <span className="text-xs font-black text-blue-600">เปิดลิงก์ →</span>
+                {/* ส่วน Link */}
+                {workData.workLink && (
+                  <a href={workData.workLink} target="_blank" className="flex items-center justify-between p-5 bg-blue-50 rounded-2xl border border-blue-100 hover:bg-blue-100 transition-all">
+                      <span className="font-bold text-blue-700 truncate mr-4">{workData.workLink}</span>
+                      <span className="text-xs font-black text-blue-600 shrink-0">เปิดลิงก์ →</span>
                   </a>
-                ) : (
+                )}
+
+                {/* Attachments */}
+                {workData.attachments && workData.attachments.length > 0 && (
+                  <div className="grid grid-cols-1 gap-2">
+                    {workData.attachments.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <FileText className="text-purple-500" size={20} />
+                          <div className="truncate">
+                            <p className="text-sm font-bold text-gray-800 truncate">{file.fileName}</p>
+                            <p className="text-[10px] text-gray-400">{(file.fileSize / (1024 * 1024)).toFixed(2)} MB</p>
+                          </div>
+                        </div>
+                        {/* <a href={file.fileUrl} target="_blank" className="text-xs font-bold text-purple-600 hover:underline">ดาวน์โหลด</a> */}
+                        <a 
+                          href={file.fileUrl.replace("/upload/", "/upload/fl_attachment/")} // ✅ เทคนิค Cloudinary: บังคับ Download
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs font-bold text-purple-600 hover:underline"
+                        >
+                          ดาวน์โหลด
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {(!workData.workLink && (!workData.attachments || workData.attachments.length === 0)) && (
                   <div className="p-5 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 italic text-sm">
                       ไม่มีการแนบไฟล์/ลิงก์
                   </div>
@@ -435,7 +734,9 @@ export default function WorkManagementPage() {
               </div>
             ) : (
               <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
-                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">Feedback จากเจ้าของงาน</p>
+                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">
+                  Feedback จากเจ้าของงาน
+                </p>
                 <p className="text-gray-700 text-sm italic">
                   {workData.feedback || "ยังไม่มีข้อความตอบกลับ"}
                 </p>
@@ -443,104 +744,70 @@ export default function WorkManagementPage() {
             )}
           </section>
 
-          {/* Job Info Summary */}
-          <section 
-            className="rounded-[2rem] p-8 text-white shadow-xl text-left relative overflow-hidden"
-            style={{ 
-              background: 'linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)' 
-            }}
+          {/* Info Card */}
+          <motion.section 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6 }}
+            className="rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)' }}
           >
-            <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
-              <Briefcase size={100} />
+            <div className="absolute -bottom-10 -right-10 opacity-[0.1]">
+              <Briefcase size={200} />
             </div>
 
-            <h3 className="text-s font-bold text-white uppercase tracking-widest mb-4">
-              ข้อมูลโปรเจกต์
-            </h3>
+            <h3 className="text-s font-bold text-white mb-4">ข้อมูลโปรเจกต์</h3>
 
-            <div className="space-y-4 relative z-10">
+            <div className="space-y-8 relative z-10">
               <div>
-                <p className="text-[10px] text-blue-100/70 font-bold uppercase mb-1">งบประมาณที่ตกลง</p>
-                <p className="text-2xl font-black tracking-tight">
-                  {workData.jobId?.budgetMin?.toLocaleString()} - {workData.jobId?.budgetMax?.toLocaleString()} 
-                  <span className="text-sm font-medium ml-1">บาท</span>
+                <p className="text-[10px] font-black uppercase opacity-60 mb-2">งบประมาณ</p>
+                <p className="text-3xl font-black">
+                  ฿{workData.jobId?.budgetMin?.toLocaleString()} - {workData.jobId?.budgetMax?.toLocaleString()}
                 </p>
               </div>
 
-              <div className="pt-5 border-t border-gray-50">
-                <div className="flex items-center gap-2 mb-3">
-                  <Info size={14} className="text-white" />
-                  <p className="text-[10px] text-white font-black uppercase tracking-widest">
-                    รายละเอียดงานโดยสังเขป
-                  </p>
-                </div>
-                
-                <p className="text-sm text-white leading-relaxed font-medium">
-                  {workData.jobId?.description || "ไม่มีรายละเอียดเพิ่มเติม"}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-left relative overflow-hidden group hover:shadow-md transition-all">
-            {/* แถบสีด้านข้างเพื่อบ่งบอกหมวดหมู่ (Accent Bar) */}
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500 opacity-80" />
-            
-            <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
-              <Briefcase size={100} />
-            </div>
-
-            <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-              รูปแบบการทำงาน
-            </h3>
-
-            <div className="space-y-5 relative z-10">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-2xl font-black text-gray-900 tracking-tight">
-                    {workData.jobId?.jobType || "ไม่ได้ระบุ"}
-                  </p>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 uppercase">
-                    {workData.jobId?.jobType}
-                  </span>
-                </div>
-              </div>
-
-              {!(workData.jobId?.jobType?.toLowerCase().trim().includes("ออนไลน์") || 
-                workData.jobId?.jobType?.toLowerCase().trim().includes("online")) && (
-                  <>
-                <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100/50 flex items-start gap-3 transition-all hover:bg-orange-50">
-                  <div className="p-2 bg-white rounded-xl text-orange-500 shadow-sm">
-                    <MapPin size={18} />
+              <div className="pt-6 border-t border-white/20 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <MapPin size={16} />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mb-0.5">สถานที่ปฏิบัติงาน</p>
-                    <p className="text-sm text-gray-700 font-bold leading-tight">
-                      {workData.jobId?.location || "ติดต่อผู้ว่าจ้างเพื่อสอบถามสถานที่"}
+                  <div>
+                    <p className="text-[10px] font-black opacity-60">สถานที่</p>
+                    <p className="text-sm font-bold">{workData.jobId?.location || "ออนไลน์"}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
+                    <Info size={16} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black opacity-60 mb-1">รายละเอียดงาน</p>
+                    <p className="text-xs font-medium leading-relaxed opacity-90 line-clamp-4">
+                      {workData.jobId?.description}
                     </p>
                   </div>
                 </div>
-                </>
-              )}
-
-              {/* ส่วนคำอธิบายงาน
-              <div className="pt-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Info size={14} className="text-gray-400" />
-                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                    รายละเอียดเพิ่มเติม
-                  </p>
-                </div>
-                <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-3">
-                  {workData.jobId?.description || "ไม่มีรายละเอียดเพิ่มเติม"}
-                </p>
-              </div> */}
+              </div>
             </div>
-          </section>
+          </motion.section>
         </div>
-
       </main>
+      {workData.status === "completed" && (
+        <motion.div 
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="fixed bottom-6 left-6 z-50 bg-white border-2 border-green-500 p-4 rounded-2xl shadow-2xl flex items-center gap-4 max-w-[280px]"
+        >
+          <div className="bg-green-500 p-2 rounded-lg text-white shrink-0">
+            <CheckCircle2 size={20} />
+          </div>
+          <div>
+            <p className="text-[10px] text-green-600 font-black uppercase tracking-widest">สถานะงาน</p>
+            <p className="text-xs font-bold text-gray-800">งานนี้เสร็จสมบูรณ์แล้ว</p>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

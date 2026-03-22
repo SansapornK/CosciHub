@@ -10,6 +10,9 @@ export interface IApplication extends Document {
   progress:       number;
   appliedDate:    Date;
   updatedAt?:     Date;
+  workLink?: string;
+  attachments?: { fileName: string; fileUrl: string; fileSize: number }[];
+  // note?: string;
 }
 
 const ApplicationSchema: Schema = new Schema({
@@ -42,6 +45,20 @@ const ApplicationSchema: Schema = new Schema({
   rejectionNote: { type: String, default: null },
   appliedDate:   { type: Date, default: Date.now },
   updatedAt:     { type: Date, default: null },
+
+  workLink: { type: String, default: "" },
+
+  attachments: [{
+    fileName: String,
+    fileUrl:  String,
+    fileSize: Number
+  }],
+  // note: { type: String, default: "" },
+
+  feedback: { 
+    type: String, 
+    default: null 
+  },
 });
 
 ApplicationSchema.index({ jobId: 1, applicantEmail: 1 }, { unique: true });
