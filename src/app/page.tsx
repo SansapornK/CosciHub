@@ -10,7 +10,21 @@ import { useSession } from "next-auth/react";
 import JobCard from "./components/cards/JobCard";
 import { calculateTimeAgo, getCategoryIcon } from "@/app/components/utils/jobHelpers";
 import { Bookmark, DollarSign, User, Tag, Briefcase } from 'lucide-react'; 
+import { motion, AnimatePresence } from "framer-motion";
 
+// --- Animation Variants ---
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
 
 // --- Hero Slides Data ---
 const HERO_SLIDES = [
@@ -89,131 +103,286 @@ const HERO_SLIDES = [
 //   },
 // ];
 
+const CategoryCard = ({ title, icon, bgColor, path }) => (
+  <motion.div variants={fadeInUp}>
+    <Link 
+      href={path || '/find-job'} 
+      className="group flex flex-col items-center p-2 transition-all duration-300 w-full min-w-[100px] md:min-w-[120px]"
+    >
+      <div className={`
+        ${bgColor} 
+        rounded-full p-4 mb-3 flex items-center justify-center 
+        size-14 md:size-16 
+        transform transition-all duration-300 
+        group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-blue-200
+      `}>
+        {icon} 
+      </div>
+      
+      <h4 className="text-[10px] md:text-[11px] font-bold text-gray-700 text-center 
+                     group-hover:text-[#0C5BEA] transition-colors 
+                     leading-tight break-words px-1 h-auto">
+        {title}
+      </h4>
+    </Link>
+  </motion.div>
+);
+
 const MAJOR = [
   {
     id: "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย",
     title: "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-pink-600"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+        >
+          <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+          <circle cx="9" cy="9" r="2"/>
+          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
       </svg>
     ),
-    bgColor: "bg-pink-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "cyber",
     title: "การจัดการธุรกิจไซเบอร์",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-blue-600"><path d="M12 16v5"/><path d="M16 14v7"/><path d="M20 10v11"/><path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15"/><path d="M4 18v3"/><path d="M8 14v7"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="M12 16v5"/>
+        <path d="M16 14v7"/>
+        <path d="M20 10v11"/>
+        <path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15"/>
+        <path d="M4 18v3"/>
+        <path d="M8 14v7"/>
+      </svg>
     ),
-    bgColor: "bg-blue-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "นวัตกรรมคอมพิวเตอร์เพื่อการสื่อสาร",
     title: "นวัตกรรมคอมพิวเตอร์เพื่อการสื่อสาร",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-red-600"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/>
+        <path d="M20.054 15.987H3.946"/>
+      </svg>
     ),
-    bgColor: "bg-red-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การผลิตภาพยนตร์และสื่อดิจิทัล",
     title: "การผลิตภาพยนตร์และสื่อดิจิทัล",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-yellow-600"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/>
+        <rect x="2" y="6" width="14" height="12" rx="2"/>
+      </svg>
     ),
-    bgColor: "bg-yellow-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การแสดงและกำกับการแสดงภาพยนตร์",
     title: "การแสดงและกำกับการแสดงภาพยนตร์",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-green-600"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/>
+        <path d="m6.2 5.3 3.1 3.9"/>
+        <path d="m12.4 3.4 3.1 4"/>
+        <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>
+      </svg>
     ),
-    bgColor: "bg-green-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การออกแบบเพื่องานภาพยนตร์และสื่อดิจิทัล",
     title: "การออกแบบเพื่องานภาพยนตร์และสื่อดิจิทัล",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-purple-600"><path d="m11 10 3 3"/><path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/><path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="m11 10 3 3"/>
+        <path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/>
+        <path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/>
+      </svg>
     ),
-    bgColor: "bg-purple-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การจัดการภาพยนตร์และสื่อดิจิทัล",
     title: "การจัดการภาพยนตร์และสื่อดิจิทัล",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-indigo-600"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/>
+        <path d="M14 2v5a1 1 0 0 0 1 1h5"/>
+        <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/>
+      </svg>
     ),
-    bgColor: "bg-indigo-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อการท่องเที่ยว",
     title: "การสื่อสารเพื่อการท่องเที่ยว",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-yellow-600"><path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/><path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/><path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/><circle cx="12" cy="12" r="10"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/>
+        <path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/>
+        <path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/>
+        <circle cx="12" cy="12" r="10"/>
+      </svg>
     ),
-    bgColor: "bg-yellow-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อสุขภาพ",
     title: "การสื่อสารเพื่อสุขภาพ",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m4 0h6m-6 0h-2M9 13V7a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2h-6a2 2 0 01-2-2z" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-teal-600"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/><path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
+        <path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>
+      </svg>
     ),
-    bgColor: "bg-teal-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อการจัดการนวัตกรรม",
     title: "การสื่อสารเพื่อการจัดการนวัตกรรม",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M20.245 8.914L18.75 7.419M3.755 8.914L5.25 7.419M12 15a7 7 0 100-14 7 7 0 000 14z" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-red-600"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+        <path d="M9 18h6"/>
+        <path d="M10 22h4"/>
+      </svg>
     ),
-    bgColor: "bg-red-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อเศรษฐศาสตร์",
     title: "การสื่อสารเพื่อเศรษฐศาสตร์",
     icon: (
-      // <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      //   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      // </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-blue-600"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
+      >
+        <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
+        <path d="m19 9-5 5-4-4-3 3"/>
+      </svg>
     ),
-    bgColor: "bg-blue-100",
+    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
 ];
-
 
 interface JobCardData {
   id: string;
@@ -267,14 +436,17 @@ const ABOUT_FEATURES = [
 ];
 
 const AboutFeatureCard = ({ title, description, icon }) => (
-  <div className="bg-white shadow-md rounded-lg w-full flex flex-col items-center max-w-xs text-center p-4 py-10 px-10 border-[0.1px] border-gray-300 gap-3 hover:bg-gray-50 transition-colors duration-200">
-    <div className="flex items-center justify-center p-6 bg-primary-blue-100 rounded-full mb-4"> 
+  <motion.div 
+    variants={fadeInUp}
+    whileHover={{ y: -10 }}
+    className="bg-white shadow-xl shadow-gray-200/50 rounded-[2rem] w-full flex flex-col items-center text-center p-8 border border-gray-100 gap-4"
+  >
+    <div className="flex items-center justify-center p-5 bg-[#6D91D3]/10 rounded-2xl text-[#0C5BEA]"> 
         {icon}
     </div>
-    
-    <h4 className="text-lg font-medium text-gray-800 mb-2">{title}</h4>
-    <p className="text-sm text-gray-600">{description}</p>
-  </div>
+    <h4 className="text-lg font-black text-gray-800">{title}</h4>
+    <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
+  </motion.div>
 );
 
 const CONNECT_SECTION_DATA = {
@@ -316,18 +488,6 @@ const HowToCard = ({ title, description, image }) => (
   </div>
 );
 
-const CategoryCard = ({ title, icon, bgColor, path }) => (
-  <Link 
-    href={path || '/find-job'} 
-    className="flex flex-col items-center p-2 transition-all duration-200" 
-    // aria-label={`ค้นหางาน ${title}`}
-  >
-    <div className={`${bgColor} rounded-full p-4 mb-3 flex items-center justify-center size-16 transform transition-transform duration-200 hover:scale-105 shadow-md`}>
-      {icon} 
-    </div>
-    <h4 className="text-xs font-medium text-gray-700 text-center">{title}</h4>
-  </Link>
-);
 
 const HeroCarousel = ({ images, setCurrentSlide }) => { 
   const [currentIndex, setCurrentIndex] = useState(0);
