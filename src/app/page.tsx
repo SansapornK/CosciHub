@@ -9,29 +9,54 @@ import Loading from "./components/common/Loading";
 import { useSession } from "next-auth/react";
 import JobCard from "./components/cards/JobCard";
 import { calculateTimeAgo, getCategoryIcon } from "@/app/components/utils/jobHelpers";
-import { Bookmark, DollarSign, User, Tag, Briefcase } from 'lucide-react'; 
+import { Bookmark, DollarSign, User, Tag, Briefcase, ArrowRight } from 'lucide-react'; 
 import { motion, AnimatePresence } from "framer-motion";
+
+// --- Configuration ---
+const CI_COLORS = {
+  primary: "#0C5BEA",
+  secondary: "#6D91D3",
+  highlight: "#F4FE57",
+  gray: "#A6A6A6",
+  white: "#FFFFFF",
+};
 
 // --- Animation Variants ---
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+  }
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
+    transition: {
+      staggerChildren: 0.1
+    }
   }
 };
 
-// --- Hero Slides Data ---
+const hoverScale = {
+  hover: { 
+    scale: 1.03,
+    boxShadow: "0px 10px 30px rgba(12, 91, 234, 0.1)",
+    transition: { duration: 0.3, ease: "easeInOut" }
+  }
+};
+
+
+// --- Hero Slides ---
 const HERO_SLIDES = [
   {
     image: "/images/heroImage1.jpg",
     title: "COSCI Hub แพลตฟอร์มหางานพิเศษ",
     subtitle: "สำหรับนิสิต อาจารย์ และศิษย์เก่าชาวนวัต",
+    highlight: "ชาวนวัต",
     description: "แพลตฟอร์มหางานพิเศษ สำหรับนิสิตวิทยาลัยนวัตกรรมสื่อสารสังคม เพื่อเป็นช่องทางในการหารายได้เสริมระหว่างศึกษา รวมถึงแสดงผลงานและทักษะความสามารถเพื่อใช้ในการหางานในอนาคต",
     primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null, 
@@ -40,6 +65,7 @@ const HERO_SLIDES = [
     image: "/images/heroImage2.jpg",
     title: "ค้นหางานพิเศษที่ตรงใจ",
     subtitle: "เติมเต็มทักษะ สร้างรายได้เสริม",
+    highlight: "ตรงใจ",
     description: "สำรวจโอกาสงานพิเศษหลากหลายหมวดหมู่ ที่รอให้คุณมาโชว์ศักยภาพและเก็บประสบการณ์ก่อนก้าวสู่โลกการทำงานจริง",
     primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null, 
@@ -48,61 +74,65 @@ const HERO_SLIDES = [
     image: "/images/heroImage3.jpg",
     title: "โครงการพิเศษจากคณาจารย์",
     subtitle: "แหล่งรวมโปรเจกต์งานวิจัยและพัฒนา",
+    highlight: "คณาจารย์",
     description: "โอกาสในการร่วมงานกับคณาจารย์ในโครงการที่น่าสนใจ เพื่อเพิ่มพูนความรู้เฉพาะทาง และสร้างพอร์ตโฟลิโอที่แข็งแกร่ง",
     primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null, 
   },
 ];
+
+const HeroCarousel = ({ images, setCurrentSlide }) => { 
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const totalImages = images.length;
+  const slideDuration = 5000; 
+
+  useEffect(() => {
+    setCurrentSlide(currentIndex); 
+  }, [currentIndex, setCurrentSlide]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % totalImages);
+    }, slideDuration);
+    return () => clearInterval(interval);
+  }, [totalImages, slideDuration]);
+  
+  return (
+    <div className="absolute inset-0 w-full h-full z-0">
+      <AnimatePresence initial={false}>
+        <motion.img
+          key={currentIndex}
+          src={images[currentIndex].image} 
+          alt="Hero background"
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.5, ease: "easeInOut" }}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: 'center' }} 
+        />
+      </AnimatePresence>
+      
+      {/* Overlay darkening for text readability */}
+      <div className="absolute inset-0 bg-black/20 z-10" />
+
+      {/* Indicator Dots */}
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-30">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-[#F4FE57] scale-125' : 'bg-white/50 hover:bg-white'}`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 // ---------------------------------------------
 
-// ---  Constants Data ---
-// const FEATURES = [
-//   {
-//     id: "search",
-//     title: "ค้นหา",
-//     description: "ครอบคลุมทั้งฟรีแลนซ์และผู้ว่าจ้าง มีการกรองหมวดหมู่งานอย่างชัดเจน",
-//     icon: (
-//       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-//       </svg>
-//     ),
-//     bgColor: "bg-blue-100",
-//   },
-//   {
-//     id: "project-board",
-//     title: "โปรเจกต์บอร์ด",
-//     description: "ผู้จ้างสามารถโพสต์ประกาศหางาน โดยกำหนดทักษะและงบประมาณ",
-//     icon: (
-//       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-//       </svg>
-//     ),
-//     bgColor: "bg-indigo-100",
-//   },
-//   {
-//     id: "chat",
-//     title: "แชทในแพลตฟอร์ม",
-//     description: "ผู้ว่าจ้างและฟรีแลนซ์สามารถพูดคุยรายละเอียดงานได้โดยตรงผ่านแชทในตัว",
-//     icon: (
-//       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-//       </svg>
-//     ),
-//     bgColor: "bg-purple-100",
-//   },
-//   {
-//     id: "dashboard",
-//     title: "แดชบอร์ด",
-//     description: "ผู้ว่าจ้างและฟรีแลนซ์สามารถดูสถานะงานรวมถึง คำขอร่วมงานได้ในแดชบอร์ด",
-//     icon: (
-//       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-//       </svg>
-//     ),
-//     bgColor: "bg-green-100",
-//   },
-// ];
-
+// --- Category Card ---
 const CategoryCard = ({ title, icon, bgColor, path }) => (
   <motion.div variants={fadeInUp}>
     <Link 
@@ -383,22 +413,9 @@ const MAJOR = [
     bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
 ];
+// ---------------------------------------------
 
-interface JobCardData {
-  id: string;
-  icon: JSX.Element;
-  title: string;
-  type: string;
-  postedBy: string;
-  minCompensation: string;
-  maxCompensation: string | null;
-  details: string;
-  currency: string;
-  timeAgo: string;
-  isVisible: boolean;
-}
-
-// --- About Section Features Data ---
+// --- FEATURES ---
 
 const ABOUT_FEATURES = [
   {
@@ -418,11 +435,22 @@ const ABOUT_FEATURES = [
     ), 
   },
   {
-    title: 'พูดคุยสะดวก',
-    description: 'สามารถสื่อสารกับผู้ว่าจ้างผ่านเว็บไซต์ได้โดยตรง',
+    title: 'ระบบรีวิวการทำงาน',
+    description: 'สร้างโปรไฟล์ให้น่าเชื่อถือด้วยคะแนนรีวิวจากผู้ใช้งานจริง',
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="h-10 w-10 text-primary-blue-500"
+      >
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
     ), 
   },
@@ -437,17 +465,37 @@ const ABOUT_FEATURES = [
 
 const AboutFeatureCard = ({ title, description, icon }) => (
   <motion.div 
-    variants={fadeInUp}
-    whileHover={{ y: -10 }}
-    className="bg-white shadow-xl shadow-gray-200/50 rounded-[2rem] w-full flex flex-col items-center text-center p-8 border border-gray-100 gap-4"
+    variants={fadeInUp} 
+    whileHover={{ 
+      scale: 1.03,
+      boxShadow: "0px 10px 30px rgba(12, 91, 234, 0.1)",
+      transition: { duration: 0.3, ease: "easeInOut" }
+    }}
+    className="bg-white rounded-2xl w-full flex flex-col items-center max-w-xs text-center p-8 border border-gray-100 gap-4"
   >
-    <div className="flex items-center justify-center p-5 bg-[#6D91D3]/10 rounded-2xl text-[#0C5BEA]"> 
+    <div className="flex items-center justify-center p-6 bg-[#6D91D3]/10 rounded-full mb-2 text-[#0C5BEA]"> 
         {icon}
     </div>
-    <h4 className="text-lg font-black text-gray-800">{title}</h4>
+    <h4 className="text-lg font-semibold text-gray-800">{title}</h4>
     <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
   </motion.div>
 );
+
+// ---------------------------------------------
+
+interface JobCardData {
+  id: string;
+  icon: JSX.Element;
+  title: string;
+  type: string;
+  postedBy: string;
+  minCompensation: string;
+  maxCompensation: string | null;
+  details: string;
+  currency: string;
+  timeAgo: string;
+  isVisible: boolean;
+}
 
 const CONNECT_SECTION_DATA = {
   header: "พื้นที่เชื่อมต่อระหว่างการเรียนรู้กับการทำงานจริงอย่างมีคุณภาพ",
@@ -463,82 +511,6 @@ const CONNECT_SECTION_DATA = {
 };
 
 
-
-// --- 3. Components ---
-
-const FeatureCard = ({ title, description, icon, bgColor }) => (
-  <div className="bg-white shadow-md text-start rounded-lg w-full p-6 flex flex-col border-[0.1px] border-gray-300 gap-3 hover:bg-gray-50 transition-colors duration-200">
-    <div className="flex flex-col items-center mb-3">
-      <div className={`${bgColor} rounded-full p-3 mb-2`}>
-        {icon}
-      </div>
-      <h4 className="text-m font-medium text-primary-blue-500">{title}</h4>
-    </div>
-    <p className="text-gray-400 text-sm">{description}</p>
-  </div>
-);
-
-const HowToCard = ({ title, description, image }) => (
-  <div className="bg-white shadow-md text-start place-items-center rounded-lg w-full p-3 flex flex-col lg:flex-row border-[0.1px] border-gray-300 gap-3 hover:bg-gray-50 transition-colors duration-200">
-    <img src={image} alt="cosci:connect" className="w-80"/>
-    <div>
-      <h4 className="text-m font-medium text-primary-blue-500">{title}</h4>
-      <p className="text-gray-400 text-sm">{description}</p>
-    </div>
-  </div>
-);
-
-
-const HeroCarousel = ({ images, setCurrentSlide }) => { 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const totalImages = images.length;
-  const slideDuration = 4000; 
-
-  useEffect(() => {
-    setCurrentSlide(currentIndex); 
-  }, [currentIndex, setCurrentSlide]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % totalImages);
-    }, slideDuration);
-    return () => clearInterval(interval);
-  }, [totalImages, slideDuration]);
-  
-  return (
-    <div className="relative w-full h-full">
-      {images.map((slide, index) => (
-        <img
-          key={index}
-          src={slide.image} 
-          alt={`Hero Slide ${index + 1}`}
-          className={`
-            absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000
-            ${index === currentIndex ? 'opacity-100' : 'opacity-0'}
-          `}
-          style={{ objectPosition: 'center' }} 
-        />
-      ))}
-      
-      {/* Indicator Dots */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
-        {images.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`
-              w-3 h-3 rounded-full transition-colors duration-300
-              ${index === currentIndex ? 'bg-primary-blue-500' : 'bg-gray-400 hover:bg-gray-500'}
-            `}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-
 // --- 4. Main Component ---
 export default function Home() {
   const { data: session, status } = useSession();
@@ -549,11 +521,9 @@ export default function Home() {
 
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
-
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
 
-  const primaryBtnClass = 'bg-primary-blue-500 text-white font-medium py-3 px-6 rounded-full shadow-lg transition-all hover:bg-primary-blue-600';
-  const secondaryBtnClass = 'bg-transparent border border-gray-900 text-gray-900 font-medium py-3 px-6 rounded-full shadow-lg transition-all hover:bg-black/10';
+  const primaryBtnClass = 'bg-[#0C5BEA] text-white font-semibold py-3.5 px-8 rounded-full shadow-lg shadow-[#0C5BEA]/20 transition-all hover:bg-[#0C5BEA]/90 hover:shadow-[#0C5BEA]/30 active:scale-95 flex items-center gap-2';
 
   // recommended jobs
   useEffect(() => {
@@ -606,48 +576,64 @@ export default function Home() {
 
   return (
     <>
+    <motion.div initial="hidden" animate="visible" className="bg-[#FFFFFF]"> 
       <div> 
-        {/* Hero section: W-FULL, No Horizontal Padding */}
-        <section 
-            className="relative w-full h-[500px] md:h-[600px] border-b border-gray-200"
-        >
-          {/* 1. Hero Carousel */}
+        {/* --- Hero section --- */}
+        <section className="relative w-full h-[550px] md:h-[650px] overflow-hidden">
           <HeroCarousel images={HERO_SLIDES} setCurrentSlide={setCurrentSlideIndex} />
 
-          {/* 2. Hero Content */}
-          <div 
-            className="absolute inset-0 flex justify-start items-end z-20" 
-          > 
-            
-            <div 
-                className={`relative flex flex-col items-start text-start text-gray-900 max-w-4xl pl-6 pb-6 md:pl-10 md:pb-10`}
-            >
-              <h1 className="text-l md:text-xl font-medium drop-shadow-md">
-                <span className="text-primary-blue-500">
-                  {currentSlideData.title}
-                </span> 
-                <br className="hidden md:block"/>
-                {currentSlideData.subtitle}
-              </h1>
-              <p className="mt-4 text-s drop-shadow-md">
-                {currentSlideData.description}
-              </p>
-              <div className="flex gap-4 mt-8">
-                <Link href={currentSlideData.primaryButton.link}>
-                  <button className={primaryBtnClass}>
-                    {currentSlideData.primaryButton.text}
-                  </button>
-                </Link>
-                
-                {currentSlideData.secondaryButton && (
-                    <Link href={currentSlideData.secondaryButton.link}>
-                      <button className={secondaryBtnClass}>
-                        {currentSlideData.secondaryButton.text}
-                      </button>
-                    </Link>
-                )}
-              </div>
-            </div>
+          <div className="absolute inset-0 flex justify-start items-end z-20 px-6 md:px-16 lg:px-24 pb-12 md:pb-20"> 
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={currentSlideIndex}
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="relative flex flex-col items-start text-start text-white max-w-2xl"
+              >
+                <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+                  <span className="text-lg md:text-xl lg:text-2xl font-black inline-block">
+                    {currentSlideData.title?.replace(currentSlideData.highlight || '', '')}
+                  </span>
+                  
+                  {currentSlideData.highlight && (
+                    <span className="text-[#F4FE57] text-lg md:text-xl lg:text-2xl font-black relative inline-block ml-2">
+                      {currentSlideData.highlight}
+                      <motion.span 
+                        initial={{ width: 0 }}
+                        animate={{ width: "100%" }}
+                        transition={{ delay: 0.5, duration: 0.8 }}
+                        className="absolute -bottom-1 left-0 h-1 bg-[#F4FE57] rounded-full shadow-[0_0_10px_rgba(244,254,87,0.6)]"
+                      />
+                    </span>
+                  )}
+                  
+                  <br className="hidden md:block"/>
+                  
+                  <span className="text-base md:text-lg lg:text-xl font-bold opacity-90 block mt-1 tracking-normal">
+                    {currentSlideData.subtitle}
+                  </span>
+                </h1>
+
+                <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-xl font-medium drop-shadow-md">
+                  {currentSlideData.description}
+                </p>
+
+                <div className="flex gap-4 mt-8">
+                  <Link href={currentSlideData.primaryButton.link}>
+                    <motion.button 
+                      whileHover={{ scale: 1.05, backgroundColor: "#FFFFFF", color: "#0C5BEA" }} 
+                      whileTap={{ scale: 0.95 }} 
+                      className="bg-[#0C5BEA] text-white text-sm md:text-base font-bold py-3 px-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-[#0C5BEA] transition-all flex items-center gap-2 group"
+                    >
+                      {currentSlideData.primaryButton.text} 
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </motion.button>
+                  </Link>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </section>
       </div>
@@ -840,6 +826,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </motion.div>
     </>
   );
 }
