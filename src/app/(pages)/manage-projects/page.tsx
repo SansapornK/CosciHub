@@ -9,6 +9,14 @@ import Loading from "../../components/common/Loading";
 import toast, { Toaster } from 'react-hot-toast';
 import { usePusher } from "../../../providers/PusherProvider";
 import Link from "next/link";
+import { 
+  Briefcase, 
+  Clock, 
+  CheckCircle, 
+  LayoutDashboard, 
+  Users, 
+  ArrowRight 
+} from "lucide-react";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -698,128 +706,104 @@ export default function ManageProjectsPage() {
               )}
             </div>
           ) : (
-            // ── ฝั่งเจ้าของ ──────────────────────────────────────────────────────
-            <div className="bg-gray-50 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-medium text-gray-700 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  งานที่กำลังดำเนินการ
+            /* ฝั่งเจ้าของงาน */
+            <div className="bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+                  <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
+                    <Clock size={20} />
+                  </div>
+                  งานที่กำลังดำเนินการ ({activeOwnerJobs.length})
                 </h2>
-                <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
-                  {activeOwnerJobs.length} งาน
-                </span>
               </div>
 
               {activeOwnerJobs.length === 0 ? (
-                <div className="bg-white rounded-lg p-6 text-center text-gray-500 border border-dashed border-gray-300">
-                  <p>ยังไม่มีงานที่กำลังดำเนินการ</p>
+                <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                    <Briefcase size={32} />
+                  </div>
+                  <p className="font-bold text-gray-400">ยังไม่มีงานที่กำลังดำเนินการในขณะนี้</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {activeOwnerJobs.map((job) => {
-
-                    // Badge color map
-                    const badgeColorMap: Record<string, { badge: string; bar: string }> = {
-                      red:    { badge: "bg-red-100 text-red-800",    bar: "#E24B4A" },
-                      orange: { badge: "bg-orange-100 text-orange-800", bar: "#EF9F27" },
-                      yellow: { badge: "bg-yellow-100 text-yellow-800", bar: "#EF9F27" },
-                      blue:   { badge: "bg-blue-100 text-blue-800",  bar: "#378ADD" },
-                      green:  { badge: "bg-green-100 text-green-800", bar: "#639922" },
+                    const badgeStyles: Record<string, string> = {
+                      red: "bg-red-50 text-red-600 border-red-100",
+                      orange: "bg-orange-50 text-orange-600 border-orange-100",
+                      blue: "bg-blue-50 text-blue-600 border-blue-100",
+                      green: "bg-green-50 text-green-600 border-green-100",
                     };
-                    const colors = badgeColorMap[job.aggregateBadge.color] ?? badgeColorMap.blue;
-
-                    // Mini breakdown pills
-                    const breakdownItems = [
-                      { count: job.statusCounts.submitted,   label: "รอตรวจ",    cls: "bg-red-50 text-red-700"    },
-                      { count: job.statusCounts.revision,    label: "แก้ไข",     cls: "bg-orange-50 text-orange-700" },
-                      { count: job.statusCounts.inProgress,  label: "กำลังทำ",  cls: "bg-yellow-50 text-yellow-700" },
-                      { count: job.statusCounts.waitingToStart, label: "รอเริ่ม", cls: "bg-blue-50 text-blue-700"  },
-                      { count: job.statusCounts.completed,   label: "เสร็จ",     cls: "bg-green-50 text-green-700" },
-                    ].filter((item) => item.count > 0);
+                    const currentStyle = badgeStyles[job.aggregateBadge.color] || badgeStyles.blue;
 
                     return (
-                      <div
-                        key={job._id}
-                        className="bg-white rounded-xl border border-gray-200 flex flex-col gap-3 overflow-hidden">
-                        <div className="p-4 flex flex-col gap-3">
-                          {/* Title + Aggregate Badge */}
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="font-medium text-gray-800 text-sm flex-1 line-clamp-2">
-                              {job.title}
-                            </p>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold whitespace-nowrap flex-shrink-0 ${colors.badge}`}>
+                      <div key={job._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group">
+                        <div className="p-6 flex-1">
+                          <div className="flex justify-between items-start gap-4 mb-5">
+                            <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{job.title}</h3>
+                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest shrink-0 ${currentStyle}`}>
                               {job.aggregateBadge.label}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-400">{job.category}</p>
 
-                          {/* Average Progress Bar */}
-                          <div>
-                            <div className="flex justify-between text-xs text-gray-500 mb-1.5">
-                              <span>ความคืบหน้าเฉลี่ย</span>
-                              <span className="font-medium text-gray-700">{job.avgProgress}%</span>
-                            </div>
-                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                              <div
-                                className="h-1.5 rounded-full transition-all duration-500"
-                                style={{ width: `${job.avgProgress}%`, background: colors.bar }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Avatar Stack + Deadline */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <div className="flex">
-                                {job.workers.slice(0, 5).map((w, i) => (
-                                  <div
-                                    key={w._id}
-                                    title={w.applicantName}
-                                    className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden flex items-center justify-center text-[10px] font-medium text-gray-600 flex-shrink-0"
-                                    style={{ marginLeft: i > 0 ? "-6px" : "0", zIndex: 5 - i }}
-                                  >
-                                    {w.profileImageUrl ? (
-                                      <img src={w.profileImageUrl} alt={w.applicantName} className="w-full h-full object-cover" />
-                                    ) : (
-                                      w.applicantName?.charAt(0) || "?"
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                              <span className="text-xs text-gray-500">{job.workers.length} คน</span>
-                            </div>
-                            {job.deliveryDate && (
-                              <span className="text-xs text-gray-400">
-                                ส่งงาน {new Date(job.deliveryDate).toLocaleDateString("th-TH", {
-                                  day: "numeric", month: "short",
-                                })}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Mini Breakdown */}
-                          {breakdownItems.length > 0 && (
-                            <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-100">
-                              {breakdownItems.map((item) => (
-                                <span
-                                  key={item.label}
-                                  className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${item.cls}`}
+                          {/* รายชื่อนิสิตผู้ปฏิบัติงาน */}
+                          <div className="space-y-3">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                              <Users size={12} /> รายชื่อผู้ปฏิบัติงาน
+                            </p>
+                            
+                            <div className="flex flex-col gap-2">
+                              {job.workers.map((worker) => (
+                                <div 
+                                  key={worker._id} 
+                                  className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all group/item"
                                 >
-                                  {item.count} {item.label}
-                                </span>
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-blue-600 font-bold text-xs shrink-0 overflow-hidden">
+                                      {worker.profileImageUrl ? (
+                                        <img src={worker.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        worker.applicantName?.charAt(0)
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-black text-gray-800 truncate">{worker.applicantName}</p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <div className="w-16 bg-gray-200 h-1 rounded-full overflow-hidden">
+                                          <div className="bg-blue-600 h-full" style={{ width: `${worker.progress}%` }} />
+                                        </div>
+                                        <span className="text-[9px] font-bold text-gray-400">{worker.progress}%</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <Link 
+                                    href={`/manage-projects/${job._id}/work/${worker._id}`}
+                                    className="ml-2 px-3 py-1.5 bg-white text-blue-600 text-[10px] font-black rounded-lg border border-blue-100 shadow-sm hover:bg-blue-600 hover:text-white transition-all whitespace-nowrap"
+                                  >
+                                    {worker.status === 'submitted' ? 'ตรวจงาน' : 'จัดการงาน'}
+                                  </Link>
+                                </div>
                               ))}
                             </div>
-                          )}
-                        {/* ดูรายละเอียดงาน button */}
-                        <Link
-                          href={`/manage-projects/${job._id}/applicants`}
-                          className="btn-primary text-sm text-center py-2 rounded-full w-full">
-                          ดูรายละเอียดงาน ↗
-                        </Link>
-                        </div>
-                      </div>
+                            </div>
+                          </div>
+
+                          {/* Footer Card */}
+                          <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between mt-auto">
+                              <div className="flex items-center gap-2 text-gray-400">
+                                  <Clock size={14} />
+                                  <span className="text-[10px] font-black uppercase tracking-widest">
+                                    {job.deliveryDate ? new Date(job.deliveryDate).toLocaleDateString('th-TH') : 'ไม่ระบุ'}
+                                  </span>
+                              </div>
+                              <Link 
+                                href={`/manage-projects/${job._id}/applicants`}
+                                className="text-[10px] font-black text-blue-600 hover:underline uppercase tracking-widest"
+                              >
+                                ดูภาพรวมโปรเจกต์ →
+                              </Link>
+                            </div>
+                          </div>
                     );
                   })}
                 </div>
@@ -827,6 +811,6 @@ export default function ManageProjectsPage() {
             </div>
           )}
         </div>
-    </div>
+      </div>
   );
 }
