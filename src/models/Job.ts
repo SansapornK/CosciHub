@@ -32,7 +32,6 @@ const JobSchema = new mongoose.Schema({
       "published", 
       "in_progress",
       "revision",
-      "awaiting",
       "completed",
       "closed",
     ],
