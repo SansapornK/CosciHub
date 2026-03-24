@@ -255,7 +255,7 @@ export default function ManageProjectsPage() {
       <Toaster position="bottom-left" />
 
       {/* ── Header ── */}
-      <section className="mt-6 p-6 flex flex-col gap-2 bg-primary-blue-500 rounded-xl">
+      {/* <section className="mt-6 p-6 flex flex-col gap-2 bg-primary-blue-500 rounded-xl">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="font-medium text-xl text-white">จัดการโปรเจกต์</h1>
@@ -272,7 +272,7 @@ export default function ManageProjectsPage() {
             ดูโปรเจกต์ทั้งหมด
           </Link>
         </div>
-      </section>
+      </section> */}
 
 
       {/* ── Row 4: ✅ Job Applications Section ── */}
@@ -316,7 +316,7 @@ export default function ManageProjectsPage() {
                   {/* Title + badge */}
                   <div className="flex items-start justify-between gap-4">
                     <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{app.jobTitle}</h3>
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shrink-0 ${s.className}`}>
+                    <span className={`text-xs px-2.5 py-1 rounded-lg uppercase shrink-0 ${s.className}`}>
                       {s.label}
                     </span>
                   </div>
@@ -404,11 +404,11 @@ export default function ManageProjectsPage() {
                     <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{job.title}</h3>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       {job.acceptedCount >= job.capacity ? (
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest bg-green-50 text-green-600 border-green-100">
+                        <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100">
                           คัดเลือกครบแล้ว
                         </span>
                       ) : job.pendingCount > 0 ? (
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest bg-purple-50 text-purple-600 border-purple-100">
+                        <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-purple-50 text-purple-600 border-purple-100">
                           รอพิจารณา {job.pendingCount}
                         </span>
                       ) : null}
@@ -474,7 +474,7 @@ export default function ManageProjectsPage() {
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-4">
                           <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{app.jobTitle}</h3>
-                          <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest shrink-0 ${s.color}`}>
+                          <span className={`text-xs px-2.5 py-1 rounded-lg border uppercase shrink-0 ${s.color}`}>
                             {s.label}
                           </span>
                         </div>
@@ -552,7 +552,7 @@ export default function ManageProjectsPage() {
                         <div className="p-6 flex-1">
                           <div className="flex justify-between items-start gap-4 mb-5">
                             <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{job.title}</h3>
-                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest shrink-0 ${currentStyle}`}>
+                            <span className={`text-xs px-2.5 py-1 rounded-lg border uppercase shrink-0 ${currentStyle}`}>
                               {job.aggregateBadge.label}
                             </span>
                           </div>
@@ -605,7 +605,7 @@ export default function ManageProjectsPage() {
                             href={`/manage-projects/${job._id}/overview`}
                             className="btn-primary block text-sm text-center py-2 rounded-full w-full mt-3"
                           >
-                            ดูรายละเอียดงาน ↗
+                            ดูรายละเอียดงาน
                           </Link>
                         </div>
                       </div>

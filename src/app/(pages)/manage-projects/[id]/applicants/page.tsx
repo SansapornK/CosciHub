@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import Loading from "../../../../components/common/Loading";
 import { toast, Toaster } from "react-hot-toast";
 
@@ -283,22 +284,22 @@ export default function ApplicantsPage() {
   const remaining = capacity - acceptedCount;
 
   return (
-    <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto w-full">
+    <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
       <Toaster position="bottom-left" />
 
+        <div className="mt-6 mb-1">
+            <Link href="/manage-projects" className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 w-fit">
+                <ArrowLeft size={18} /> กลับหน้าจัดการโปรเจกต์
+            </Link>
+        </div>
+
       {/* Header */}
-      <section className="mt-6 p-6 bg-primary-blue-500 rounded-xl">
-        <Link
-          href="/manage-projects"
-          className="text-white/70 hover:text-white text-sm flex items-center gap-1 mb-3 w-fit"
-        >
-          ← กลับหน้าจัดการโปรเจกต์
-        </Link>
+      <section className="bg-primary-blue-500 rounded-2xl p-6 text-white">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-semibold text-xl text-white">ผู้สมัครงาน</h1>
-            <p className="text-white/80 text-sm mt-1 line-clamp-1">{job?.title}</p>
-            <p className="text-white/60 text-xs mt-0.5">{job?.category}</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">ผู้สมัครงาน</p>
+            <h1 className="text-xl font-semibold leading-snug">{job.title}</h1>
+            <p className="text-white/70 text-sm mt-1">{job.category}</p>
           </div>
           <div className="bg-white/20 rounded-xl px-4 py-2 text-white text-center flex-shrink-0">
             <p className="text-2xl font-bold">{applicants.length}</p>
