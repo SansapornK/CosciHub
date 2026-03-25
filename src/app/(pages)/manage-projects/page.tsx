@@ -14,9 +14,39 @@ import {
   CheckCircle, 
   LayoutDashboard, 
   Users, 
-  ArrowRight 
+  ArrowRight,
+  DollarSign,
+  Star,
+   
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40, filter: "blur(4px)" },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    filter: "blur(0px)",
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] }
+  }
+};
+
+const imageReveal = {
+  hidden: { opacity: 0, scale: 1.1 },
+  visible: { 
+    opacity: 1, 
+    scale: 1,
+    transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] }
+  }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.2 }
+  }
+};
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
 //  งานที่นิสิตสมัครไว้
@@ -156,6 +186,7 @@ export default function ManageProjectsPage() {
       } else {
         setActiveOwnerJobs(activeRes.data.jobs || []);
       }
+
     } catch (err) {
       console.error("Error fetching job applications:", err);
     } finally {
@@ -242,6 +273,27 @@ export default function ManageProjectsPage() {
   };
 
   const isFreelancer = session?.user?.role === 'student';
+  
+  // --- Logic Dashboard ---
+  const dashboardStats = {
+    totalCompleted: 0,
+    totalEarnings: 0,
+    avgRating: 4.9, // ในอนาคตดึงจาก session.user.rating หรือ API profile
+    reviewCount: 8  // ในอนาคตดึงจาก session.user.reviewCount
+  };
+
+  if (isFreelancer) {
+    const completedApps = jobApplications.filter(app => app.status === 'completed');
+    
+    dashboardStats.totalCompleted = completedApps.length;
+    
+    // คำนวณรายได้สะสม (ใช้ค่า budgetMin เป็นเกณฑ์)
+    dashboardStats.totalEarnings = completedApps.reduce((sum, app) => 
+      sum + (app.jobBudgetMin || 0), 0
+    );
+
+  } 
+
 
   // Status badge config สำหรับ job application
   const appStatusConfig: Record<string, { label: string; className: string }> = {
@@ -250,12 +302,33 @@ export default function ManageProjectsPage() {
     rejected: { label: "ไม่ผ่านการคัดเลือก", className: "bg-red-100  text-red-600"    },
   };
 
+
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto w-full">
       <Toaster position="bottom-left" />
 
+      {isFreelancer ? (
+        <div className="flex justify-between items-center mt-8">
+          <h2 className="text-3xl font-black text-[#0C5BEA] flex items-center gap-3">
+            งานของฉัน
+          </h2>
+        </div>
+
+      ):(
+        <div className="flex justify-between items-center mt-8 mb-8">
+          <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-100">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            จัดการงาน ({jobApplications.filter(a => a.status === "pending" || a.status === "rejected" || a.status === "accepted").length})
+          </h2>
+        </div>
+      )}
+        
       {/* ── Header ── */}
-      <section className="mt-6 p-6 flex flex-col gap-2 bg-primary-blue-500 rounded-xl">
+      {/* <section className="mt-6 p-6 flex flex-col gap-2 bg-primary-blue-500 rounded-xl">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="font-medium text-xl text-white">จัดการโปรเจกต์</h1>
@@ -272,16 +345,107 @@ export default function ManageProjectsPage() {
             ดูโปรเจกต์ทั้งหมด
           </Link>
         </div>
-      </section>
+      </section> */}
+
+      {/* --- Dashboard Summary Section --- */}
+      {isFreelancer && (
+        <div className="w-full max-w-7xl mx-auto mb-10">
+          <motion.div 
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            
+            {/* 1. */}
+            <motion.div 
+              variants={fadeInUp}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
+              className="rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group min-h-[200px] flex flex-col justify-between items-end"
+              style={{ background: 'linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)' }}
+            >
+              {/* Icon Bg */}
+              <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 group-hover:rotate-12 transition-all duration-700">
+                <Briefcase size={160} strokeWidth={1.5} />
+              </div>
+
+              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">งานทั้งหมดที่เคยทำ</h3>
+
+              <div className="relative z-10">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-6xl font-black tracking-tighter drop-shadow-lg">
+                    {dashboardStats.totalCompleted}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 2. */}
+            <motion.div 
+              variants={fadeInUp}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
+              className="rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group min-h-[200px] flex flex-col justify-between items-end"
+              style={{ background: 'linear-gradient(135deg, #0C5BEA 10%, #6D91D3 100%)' }}
+            >
+              <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-700">
+                <DollarSign size={160} strokeWidth={1.5} />
+              </div>
+
+              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">รายได้รวม</h3>
+
+              <div className="relative z-10">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl md:text-6xl font-black tracking-tighter drop-shadow-lg">
+                    {dashboardStats.totalEarnings.toLocaleString()}
+                  </span>
+                  <span className="text-sm font-bold text-white/60">บาท</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 3. */}
+            <motion.div 
+              variants={fadeInUp}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
+              className="rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group min-h-[200px] flex flex-col justify-between items-end"
+              style={{ background: 'linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)' }}
+            >
+              <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 transition-all duration-700">
+                <Star size={160} strokeWidth={1.5} />
+              </div>
+
+              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">รีวิวรวม</h3>
+
+              <div className="relative z-10 flex flex-col items-end">
+                <span className="text-6xl font-black tracking-tighter text-white drop-shadow-lg">
+                  {dashboardStats.avgRating}
+                </span>
+                <div className="flex gap-0.5 mt-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      size={14} 
+                      fill={i < Math.floor(dashboardStats.avgRating) ? "#F4FE57" : "none"} 
+                      className={i < Math.floor(dashboardStats.avgRating) ? "text-[#F4FE57]" : "text-white/20"}
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+          </motion.div>
+        </div>
+      )}
 
 
       {/* ── Row 4: ✅ Job Applications Section ── */}
       <div className="w-full">
         {isFreelancer ? (
       // ── ฝั่งนิสิต: งานที่สมัครไว้ ──────────────────────────────────────
-      <div className="bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100">
+      <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+          <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
             <div className="p-2.5 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-100">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -372,7 +536,7 @@ export default function ManageProjectsPage() {
         // ── ฝั่งเจ้าของ: งานที่มีคนมาสมัคร ───────────────────────────────────
         <div className="bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+            <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
               <div className="p-2.5 bg-purple-500 rounded-xl text-white shadow-lg shadow-purple-100">
                 <Users size={20} />
               </div>
@@ -438,9 +602,9 @@ export default function ManageProjectsPage() {
         <div className="w-full">
           {isFreelancer ? (
           // ── ฝั่งนิสิต ──────────────────────────────────────────────────────────
-          <div className="bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100">
+          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+              <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
                 <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -512,7 +676,7 @@ export default function ManageProjectsPage() {
             /* ฝั่งเจ้าของงาน */
             <div className="bg-gray-50/50 rounded-[2.5rem] p-8 border border-gray-100">
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+                <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
                   <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
                     <Clock size={20} />
                   </div>

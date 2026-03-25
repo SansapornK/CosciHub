@@ -3,6 +3,7 @@
 
 @theme {
     /* colors */
+    --color-app-bg: #f9fafb;
     --color-primary-black: #1a1a1a ;
     --color-primary-gray: #F9FAFB ;
     --color-secondary-gray: #EEEEEE ;
@@ -45,6 +46,7 @@
   
 body {
     font-family: "IBM Plex Sans Thai", sans-serif;
+    background-color: #f9fafb;
     @apply text-primary-black;
 }
 
