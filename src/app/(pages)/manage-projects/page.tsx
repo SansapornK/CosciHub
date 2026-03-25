@@ -346,6 +346,7 @@ export default function ManageProjectsPage() {
           </Link>
         </div>
       </section> */}
+<<<<<<< HEAD
 
       {/* --- Dashboard Summary Section --- */}
       {isFreelancer && (
@@ -437,6 +438,8 @@ export default function ManageProjectsPage() {
           </motion.div>
         </div>
       )}
+=======
+>>>>>>> 20b2953ffc0e7b85fd404599e5eba55da255194d
 
 
       {/* ── Row 4: ✅ Job Applications Section ── */}
@@ -480,7 +483,7 @@ export default function ManageProjectsPage() {
                   {/* Title + badge */}
                   <div className="flex items-start justify-between gap-4">
                     <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{app.jobTitle}</h3>
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shrink-0 ${s.className}`}>
+                    <span className={`text-xs px-2.5 py-1 rounded-lg uppercase shrink-0 ${s.className}`}>
                       {s.label}
                     </span>
                   </div>
@@ -568,11 +571,11 @@ export default function ManageProjectsPage() {
                     <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{job.title}</h3>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       {job.acceptedCount >= job.capacity ? (
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest bg-green-50 text-green-600 border-green-100">
+                        <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100">
                           คัดเลือกครบแล้ว
                         </span>
                       ) : job.pendingCount > 0 ? (
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest bg-purple-50 text-purple-600 border-purple-100">
+                        <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-purple-50 text-purple-600 border-purple-100">
                           รอพิจารณา {job.pendingCount}
                         </span>
                       ) : null}
@@ -638,7 +641,7 @@ export default function ManageProjectsPage() {
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-4">
                           <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{app.jobTitle}</h3>
-                          <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest shrink-0 ${s.color}`}>
+                          <span className={`text-xs px-2.5 py-1 rounded-lg border uppercase shrink-0 ${s.color}`}>
                             {s.label}
                           </span>
                         </div>
@@ -716,7 +719,7 @@ export default function ManageProjectsPage() {
                         <div className="p-6 flex-1">
                           <div className="flex justify-between items-start gap-4 mb-5">
                             <h3 className="font-black text-gray-900 leading-tight line-clamp-2">{job.title}</h3>
-                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest shrink-0 ${currentStyle}`}>
+                            <span className={`text-xs px-2.5 py-1 rounded-lg border uppercase shrink-0 ${currentStyle}`}>
                               {job.aggregateBadge.label}
                             </span>
                           </div>
@@ -769,7 +772,7 @@ export default function ManageProjectsPage() {
                             href={`/manage-projects/${job._id}/overview`}
                             className="btn-primary block text-sm text-center py-2 rounded-full w-full mt-3"
                           >
-                            ดูรายละเอียดงาน ↗
+                            ดูรายละเอียดงาน
                           </Link>
                         </div>
                       </div>

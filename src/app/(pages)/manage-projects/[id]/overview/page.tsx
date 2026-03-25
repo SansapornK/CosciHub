@@ -98,7 +98,7 @@ export default function JobOverviewPage() {
   const statusLabel: Record<string, { text: string; cls: string }> = {
     accepted:    { text: "รอเริ่มงาน",    cls: "bg-blue-100 text-blue-700"    },
     in_progress: { text: "กำลังทำงาน",   cls: "bg-yellow-100 text-yellow-700" },
-    submitted:   { text: "ส่งงานแล้ว",   cls: "bg-purple-100 text-purple-700" },
+    submitted:   { text: "รอตรวจ",   cls: "bg-purple-100 text-purple-700" },
     revision:    { text: "แก้ไขงาน",     cls: "bg-orange-100 text-orange-700" },
     completed:   { text: "เสร็จสมบูรณ์", cls: "bg-green-100 text-green-700"   },
   };
@@ -112,31 +112,37 @@ export default function JobOverviewPage() {
   ].filter((item) => item.count > 0);
 
   return (
-    <div className="max-w-4xl mx-auto pb-16">
+    <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
       <Toaster position="bottom-left" />
 
-      <div className="mt-6 mb-6">
+      <div className="mt-6 mb-1">
         <Link href="/manage-projects" className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 w-fit">
           <ArrowLeft size={18} /> กลับหน้าจัดการโปรเจกต์
         </Link>
       </div>
 
       {/* Header */}
-      <section className="bg-primary-blue-500 rounded-2xl p-6 mb-6 text-white">
+      <section className="bg-primary-blue-500 rounded-2xl p-6 text-white">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-white/60 text-xs font-medium uppercase tracking-widest mb-1">ภาพรวมงาน</p>
+            <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">ภาพรวมงาน</p>
             <h1 className="text-xl font-semibold leading-snug">{job.title}</h1>
             <p className="text-white/70 text-sm mt-1">{job.category}</p>
           </div>
-          <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg border uppercase tracking-widest shrink-0 ${currentStyle.badge}`}>
-            {job.aggregateBadge.label}
-          </span>
+            {breakdownItems.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+                {breakdownItems.map((item) => (
+                <span key={item.label} className={`text-xs px-2.5 py-1 rounded-full font-medium ${item.cls}`}>
+                    {item.count} {item.label}
+                </span>
+                ))}
+            </div>
+            )}
         </div>
         <div className="flex flex-wrap gap-4 mt-5 pt-4 border-t border-white/20">
           <div className="flex items-center gap-2 text-white/80 text-sm">
             <Users size={14} />
-            <span>{job.workers.length}/{job.capacity} คน</span>
+            <span>{job.workers.length} คน</span>
           </div>
           {job.deliveryDate && (
             <div className="flex items-center gap-2 text-white/80 text-sm">
@@ -144,33 +150,25 @@ export default function JobOverviewPage() {
               <span>ส่งงาน {new Date(job.deliveryDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}</span>
             </div>
           )}
+          <div className="flex items-center justify-between text-white/80 text-sm gap-4">
+            <span>ความคืบหน้าเฉลี่ย</span>
+            <div className="flex items-center gap-2 flex-1 justify-end">
+                <div className="w-24 bg-white/20 rounded-full h-2 overflow-hidden">
+                <div 
+                    className="h-full rounded-full transition-all duration-500" 
+                    style={{ width: `${job.avgProgress}%`, background: "white" }} 
+                />
+                </div>
+                <span>{job.avgProgress}%</span>
+            </div>
+        </div>
         </div>
       </section>
 
-      {/* Progress summary */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 shadow-sm">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span className="font-medium">ความคืบหน้าเฉลี่ย</span>
-          <span className="font-bold text-gray-800">{job.avgProgress}%</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-          <div className="h-2.5 rounded-full transition-all duration-500" style={{ width: `${job.avgProgress}%`, background: currentStyle.bar }} />
-        </div>
-        {breakdownItems.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {breakdownItems.map((item) => (
-              <span key={item.label} className={`text-xs px-2.5 py-1 rounded-full font-medium ${item.cls}`}>
-                {item.count} {item.label}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Workers list */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-4">
-          <Users size={12} /> รายชื่อผู้ปฏิบัติงาน
+        <p className="text-s font-black text-gray-500 uppercase tracking-wide flex items-center gap-2 mb-4">
+          <Users size={14} /> รายชื่อผู้ปฏิบัติงาน
         </p>
         <div className="flex flex-col gap-2">
           {job.workers.map((worker) => {
@@ -178,27 +176,26 @@ export default function JobOverviewPage() {
             return (
               <div key={worker._id} className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary-blue-500 font-bold text-sm shrink-0 overflow-hidden">
+                  <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary-blue-500 font-bold text-sm shrink-0 overflow-hidden">
                     {worker.profileImageUrl
                       ? <img src={worker.profileImageUrl} alt={worker.applicantName} className="w-full h-full object-cover" />
                       : worker.applicantName?.charAt(0) || "?"}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{worker.applicantName}</p>
+                    <p className="text-[17px] font-medium text-black truncate">{worker.applicantName}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <div className="w-20 bg-gray-200 h-1.5 rounded-full overflow-hidden">
                         <div className="bg-primary-blue-500 h-full rounded-full" style={{ width: `${worker.progress}%` }} />
                       </div>
-                      <span className="text-[10px] font-bold text-gray-400">{worker.progress}%</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${wStatus.cls}`}>{wStatus.text}</span>
+                      <span className="text-sm text-gray-400">{worker.progress}%</span>
+                      <span className={`text-sm px-2 py-0.5 rounded-full ${wStatus.cls}`}>{wStatus.text}</span>
                     </div>
                   </div>
                 </div>
                 <Link
                   href={`/manage-projects/${jobId}/work/${worker._id}`}
-                  className="ml-2 px-3 py-1.5 bg-white text-primary-blue-500 text-xs font-semibold rounded-lg border border-gray-200 shadow-sm hover:bg-primary-blue-500 hover:text-white hover:border-primary-blue-500 transition-all whitespace-nowrap"
-                >
-                  {worker.status === "submitted" ? "ตรวจงาน" : "จัดการงาน"}
+                  className="ml-2 px-3 py-1.5 bg-white text-primary-blue-500 text-s rounded-lg border border-gray-200 shadow-sm hover:bg-primary-blue-500 hover:text-white hover:border-primary-blue-500 transition-all whitespace-nowrap">
+                  ติดตามงาน
                 </Link>
               </div>
             );
