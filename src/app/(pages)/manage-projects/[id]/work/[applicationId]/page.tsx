@@ -231,12 +231,13 @@ export default function WorkManagementPage() {
   }
 
   const statusLabel: Record<string, { text: string; class: string }> = {
-    accepted: { text: "รอเริ่มงาน", class: "bg-blue-100 text-blue-700" },
-    in_progress: { text: "กำลังทำงาน", class: "bg-yellow-100 text-yellow-700" },
-    submitted: { text: "ส่งงานแล้ว", class: "bg-purple-100 text-purple-700" },
-    revision: { text: "แก้ไขงาน", class: "bg-orange-100 text-orange-700" },
-    completed: { text: "เสร็จสมบูรณ์", class: "bg-green-100 text-green-700" },
+    accepted:    { text: "รอเริ่มงาน",   class: "bg-blue-100 text-blue-700" },
+    in_progress: { text: "กำลังทำงาน",  class: "bg-yellow-50 text-yellow-600 border-yellow-100" },
+    submitted:   { text: "ส่งงานแล้ว",  class: "bg-purple-50 text-purple-600 border-purple-100" },
+    revision:    { text: "แก้ไขงาน",    class: "bg-orange-50 text-orange-600 border-orange-100" },
+    completed:   { text: "เสร็จสมบูรณ์", class: "bg-green-100 text-green-700" },
   };
+  
 
   const currentStatus = statusLabel[workData.status] || statusLabel.in_progress;
 
@@ -275,7 +276,7 @@ export default function WorkManagementPage() {
                 {/* <span className="bg-gray-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest shadow-lg shadow-gray-200">
                   {workData.jobId?.category || "ทั่วไป"}
                 </span> */}
-                <span className="bg-gray-100 text-gray-600 text-[12px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                <span className="bg-gray-100 text-gray-600 text-[12px] px-2.5 py-1 font-medium rounded-full uppercase">
                   {workData.jobId?.category || "ทั่วไป"}
                 </span>
 
@@ -283,7 +284,7 @@ export default function WorkManagementPage() {
                   {statusLabel[workData.status]?.text}
                 </span> */}
 
-                <span className={`text-[12px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${statusLabel[workData.status]?.class}`}>
+                <span className={`text-[12px] text-xs px-2.5 py-1 rounded-lg border uppercase shrink-0  ${statusLabel[workData.status]?.class}`}>
                   {statusLabel[workData.status]?.text}
                 </span>
 
@@ -293,7 +294,7 @@ export default function WorkManagementPage() {
                   //   <Clock size={14} />
                   //   Deadline: {new Date(workData.jobId.deliveryDate).toLocaleDateString('th-TH')}
                   // </span>
-                  <span className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[12px] font-black px-2.5 py-1 rounded-full border border-red-100 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[12px] px-2.5 py-1 rounded-full border border-red-100 uppercase">
                     <Clock size={12} />
                     ส่งงานภายใน: {new Date(workData.jobId.deliveryDate).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
                   </span>
@@ -312,7 +313,7 @@ export default function WorkManagementPage() {
               </div>
 
               <div className="min-w-0 flex-1 md:flex-none">
-                <p className="text-[9px] md:text-[10px] text-gray-400 font-black uppercase tracking-widest mb-0.5 truncate">
+                <p className="text-[9px] md:text-[10px] text-gray-400 font-black uppercase mb-0.5 truncate">
                   {isFreelancer ? "ผู้ว่าจ้าง / เจ้าของงาน" : "นิสิตผู้ปฏิบัติงาน"}
                 </p>
                 <p className="text-xs md:text-sm font-black text-gray-800 truncate max-w-[150px] md:max-w-none">
@@ -375,7 +376,7 @@ export default function WorkManagementPage() {
                 <div className="flex justify-between items-center px-1">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">เลื่อนเพื่ออัปเดตสถานะ</p>
+                    <p className="text-xs font-black text-gray-400">เลื่อนเพื่ออัปเดตสถานะ</p>
                   </div>
                   <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-black">
                     {newProgress}%
@@ -734,7 +735,7 @@ export default function WorkManagementPage() {
               </div>
             ) : (
               <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
-                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">
+                <p className="text-[10px] font-bold text-indigo-400  mb-2">
                   Feedback จากเจ้าของงาน
                 </p>
                 <p className="text-gray-700 text-sm italic">

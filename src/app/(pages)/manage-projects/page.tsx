@@ -346,7 +346,6 @@ export default function ManageProjectsPage() {
           </Link>
         </div>
       </section> */}
-<<<<<<< HEAD
 
       {/* --- Dashboard Summary Section --- */}
       {isFreelancer && (
@@ -438,8 +437,6 @@ export default function ManageProjectsPage() {
           </motion.div>
         </div>
       )}
-=======
->>>>>>> 20b2953ffc0e7b85fd404599e5eba55da255194d
 
 
       {/* ── Row 4: ✅ Job Applications Section ── */}
