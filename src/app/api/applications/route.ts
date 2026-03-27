@@ -203,7 +203,7 @@ export async function GET(req: Request) {
       const user = await User.findOne({ email: session.user.email });
       if (!user) return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
 
-      const ACTIVE = ["accepted", "in_progress", "submitted", "revision"];
+      const ACTIVE = ["accepted", "in_progress", "submitted", "revision", "completed"];
 
       // ดึงงานทั้งหมดของ owner ไม่กรอง status
       const allOwnedJobs = await (Job as any)
@@ -224,7 +224,12 @@ export async function GET(req: Request) {
       if (applications.length === 0) return NextResponse.json({ jobs: [] });
 
       // ค้นหา jobIds ที่มี active applications
-      const activeJobIdSet = new Set(applications.map((a: any) => a.jobId.toString()));
+      
+      const activeJobIdSet = new Set(
+    applications
+      .filter((a: any) => a.status !== "completed")
+      .map((a: any) => a.jobId.toString())
+  );
 
       const emails = applications.map((a: any) => a.applicantEmail);
       const userProfiles = await User.find({ email: { $in: emails } })
@@ -314,6 +319,105 @@ export async function GET(req: Request) {
             avgProgress,
           };
         });
+
+      return NextResponse.json({ jobs: result });
+    }
+
+    // ══════════════════════════════════════════════════════
+    // CASE 6: ?role=student&phase=completed (งานที่นิสิตทำเสร็จแล้ว)
+    // ══════════════════════════════════════════════════════
+    if (role === "student" && phase === "completed") {
+      const applications = await Application.find({
+        applicantEmail: session.user.email,
+        status: "completed", // กรองเฉพาะที่เสร็จแล้วจริงๆ
+      }).sort({ updatedAt: -1 }).lean();
+
+      const jobIds = applications.map((a: any) => a.jobId);
+      const jobs = await (Job as any).find({ _id: { $in: jobIds } })
+        .select("title category owner deliveryDate")
+        .lean();
+
+      const jobMap: Record<string, any> = {};
+      jobs.forEach((j: any) => { jobMap[j._id.toString()] = j; });
+
+      const result = applications.map((a: any) => ({
+        _id:          a._id.toString(),
+        jobId:        a.jobId.toString(),
+        jobTitle:     jobMap[a.jobId.toString()]?.title    ?? "ไม่พบข้อมูล",
+        jobCategory:  jobMap[a.jobId.toString()]?.category ?? "",
+        jobOwner:     jobMap[a.jobId.toString()]?.owner    ?? "",
+        jobDeadline:  jobMap[a.jobId.toString()]?.deliveryDate ?? null, // เพิ่มให้ Frontend แสดงผลได้
+        status:       a.status,
+        appliedDate:  a.appliedDate,
+      }));
+
+      return NextResponse.json({ applications: result });
+    }
+
+    // ══════════════════════════════════════════════════════
+    // CASE 7: ?role=owner&phase=completed (งานที่นิสิตทุกคนทำเสร็จหมดแล้ว)
+    // ══════════════════════════════════════════════════════
+    if (role === "owner" && phase === "completed") {
+      const user = await User.findOne({ email: session.user.email });
+      if (!user) return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
+
+      // 1. ดึงงานทั้งหมดที่เป็นเจ้าของ
+      const ownedJobs = await (Job as any).find({ owner: user.name }).lean();
+      if (ownedJobs.length === 0) return NextResponse.json({ jobs: [] });
+
+      const allJobIds = ownedJobs.map((j: any) => j._id);
+
+      // 2. ดึงใบสมัครทั้งหมดของงานเหล่านั้นมาเพื่อเช็คสถานะทุกคน
+      const allApplications = await Application.find({
+        jobId: { $in: allJobIds }
+      }).lean();
+
+      // 3. จัดกลุ่มใบสมัครตาม JobId
+      const appsByJob: Record<string, any[]> = {};
+      allApplications.forEach(app => {
+        const jId = app.jobId.toString();
+        if (!appsByJob[jId]) appsByJob[jId] = [];
+        appsByJob[jId].push(app);
+      });
+
+      // 4. กรองเฉพาะงานที่ "นิสิตที่ถูกรับเข้าทำงานทุกคน (Accepted/Hired) ต้องมีสถานะเป็น completed"
+      const finishedJobs = ownedJobs.filter(job => {
+        const jobApps = appsByJob[job._id.toString()] || [];
+        
+        // กรองเอาเฉพาะคนที่ถูกจ้าง (ไม่นับคนที่รอพิจารณาหรือถูกปฏิเสธ)
+        const hiredApps = jobApps.filter(app => 
+          ["accepted", "in_progress", "submitted", "revision", "completed"].includes(app.status)
+        );
+
+        // เงื่อนไข: ต้องมีคนถูกจ้างอย่างน้อย 1 คน และ "ทุกคน" ในกลุ่มนั้นต้อง status === "completed"
+        return hiredApps.length > 0 && hiredApps.every(app => app.status === "completed");
+      });
+
+      // 5. ดึงรูปโปรไฟล์นิสิตมาแสดง
+      const hiredEmails = allApplications.map(a => a.applicantEmail);
+      const userProfiles = await User.find({ email: { $in: hiredEmails } }).select("email profileImageUrl").lean();
+      const profileMap: Record<string, string | null> = {};
+      userProfiles.forEach((u: any) => { profileMap[u.email] = u.profileImageUrl || null; });
+
+      // 6. Map ผลลัพธ์กลับไป
+      const result = finishedJobs.map((j: any) => ({
+        _id:          j._id.toString(),
+        title:        j.title,
+        category:     j.category,
+        deliveryDate: j.deliveryDate,
+        jobStatus:    j.status,
+        capacity:     j.capacity || 1,
+        workers:      (appsByJob[j._id.toString()] || [])
+          .filter(a => ["accepted", "in_progress", "submitted", "revision", "completed"].includes(a.status))
+          .map(a => ({
+            _id: a._id.toString(),
+            applicantName: a.applicantName,
+            profileImageUrl: profileMap[a.applicantEmail] || null,
+            status: a.status,
+            progress: 100
+          })),
+        avgProgress: 100,
+      }));
 
       return NextResponse.json({ jobs: result });
     }

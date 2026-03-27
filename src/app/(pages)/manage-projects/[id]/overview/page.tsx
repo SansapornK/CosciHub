@@ -125,9 +125,8 @@ export default function JobOverviewPage() {
       <section className="bg-primary-blue-500 rounded-2xl p-6 text-white">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-white/60 text-xs font-medium uppercase tracking-wide mb-1">ภาพรวมงาน</p>
+            <p className="text-white/60 text-s font-medium uppercase tracking-wide mb-1">ภาพรวมงาน</p>
             <h1 className="text-xl font-semibold leading-snug">{job.title}</h1>
-            <p className="text-white/70 text-sm mt-1">{job.category}</p>
           </div>
             {breakdownItems.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
@@ -150,16 +149,13 @@ export default function JobOverviewPage() {
               <span>ส่งงาน {new Date(job.deliveryDate).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}</span>
             </div>
           )}
-          <div className="flex items-center justify-between text-white/80 text-sm gap-4">
-            <span>ความคืบหน้าเฉลี่ย</span>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-white/80 text-sm">ความคืบหน้าเฉลี่ย</span>
             <div className="flex items-center gap-2 flex-1 justify-end">
                 <div className="w-24 bg-white/20 rounded-full h-2 overflow-hidden">
-                <div 
-                    className="h-full rounded-full transition-all duration-500" 
-                    style={{ width: `${job.avgProgress}%`, background: "white" }} 
-                />
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${job.avgProgress}%`, background: "white" }} />
                 </div>
-                <span>{job.avgProgress}%</span>
+                <span className="text-white/80 text-sm">{job.avgProgress}%</span>
             </div>
         </div>
         </div>
