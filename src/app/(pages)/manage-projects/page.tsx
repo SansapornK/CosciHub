@@ -405,6 +405,7 @@ export default function ManageProjectsPage() {
         </div>
       )}
 
+
       {/* --- Dashboard Summary Section --- */}
       {isFreelancer && (
         <div className="w-full max-w-7xl mx-auto mb-10">
