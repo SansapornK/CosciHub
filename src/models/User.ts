@@ -15,8 +15,9 @@ export interface IUser extends Document {
   portfolioUrl?: string;
   bio?: string;
   emailVerified: boolean;
-  isOpen?: boolean;  // ทำให้เป็น optional
-  basePrice?: number;  // ทำให้เป็น optional
+  verificationStatus?: 'pending' | 'approved' | 'rejected' | 'not_required';
+  verifiedBy?: string;   // อีเมลอาจารย์ที่ approve/reject
+  verifiedAt?: Date;
   galleryImages?: string[];  // ทำให้เป็น optional
   createdAt: Date;
   updatedAt: Date;
@@ -52,22 +53,27 @@ const UserSchema: Schema = new Schema(
     },
     bio: { type: String },
     emailVerified: { type: Boolean, default: false },
-    isOpen: { 
-      type: Boolean, 
-      required: function() { return this.role === 'student'; },
-      default: function() { return this.role === 'student' ? true : undefined; }
-    },
-    basePrice: { 
-      type: Number,
-      min: 100,
-      required: function() { return this.role === 'student'; },
-      default: function() { return this.role === 'student' ? 500 : undefined; }
-    },
     galleryImages: {
       type: [String],
       required: function() { return this.role === 'student'; },
       default: []
-    }
+    },
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected', 'not_required'],
+      default: function (this: IUser) {
+        // alumni ต้องรอการยืนยัน, role อื่นไม่ต้อง
+        return this.role === 'alumni' ? 'pending' : 'not_required';
+      },
+    },
+    verifiedBy: {
+      type: String,
+      default: null, // อีเมลอาจารย์ที่ตัดสินใจ
+    },
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -79,6 +85,12 @@ UserSchema.index(
     unique: true, 
     partialFilterExpression: { role: 'student' }
   }
+);
+
+// New Index : ช่วยให้ query alumni ที่รอยืนยันได้เร็วขึ้น
+UserSchema.index(
+  { verificationStatus: 1 },
+  { partialFilterExpression: { role: 'alumni' } }
 );
 
 // Fix for TypeScript to handle mongoose models with Next.js hot reloading

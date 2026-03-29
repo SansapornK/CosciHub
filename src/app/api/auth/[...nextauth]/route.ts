@@ -9,6 +9,7 @@ import { Adapter } from 'next-auth/adapters';
 import mongoose from 'mongoose';
 import connectToDatabase from '@/libs/mongodb';
 import bcrypt from 'bcryptjs';
+import type { VerificationStatus } from '@/types/next-auth';
 
 // Define NextAuth configuration with custom adapter for MongoDB
 export const authOptions: NextAuthOptions = {
@@ -77,9 +78,10 @@ export const authOptions: NextAuthOptions = {
             lastName: user.lastName,
             emailVerified: user.emailVerified,
             profileImageUrl: user.profileImageUrl,
-            isOpen: user.role === 'student' ? user.isOpen : undefined,
-            basePrice: user.role === 'student' ? user.basePrice : undefined,
             galleryImages: user.role === 'student' ? user.galleryImages : undefined,
+            verificationStatus: user.role === 'alumni'
+              ? user.verificationStatus
+              : undefined,
           };
         } catch (error) {
           console.error('Error authorizing user:', error);
@@ -118,10 +120,11 @@ export const authOptions: NextAuthOptions = {
       }
       
       if (token.profileImageUrl) session.user.profileImageUrl = token.profileImageUrl as string;
-      if (token.isOpen !== undefined && token.role === 'student') session.user.isOpen = Boolean(token.isOpen);
-      if (token.basePrice !== undefined && token.role === 'student') session.user.basePrice = Number(token.basePrice);
       if (token.galleryImages && token.role === 'student') session.user.galleryImages = token.galleryImages as string[];
-      
+      if (token.verificationStatus && token.role === 'alumni') {
+        session.user.verificationStatus = token.verificationStatus as VerificationStatus;        
+      }
+
       // เพิ่มข้อมูลเพิ่มเติมจาก MongoDB หากข้อมูลใน token ไม่ครบถ้วน
       try {
         await import('@/libs/mongodb').then(({ connectToDatabase }) => connectToDatabase());
@@ -144,17 +147,13 @@ export const authOptions: NextAuthOptions = {
           
           if (!session.user.profileImageUrl) session.user.profileImageUrl = userData.profileImageUrl || null;
           
-          if (session.user.isOpen === undefined && userData.role === 'student') {
-            session.user.isOpen = Boolean(userData.isOpen);
-          }
-          
-          if (session.user.basePrice === undefined && userData.role === 'student') {
-            session.user.basePrice = userData.basePrice;
-          }
-          
           if (!session.user.galleryImages && userData.role === 'student') {
             session.user.galleryImages = userData.galleryImages;
           }
+           if (userData.role === 'alumni') {
+              session.user.verificationStatus = userData.verificationStatus;
+            }
+
         }
       } catch (error) {
         console.error('Error fetching user data for session:', error);
@@ -174,10 +173,11 @@ export const authOptions: NextAuthOptions = {
       token.emailVerified = Boolean(user.emailVerified);
       token.profileImageUrl = user.profileImageUrl;
       if (user.role === 'student') {
-        token.isOpen = user.isOpen;
-        token.basePrice = user.basePrice;
         token.galleryImages = user.galleryImages;
       }
+       if (user.role === 'alumni') {
+          token.verificationStatus = user.verificationStatus;
+        }
     }
     return token;
   }

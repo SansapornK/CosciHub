@@ -5,7 +5,7 @@ import User from '@/models/User';
 import { uploadToCloudinary } from '@/libs/cloudinary';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { sendTeacherVerificationEmails } from '@/libs/emailToProf';
+import { sendTeacherVerificationEmails } from '@/libs/emailToProf'; 
 
 export async function POST(req: NextRequest) {
   try {
@@ -196,11 +196,9 @@ export async function POST(req: NextRequest) {
     
     // เพิ่มข้อมูลสำหรับนิสิตเท่านั้น
     if (role === 'student') {
-      responseData.user.isOpen = user.isOpen;
-      responseData.user.basePrice = user.basePrice;
+
       responseData.user.galleryImages = user.galleryImages;
     }
-
     if (role === 'alumni') {
       const teacherEmailsJson = formData.get('teacherEmails') as string;
       
@@ -220,7 +218,9 @@ export async function POST(req: NextRequest) {
           toEmails: teacherEmails,
           studentName: `${firstName} ${lastName}`,
           studentMajor: major,
-          profileImageUrl: user.profileImageUrl // URL รูปที่เพิ่งอัปโหลดเสร็จ
+          profileImageUrl: user.profileImageUrl,
+          alumniId: userId, 
+          alumniEmail: email    
         }).catch(err => console.error('Background email sending failed:', err));
       }
     }

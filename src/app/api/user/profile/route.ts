@@ -44,8 +44,7 @@ export async function GET(req: NextRequest) {
       bio: user.bio,
       profileImageUrl: user.profileImageUrl,
       portfolioUrl: user.portfolioUrl,
-      isOpen: user.role === 'student' ? user.isOpen : undefined,
-      basePrice: user.basePrice,
+      verificationStatus: user.verificationStatus,
       galleryImages: user.galleryImages || []
     });
   } catch (error) {
@@ -95,13 +94,7 @@ export async function PATCH(req: NextRequest) {
     const skillsString = formData.get('skills') as string;
     const skills = skillsString ? JSON.parse(skillsString) : undefined;
     
-    // Get base price for students
-    const basePriceStr = formData.get('basePrice') as string;
-    const basePrice = basePriceStr ? parseInt(basePriceStr, 10) : undefined;
-    
-    // Get isOpen status for students
-    const isOpenStr = formData.get('isOpen') as string;
-    const isOpen = user.role === 'student' ? isOpenStr === 'true' : undefined;
+
     
     // Create update object with only the fields that were provided
     const updateData: any = {};
@@ -111,8 +104,6 @@ export async function PATCH(req: NextRequest) {
     if (firstName && lastName) updateData.name = `${firstName} ${lastName}`;
     if (bio !== undefined) updateData.bio = bio;
     if (skills) updateData.skills = skills;
-    if (basePrice !== undefined && user.role === 'student') updateData.basePrice = basePrice;
-    if (isOpen !== undefined && user.role === 'student') updateData.isOpen = isOpen;
     
     // Handle profile image update if provided
     const profileImage = formData.get('profileImage') as File | null;
@@ -247,8 +238,6 @@ export async function PATCH(req: NextRequest) {
       bio: updatedUser.bio,
       profileImageUrl: updatedUser.profileImageUrl,
       portfolioUrl: updatedUser.portfolioUrl,
-      isOpen: updatedUser.role === 'student' ? updatedUser.isOpen : undefined,
-      basePrice: updatedUser.basePrice,
       galleryImages: updatedUser.galleryImages || []
     });
   } catch (error) {

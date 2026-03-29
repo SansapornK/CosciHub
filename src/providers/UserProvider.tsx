@@ -13,8 +13,7 @@ interface UserData {
   firstName?: string;
   lastName?: string;
   profileImageUrl?: string | null;
-  isOpen?: boolean;
-  basePrice?: number;
+  verificationStatus?: string;
   galleryImages?: string[];
   skills?: string[];
 }
@@ -69,8 +68,6 @@ export default function UserProvider({ children }: { children: ReactNode }) {
         firstName: data.firstName,
         lastName: data.lastName,
         profileImageUrl: data.profileImageUrl,
-        isOpen: data.isOpen,
-        basePrice: data.basePrice,
         galleryImages: data.galleryImages,
         skills: data.skills,
       });

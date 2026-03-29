@@ -9,9 +9,8 @@ declare module 'next-auth' {
       firstName?: string;
       lastName?: string;
       emailVerified?: boolean;
+      verificationStatus?: 'pending' | 'approved' | 'rejected' | 'not_required';
       profileImageUrl?: string | null;
-      isOpen?: boolean;
-      basePrice?: number;
       galleryImages?: string[];
       skills?: string[]; // Added skills property
     } & DefaultSession['user'];
@@ -22,9 +21,8 @@ declare module 'next-auth' {
     firstName?: string;
     lastName?: string;
     emailVerified?: boolean;
+    verificationStatus?: 'pending' | 'approved' | 'rejected' | 'not_required';
     profileImageUrl?: string;
-    isOpen?: boolean;
-    basePrice?: number;
     galleryImages?: string[];
     skills?: string[]; // Added skills property
   }
@@ -36,9 +34,8 @@ declare module 'next-auth/jwt' {
     firstName?: string;
     lastName?: string;
     emailVerified?: boolean;
+    verificationStatus?: 'pending' | 'approved' | 'rejected' | 'not_required';
     profileImageUrl?: string;
-    isOpen?: boolean;
-    basePrice?: number;
     galleryImages?: string[];
     skills?: string[]; // Added skills property
   }
@@ -55,3 +52,5 @@ declare global {
     promise: Promise<any> | null;
   };
 }
+
+export type VerificationStatus = 'pending' | 'approved' | 'rejected' | 'not_required';

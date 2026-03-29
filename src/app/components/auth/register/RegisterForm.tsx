@@ -55,8 +55,6 @@ export interface RegisterData {
   profileImage?: File;
   portfolioFile?: File;
   bio?: string;
-  basePrice?: number;
-  isOpen?: boolean;
   galleryImages?: File[];
   interestedJobs?: string[];
   acceptedTerms: boolean;
@@ -154,8 +152,6 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     if (registerData.role === 'student') {
       setRegisterData(prev => ({
         ...prev,
-        basePrice: prev.basePrice ?? 500,
-        isOpen: prev.isOpen ?? true,
         skills: prev.skills.length ? prev.skills : [],
       }));
     }
@@ -492,15 +488,6 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           formData.append('skills', JSON.stringify(registerData.skills));
         }
         
-        // Add student-specific fields
-        if (registerData.basePrice !== undefined) {
-          formData.append('basePrice', registerData.basePrice.toString());
-        }
-        
-        if (registerData.isOpen !== undefined) {
-          formData.append('isOpen', registerData.isOpen.toString());
-        }
-        
         // Add portfolio file if provided
         if (registerData.portfolioFile) {
           formData.append('portfolio', registerData.portfolioFile);
@@ -567,15 +554,11 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       if (data.role !== 'student') {
         newData.studentId = undefined;
         newData.skills = [];  // ใช้อาร์เรย์ว่างแทนการกำหนดเป็น undefined เพื่อหลีกเลี่ยงปัญหา TypeScript
-        newData.basePrice = undefined;
-        newData.isOpen = undefined;
         newData.portfolioFile = undefined;
         newData.galleryImages = undefined;
       } 
       // ถ้าเปลี่ยนเป็นนิสิต ให้กำหนดค่าเริ่มต้น
       else {
-        newData.basePrice = 500;
-        newData.isOpen = true;
         newData.skills = [];
       }
       
