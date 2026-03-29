@@ -1054,7 +1054,7 @@ export default function ManageProjectsPage() {
                         <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
                           {app.jobTitle}
                         </h3>
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest shrink-0 bg-green-50 text-green-600 border-green-100">
+                        <span className="text-xs px-2.5 py-1 rounded-lg border uppercase tracking-wide shrink-0 bg-green-50 text-green-600 border-green-100">
                           เสร็จสิ้น
                         </span>
                       </div>
@@ -1101,18 +1101,17 @@ export default function ManageProjectsPage() {
                 renderItem={(job) => (
                   <div
                     key={job._id}
-                    className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
+                    className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
                   >
                     <div className="p-6 flex-1 flex flex-col gap-3">
                       <div className="flex items-start justify-between gap-4">
                         <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
                           {job.title}
                         </h3>
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-widest shrink-0 bg-green-50 text-green-600 border-green-100">
+                        <span className="text-xs px-2.5 py-1 rounded-lg border uppercase tracking-wide shrink-0 bg-green-50 text-green-600 border-green-100">
                           เสร็จสิ้น
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400">{job.category}</p>
                       <div className="flex items-center gap-1.5 mt-1">
                         {/* <div className="flex">
                     {job.workers.slice(0, 5).map((w, i) => (
@@ -1132,9 +1131,9 @@ export default function ManageProjectsPage() {
                   </div> */}
                         {/* <span className="text-xs text-gray-500">{job.workers.length} คน</span> */}
                       </div>
-                      <div className="flex items-center justify-between mt-auto pt-2">
+                      <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">
-                          {job.deliveryDate &&
+                          กำหนดส่ง {job.deliveryDate &&
                             new Date(job.deliveryDate).toLocaleDateString(
                               "th-TH"
                             )}

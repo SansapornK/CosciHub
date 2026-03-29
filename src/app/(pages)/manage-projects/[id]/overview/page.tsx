@@ -59,11 +59,17 @@ export default function JobOverviewPage() {
   const fetchJobOverview = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/applications", {
-        params: { role: "owner", phase: "inProgress" },
-      });
-      const jobs: JobOverview[] = res.data.jobs || [];
-      const found = jobs.find((j) => j._id === jobId);
+      const [activeRes, completedRes] = await Promise.all([
+      axios.get("/api/applications", { params: { role: "owner", phase: "inProgress" } }),
+      axios.get("/api/applications", { params: { role: "owner", phase: "completed" } }),
+    ]);
+
+    const allJobs: JobOverview[] = [
+      ...(activeRes.data.jobs || []),
+      ...(completedRes.data.jobs || []),
+    ];
+
+      const found = allJobs.find((j) => j._id === jobId);
       if (!found) setError("ไม่พบข้อมูลงานนี้");
       else setJob(found);
     } catch {
@@ -87,13 +93,6 @@ export default function JobOverviewPage() {
     </div>
   );
 
-  const badgeStyles: Record<string, { badge: string; bar: string }> = {
-    red:    { badge: "bg-red-50 text-red-600 border-red-100",          bar: "#E24B4A" },
-    orange: { badge: "bg-orange-50 text-orange-600 border-orange-100", bar: "#EF9F27" },
-    blue:   { badge: "bg-blue-50 text-blue-600 border-blue-100",       bar: "#378ADD" },
-    green:  { badge: "bg-green-50 text-green-600 border-green-100",    bar: "#639922" },
-  };
-  const currentStyle = badgeStyles[job.aggregateBadge.color] ?? badgeStyles.blue;
 
   const statusLabel: Record<string, { text: string; cls: string }> = {
     accepted:    { text: "รอเริ่มงาน",    cls: "bg-blue-100 text-blue-700"    },
@@ -103,13 +102,13 @@ export default function JobOverviewPage() {
     completed:   { text: "เสร็จสมบูรณ์", cls: "bg-green-100 text-green-700"   },
   };
 
-  const breakdownItems = [
-    { count: job.statusCounts.submitted,      label: "รอตรวจ",  cls: "bg-red-50 text-red-700"       },
-    { count: job.statusCounts.revision,       label: "แก้ไข",   cls: "bg-orange-50 text-orange-700" },
-    { count: job.statusCounts.inProgress,     label: "กำลังทำ", cls: "bg-yellow-50 text-yellow-700" },
-    { count: job.statusCounts.waitingToStart, label: "รอเริ่ม", cls: "bg-blue-50 text-blue-700"     },
-    { count: job.statusCounts.completed,      label: "เสร็จ",   cls: "bg-green-50 text-green-700"   },
-  ].filter((item) => item.count > 0);
+//   const breakdownItems = [
+//     { count: job.statusCounts.submitted,      label: "รอตรวจ",  cls: "bg-red-50 text-red-700"       },
+//     { count: job.statusCounts.revision,       label: "แก้ไข",   cls: "bg-orange-50 text-orange-700" },
+//     { count: job.statusCounts.inProgress,     label: "กำลังทำ", cls: "bg-yellow-50 text-yellow-700" },
+//     { count: job.statusCounts.waitingToStart, label: "รอเริ่ม", cls: "bg-blue-50 text-blue-700"     },
+//     { count: job.statusCounts.completed,      label: "เสร็จ",   cls: "bg-green-50 text-green-700"   },
+//   ].filter((item) => item.count > 0);
 
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
@@ -128,7 +127,7 @@ export default function JobOverviewPage() {
             <p className="text-white/60 text-s font-medium uppercase tracking-wide mb-1">ภาพรวมงาน</p>
             <h1 className="text-xl font-semibold leading-snug">{job.title}</h1>
           </div>
-            {breakdownItems.length > 0 && (
+            {/* {breakdownItems.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
                 {breakdownItems.map((item) => (
                 <span key={item.label} className={`text-xs px-2.5 py-1 rounded-full font-medium ${item.cls}`}>
@@ -136,7 +135,7 @@ export default function JobOverviewPage() {
                 </span>
                 ))}
             </div>
-            )}
+            )} */}
         </div>
         <div className="flex flex-wrap gap-4 mt-5 pt-4 border-t border-white/20">
           <div className="flex items-center gap-2 text-white/80 text-sm">
