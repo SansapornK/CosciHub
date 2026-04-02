@@ -18,6 +18,8 @@ export async function GET(
     await dbConnect();
     const { id } = await params; 
 
+    console.log("Checking ID in DB:", id);
+
     if (!mongoose.Types?.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "ID ไม่ถูกต้อง" }, { status: 400 });
     }
@@ -130,15 +132,62 @@ export async function PATCH(
     const job = await (Job as any).findById(application.jobId).lean();
     if (!job) return NextResponse.json({ error: "ไม่พบข้อมูลงาน" }, { status: 404 });
 
-    const isOwner = job.owner === user.name;
+    // const isOwner = job.owner === user.name;
+    const isOwner = job.owner?.trim().toLowerCase() === user.name?.trim().toLowerCase();
     const isStudent = application.applicantEmail === user.email;
 
 
     // const { action, progress, rejectionNote, workLink, note, feedback } = await req.json();
-    const { action, progress, rejectionNote, workLink, note, feedback, attachments } = await req.json();
+    const { action, progress, rejectionNote, workLink, note, feedback, attachments, rating, comment, isAnonymous, role } = await req.json();
 
     if (!isOwner && !isStudent) {
       return NextResponse.json({ error: "ไม่มีสิทธิ์อัปเดตใบสมัครนี้" }, { status: 403 });
+    }
+
+    // ─── ✅ 1. submitReview ──────────────────────────────────────────
+    if (action === "submitReview") {
+      const updateData: any = {};
+
+      if (role === 'student' && isStudent) {
+        if (application.status !== 'completed') {
+           return NextResponse.json({ error: "ต้องรองานเสร็จสิ้นก่อนจึงจะรีวิวได้" }, { status: 400 });
+        }
+        updateData.studentReview = { 
+          rating: Number(rating), 
+          comment: comment, 
+          isAnonymous: isAnonymous ?? true, 
+          createdAt: new Date() 
+        };
+      } 
+     else if (role === 'owner' && isOwner) {
+        updateData.ownerReview = { 
+          rating: Number(rating), 
+          comment: comment, 
+          isAnonymous: isAnonymous ?? false, 
+          createdAt: new Date() 
+        };
+        
+        updateData.status = "completed";
+        updateData.progress = 100;
+      } else {
+        return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึงส่วนนี้" }, { status: 400 });
+      }
+      const updated = await Application.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+
+      // ถ้าเป็นเจ้าของงานรีวิว ต้อง Sync สถานะ Job ใหญ่ด้วย
+      if (role === 'owner') {
+        await updateJobAverageProgress(application.jobId.toString());
+        await syncJobParticipants(application.jobId.toString());
+        
+        const remainingActive = await Application.countDocuments({
+          jobId: application.jobId,
+          status: { $in: ["accepted", "in_progress", "submitted", "revision"] },
+        });
+        if (remainingActive === 0) {
+          await (Job as any).findByIdAndUpdate(application.jobId, { $set: { status: "completed" } });
+        }
+      }
+      return NextResponse.json({ success: true, application: updated });
     }
 
     // ── accept ─────────────────────────────────────────────────────────────
@@ -197,16 +246,15 @@ export async function PATCH(
       return NextResponse.json({ success: true, message: "ปฏิเสธใบสมัครแล้ว" });
     }
 
-    // ── approve (owner ยืนยันงานเสร็จ) ─────
+    // ─── 2. approve (ยืนยันงานเสร็จ) ──────────────────────────────────
     if (action === "approve" && isOwner) {
-      if (application.status !== "submitted") {
-        return NextResponse.json({ error: "งานยังไม่ถูกส่ง" }, { status: 400 });
-      }
+      if (application.status !== "submitted") return NextResponse.json({ error: "งานยังไม่ถูกส่ง" }, { status: 400 });
+      
       await Application.findByIdAndUpdate(id, {
         $set: { 
           status: "completed", 
-          progress: 100,
-          feedback: feedback || "ทำงานได้ยอดเยี่ยมมาก!",
+          progress: 100, 
+          feedback: feedback || "ทำงานได้ยอดเยี่ยมมาก!", 
           updatedAt: new Date() 
         },
       });
@@ -214,18 +262,14 @@ export async function PATCH(
       await updateJobAverageProgress(application.jobId.toString());
       await syncJobParticipants(application.jobId.toString());
 
-      // ตรวจสอบว่า job ทุก application เสร็จหมดไหม
       const remainingActive = await Application.countDocuments({
         jobId: application.jobId,
         status: { $in: ["accepted", "in_progress", "submitted", "revision"] },
       });
       if (remainingActive === 0) {
-        await (Job as any).findByIdAndUpdate(application.jobId, {
-          $set: { status: "completed" },
-        });
+        await (Job as any).findByIdAndUpdate(application.jobId, { $set: { status: "completed" } });
       }
-
-      return NextResponse.json({ success: true, message: "ยืนยันงานเสร็จสิ้นแล้ว" });
+      return NextResponse.json({ success: true });
     }
 
     // ── requestRevision (owner ขอแก้ไข) ────
@@ -262,21 +306,8 @@ export async function PATCH(
       return NextResponse.json({ success: true, progress: newProgress });
     }
 
-    // ── submit (นิสิตส่งงาน) ───────────────
+    // ─── 3. submit (นิสิตส่งงาน - คลีนโค้ดแล้ว) ───────────────────────
     if (action === "submit" && isStudent) {
-
-      await Application.findByIdAndUpdate(id, {
-      $set: { 
-        status: "submitted", 
-        progress: 100, 
-        workLink: workLink, 
-        attachments: attachments || [], // รับ Array ของไฟล์มาเก็บ
-        // note: note,         
-        updatedAt: new Date() 
-      },
-    });
-
-
       if (!["in_progress", "revision", "accepted", "submitted"].includes(application.status)) {
         return NextResponse.json({ error: "ไม่สามารถส่งงานได้ในสถานะนี้" }, { status: 400 });
       }
@@ -291,20 +322,12 @@ export async function PATCH(
         },
       });
 
-      // Job → awaiting เมื่อมีคนส่งงาน
-      await (Job as any).findByIdAndUpdate(application.jobId, {
-        $set: { status: "awaiting" },
-      });
-
-        // 3. ✅ Sync ข้อมูลสรุปไปที่ Job เพื่อ Dashboard ของเจ้าของงาน
+      await (Job as any).findByIdAndUpdate(application.jobId, { $set: { status: "awaiting" } });
       await syncJobSubmissions(application.jobId.toString());
-      
-      // 4. Sync progress และรายชื่อตามเดิม
       await updateJobAverageProgress(application.jobId.toString());
 
-      return NextResponse.json({ success: true, message: "ส่งงานเรียบร้อยแล้ว รอเจ้าของตรวจสอบ" });
+      return NextResponse.json({ success: true, message: "ส่งงานเรียบร้อยแล้ว" });
     }
-
     return NextResponse.json({ error: "action ไม่ถูกต้อง" }, { status: 400 });
 
   } catch (error: any) {

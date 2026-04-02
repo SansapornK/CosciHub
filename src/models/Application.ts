@@ -13,6 +13,18 @@ export interface IApplication extends Document {
   workLink?: string;
   attachments?: { fileName: string; fileUrl: string; fileSize: number }[];
   // note?: string;
+  ownerReview: {
+    rating: number;
+    comment: string;
+    isAnonymous: boolean;
+    createdAt: Date;
+  };
+  studentReview: {
+    rating: number;
+    comment: string;
+    isAnonymous: boolean;
+    createdAt: Date;
+  };
 }
 
 const ApplicationSchema: Schema = new Schema({
@@ -59,7 +71,23 @@ const ApplicationSchema: Schema = new Schema({
     type: String, 
     default: null 
   },
+
+  studentReview: {
+    rating: { type: Number, min: 1, max: 5, default: null },
+    comment: { type: String, default: "" },
+    isAnonymous: { type: Boolean, default: true },
+    createdAt: { type: Date, default: null }
+  },
+
+  ownerReview: {
+    rating: { type: Number, min: 1, max: 5, default: null },
+    comment: { type: String, default: "" },
+    isAnonymous: { type: Boolean, default: true },
+    createdAt: { type: Date, default: null }
+  }
+
 });
+
 
 ApplicationSchema.index({ jobId: 1, applicantEmail: 1 }, { unique: true });
 ApplicationSchema.index({ jobId: 1, status: 1 });
