@@ -54,7 +54,6 @@ const MyJobsPage = () => {
         <h1 className="text-3xl font-bold text-blue-700 mb-2">แดชบอร์ด</h1>
       </header>
 
-      {/* --- ส่วนสถิติที่ปรับตามภาพ Screenshot --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <StatCard title="งานทั้งหมดที่เคยทำ" value="5" svgIcon={<BriefcaseIconSVG />} />
         <StatCard title="รายได้รวม" value="5,100" unit="บาท" svgIcon={<WalletIconSVG />} />

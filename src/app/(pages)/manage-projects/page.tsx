@@ -59,6 +59,8 @@ interface JobApplication {
   jobOwner: string;
   status: "pending" | "accepted" | "rejected";
   appliedDate: string;
+  ownerReview?: { rating: number; comment: string; isAnonymous: boolean }; // รีวิวที่อาจารย์ให้นิสิต
+  studentReview?: { rating: number; comment: string; isAnonymous: boolean }; // รีวิวที่นิสิตให้อาจารย์
 }
 
 // งานของเจ้าของที่มีคนมาสมัคร
@@ -80,7 +82,7 @@ interface OwnerJobWithApplicants {
   }[];
 }
 
-// ─── ใหม่: งานที่กำลังทำอยู่ (นิสิต) ──────────────
+// ─── งานที่กำลังทำอยู่ (นิสิต) ──────────────
 interface ActiveApplication {
   _id: string;
   jobId: string;
@@ -92,7 +94,7 @@ interface ActiveApplication {
   progress: number;
 }
 
-// ─── ใหม่: งานของเจ้าของที่กำลังดำเนินการ ─────────
+// ─── งานของเจ้าของที่กำลังดำเนินการ ─────────
 interface ActiveOwnerJob {
   _id: string;
   title: string;
@@ -127,10 +129,14 @@ interface CompletedApplication {
   jobDeadline: string | null;
   status: "completed";
   appliedDate: string;
+  updatedAt: string;
+  ownerReview?: { rating: number; comment: string; isAnonymous: boolean };
+  studentReview?: { rating: number; comment: string; isAnonymous: boolean };
 }
 
 interface CompletedOwnerJob {
   _id: string;
+  jobId: string;
   title: string;
   category: string;
   deliveryDate: string | null;
@@ -151,31 +157,41 @@ interface CompletedOwnerJob {
 export default function ManageProjectsPage() {
   const { data: session, status } = useSession();
 
-  // Project states (เดิม)
   const [error, setError] = useState("");
 
-  // ✅ ใหม่: Job Application states
   const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
   const [ownerJobs, setOwnerJobs] = useState<OwnerJobWithApplicants[]>([]);
   const [jobAppLoading, setJobAppLoading] = useState(false);
-  const [activeApplications, setActiveApplications] = useState<ActiveApplication[]>([]);
+  const [activeApplications, setActiveApplications] = useState<
+    ActiveApplication[]
+  >([]);
   const [activeOwnerJobs, setActiveOwnerJobs] = useState<ActiveOwnerJob[]>([]);
-  const [completedApplications, setCompletedApplications] = useState<CompletedApplication[]>([]);
+  const [completedApplications, setCompletedApplications] = useState<
+    CompletedApplication[]
+  >([]);
   const [completedOwnerJobs, setCompletedOwnerJobs] = useState<
     CompletedOwnerJob[]
   >([]);
-  const [page1, setPage1] = useState(0); // Row 1: งานที่สมัครไว้ / ผู้สมัครงาน
-  const [page2, setPage2] = useState(0); // Row 2: งานที่กำลังทำอยู่ / งานที่กำลังดำเนินการ
-  const [page3, setPage3] = useState(0); //Row 3: งานที่เสร็จสิ้น
+  const [page1, setPage1] = useState(0); // Row 1
+  const [page2, setPage2] = useState(0); // Row 2
+  const [page3, setPage3] = useState(0); //Row 3
   const ITEMS_PER_PAGE = 3;
 
   const { subscribeToProjectList } = usePusher();
+
+  // --- States สำหรับ Review Modal ---
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedApp, setSelectedApp] = useState<any>(null); 
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(true); 
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // ─── Effects ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (status === "authenticated") {
-      fetchJobApplications(); // ✅ เพิ่ม
+      fetchJobApplications();
     } else if (status === "unauthenticated") {
       setJobAppLoading(false);
       setError("กรุณาเข้าสู่ระบบเพื่อจัดการโปรเจกต์");
@@ -193,7 +209,7 @@ export default function ManageProjectsPage() {
     }
   }, [status, session?.user?.id, subscribeToProjectList]);
 
-  // ─── ✅ Fetch Job Applications  ────────────────────────────────────────
+  // ─── Fetch Job Applications  ────────────────────────────────────────
 
   const fetchJobApplications = async () => {
     setJobAppLoading(true);
@@ -273,7 +289,7 @@ export default function ManageProjectsPage() {
     const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
     const paginated = items.slice(
       page * ITEMS_PER_PAGE,
-      (page + 1) * ITEMS_PER_PAGE
+      (page + 1) * ITEMS_PER_PAGE,
     );
 
     return (
@@ -344,28 +360,106 @@ export default function ManageProjectsPage() {
   const isFreelancer = session?.user?.role === "student";
 
   // --- Logic Dashboard ---
+  const allCompletedList = [
+    ...jobApplications.filter((app) => app.status === "completed"),
+    ...completedApplications,
+  ];
+
+  const uniqueCompletedApps = Array.from(
+    new Map(allCompletedList.map((app) => [app._id, app])).values(),
+  );
+
+  const reviewedApps = uniqueCompletedApps.filter((app) => app.ownerReview);
+
+  const totalRatingScore = reviewedApps.reduce(
+    (sum, app) => sum + (app.ownerReview?.rating || 0),
+    0,
+  );
+  const avgRatingValue =
+    reviewedApps.length > 0
+      ? (totalRatingScore / reviewedApps.length).toFixed(1)
+      : "0.0";
+
   const dashboardStats = {
-    totalCompleted: 0,
-    totalEarnings: 0,
-    avgRating: 4.9, // ในอนาคตดึงจาก session.user.rating หรือ API profile
-    reviewCount: 8, // ในอนาคตดึงจาก session.user.reviewCount
+    totalCompleted: uniqueCompletedApps.length,
+    totalEarnings: jobApplications
+      .filter((app) => app.status === "completed")
+      .reduce((sum, app) => sum + (app.jobBudgetMin || 0), 0),
+    avgRating: avgRatingValue,
+    reviewCount: reviewedApps.length,
   };
 
-  if (isFreelancer) {
-    const completedApps = jobApplications.filter(
-      (app) => app.status === "completed"
-    );
+  // if (isFreelancer) {
+  //   const completedApps = jobApplications.filter(
+  //     (app) => app.status === "completed"
+  //   );
 
-    dashboardStats.totalCompleted = completedApps.length;
+  //   dashboardStats.totalCompleted = completedApps.length;
 
-    // คำนวณรายได้สะสม (ใช้ค่า budgetMin เป็นเกณฑ์)
-    dashboardStats.totalEarnings = completedApps.reduce(
-      (sum, app) => sum + (app.jobBudgetMin || 0),
-      0
-    );
-  }
+  //   // คำนวณรายได้สะสม (ใช้ค่า budgetMin เป็นเกณฑ์)
+  //   dashboardStats.totalEarnings = completedApps.reduce(
+  //     (sum, app) => sum + (app.jobBudgetMin || 0),
+  //     0
+  //   );
+
+  //   // ตัวอย่างการหาค่าเฉลี่ยในฝั่ง Frontend หลังจาก fetch ข้อมูลมาแล้ว
+  //   const myCompletedJobs = jobApplications.filter(app => app.status === 'completed' && app.ownerReview);
+
+  //   const totalRating = myCompletedJobs.reduce((sum, app) => sum + (app.ownerReview.rating || 0), 0);
+  //   const avgRating = myCompletedJobs.length > 0 ? (totalRating / myCompletedJobs.length).toFixed(1) : "0.0";
+
+  //   // นำ avgRating ไปใส่ใน dashboardStats.avgRating
+  // }
 
   // Status badge config สำหรับ job application
+
+  // ฟังก์ชันเปิด Modal
+  const openReviewModal = (app: any) => {
+    setSelectedApp(app);
+    setRating(5);
+    setComment("");
+    setIsReviewModalOpen(true);
+  };
+
+  // ฟังก์ชันส่งรีวิวไปยัง API
+  const handleSubmitReview = async () => {
+    if (!selectedApp) return;
+
+    console.log("Payload:", {
+      action: "submitReview",
+      role: session?.user?.role,
+      rating,
+      comment,
+      isAnonymous,
+    });
+
+    try {
+      setIsSubmittingReview(true);
+      await axios.patch(`/api/applications/${selectedApp._id}`, {
+        action: "submitReview",
+        role: session?.user?.role,
+        rating,
+        comment,
+        isAnonymous: isAnonymous,
+      });
+
+      toast.success("บันทึกรีวิวเรียบร้อยแล้ว!");
+      setIsReviewModalOpen(false);
+      fetchJobApplications();
+    } catch (err) {
+      toast.error("เกิดข้อผิดพลาดในการส่งรีวิว");
+
+      console.error("Submit Review Error:", err);
+      console.error("Response Data:", err.response?.data);
+
+      const errorMessage =
+        err.response?.data?.error || "เกิดข้อผิดพลาดในการส่งรีวิว";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   const appStatusConfig: Record<string, { label: string; className: string }> =
     {
       pending: {
@@ -405,111 +499,129 @@ export default function ManageProjectsPage() {
         </div>
       )}
 
-
       {/* --- Dashboard Summary Section --- */}
       {isFreelancer && (
-        <div className="w-full max-w-7xl mx-auto mb-10">
+        <div className="w-full max-w-7xl mx-auto mb-10 px-4 md:px-0">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6"
           >
-            {/* 1. */}
+            {/* 1. งานทั้งหมด */}
             <motion.div
               variants={fadeInUp}
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              className="rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group min-h-[200px] flex flex-col justify-between items-end"
+              className="rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[160px] md:min-h-[200px] flex flex-col justify-between items-end"
               style={{
                 background: "linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)",
               }}
             >
-              {/* Icon Bg */}
               <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 group-hover:rotate-12 transition-all duration-700">
-                <Briefcase size={160} strokeWidth={1.5} />
+                <Briefcase
+                  className="w-32 h-32 md:w-40 md:h-40"
+                  strokeWidth={1.5}
+                />
               </div>
 
-              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">
+              <h3 className="text-xs md:text-sm font-bold text-white/80 tracking-wide z-10">
                 งานทั้งหมดที่เคยทำ
               </h3>
 
-              <div className="relative z-10">
+              <div className="relative z-10 flex flex-col items-end">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-6xl font-black tracking-tighter drop-shadow-lg">
+                  <span className="text-4xl md:text-6xl font-black tracking-tighter drop-shadow-lg">
                     {dashboardStats.totalCompleted}
                   </span>
+                  <span className="text-xs md:text-sm font-bold text-white/60">
+                    งาน
+                  </span>
                 </div>
+                <p className="mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/60 uppercase">
+                  สำเร็จการทำงานแล้ว
+                </p>
               </div>
             </motion.div>
 
-            {/* 2. */}
+            {/* 2. รายได้รวม */}
             <motion.div
               variants={fadeInUp}
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              className="rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group min-h-[200px] flex flex-col justify-between items-end"
+              className="rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[160px] md:min-h-[200px] flex flex-col justify-between items-end"
               style={{
                 background:
                   "linear-gradient(135deg, #0C5BEA 10%, #6D91D3 100%)",
               }}
             >
               <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-700">
-                <DollarSign size={160} strokeWidth={1.5} />
+                <DollarSign
+                  className="w-32 h-32 md:w-40 md:h-40"
+                  strokeWidth={1.5}
+                />
               </div>
 
-              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">
+              <h3 className="text-xs md:text-sm font-bold text-white/80 tracking-wide z-10">
                 รายได้รวม
               </h3>
 
-              <div className="relative z-10">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl md:text-6xl font-black tracking-tighter drop-shadow-lg">
+              <div className="relative z-10 flex flex-col items-end">
+                <div className="flex items-baseline gap-1 md:gap-2">
+                  <span className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter drop-shadow-lg">
                     {dashboardStats.totalEarnings.toLocaleString()}
                   </span>
-                  <span className="text-sm font-bold text-white/60">บาท</span>
+                  <span className="text-xs md:text-sm font-bold text-white/60">
+                    บาท
+                  </span>
                 </div>
+                <p className="mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/40 uppercase text-right">
+                  * คำนวณจากค่าตอบแทนเบื้องต้น
+                </p>
               </div>
             </motion.div>
 
-            {/* 3. */}
+            {/* 3. รีวิวรวม */}
             <motion.div
               variants={fadeInUp}
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              className="rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden group min-h-[200px] flex flex-col justify-between items-end"
+              className="rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[160px] md:min-h-[200px] flex flex-col justify-between items-end"
               style={{
                 background: "linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)",
               }}
             >
               <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 transition-all duration-700">
-                <Star size={160} strokeWidth={1.5} />
+                <Star className="w-32 h-32 md:w-40 md:h-40" strokeWidth={1.5} />
               </div>
 
-              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">
+              <h3 className="text-xs md:text-sm font-bold text-white/80 tracking-wide z-10">
                 รีวิวรวม
               </h3>
 
               <div className="relative z-10 flex flex-col items-end">
-                <span className="text-6xl font-black tracking-tighter text-white drop-shadow-lg">
+                <span className="text-4xl md:text-6xl font-black tracking-tighter text-white drop-shadow-lg">
                   {dashboardStats.avgRating}
                 </span>
-                <div className="flex gap-0.5 mt-2">
+                <div className="flex gap-0.5 mt-1 md:mt-2">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      size={14}
+                      size={window?.innerWidth < 768 ? 12 : 14}
                       fill={
-                        i < Math.floor(dashboardStats.avgRating)
+                        i < Math.floor(Number(dashboardStats.avgRating))
                           ? "#F4FE57"
                           : "none"
                       }
                       className={
-                        i < Math.floor(dashboardStats.avgRating)
+                        i < Math.floor(Number(dashboardStats.avgRating))
                           ? "text-[#F4FE57]"
                           : "text-white/20"
                       }
                     />
                   ))}
                 </div>
+                <p className="mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/60 uppercase">
+                  จากทั้งหมด {dashboardStats.reviewCount} รีวิว
+                </p>
               </div>
             </motion.div>
           </motion.div>
@@ -545,7 +657,7 @@ export default function ManageProjectsPage() {
                     (a) =>
                       a.status === "pending" ||
                       a.status === "rejected" ||
-                      a.status === "accepted"
+                      a.status === "accepted",
                   ).length
                 }
                 )
@@ -577,7 +689,7 @@ export default function ManageProjectsPage() {
                   (a) =>
                     a.status === "pending" ||
                     a.status === "rejected" ||
-                    a.status === "accepted"
+                    a.status === "accepted",
                 )}
                 page={page1}
                 setPage={setPage1}
@@ -614,7 +726,7 @@ export default function ManageProjectsPage() {
                           <p className="text-xs text-gray-400">
                             สมัครเมื่อ{" "}
                             {new Date(app.appliedDate).toLocaleDateString(
-                              "th-TH"
+                              "th-TH",
                             )}
                           </p>
                         </div>
@@ -631,13 +743,13 @@ export default function ManageProjectsPage() {
                                   {
                                     action: "updateProgress",
                                     progress: 0,
-                                  }
+                                  },
                                 );
                                 toast.success("เริ่มงานแล้ว!");
                                 await fetchJobApplications();
                               } catch (err: any) {
                                 toast.error(
-                                  err.response?.data?.error || "เกิดข้อผิดพลาด"
+                                  err.response?.data?.error || "เกิดข้อผิดพลาด",
                                 );
                               }
                             }}
@@ -829,7 +941,7 @@ export default function ManageProjectsPage() {
                           <p className="text-xs text-gray-400">
                             กำหนดส่ง:{" "}
                             {new Date(app.jobDeadline).toLocaleDateString(
-                              "th-TH"
+                              "th-TH",
                             )}
                           </p>
                         )}
@@ -971,7 +1083,7 @@ export default function ManageProjectsPage() {
                             <span className="text-xs text-gray-400">
                               กำหนดส่ง{" "}
                               {new Date(job.deliveryDate).toLocaleDateString(
-                                "th-TH"
+                                "th-TH",
                               )}
                             </span>
                           )}
@@ -1003,28 +1115,15 @@ export default function ManageProjectsPage() {
           </div>
         )}
       </div>
-      {/* Row 3: งานที่เสร็จสิ้น */}
+      {/* ── Row 3: งานที่เสร็จสิ้น ── */}
       <div className="w-full">
         {isFreelancer ? (
-          // ── ฝั่งนิสิต ──────────────────────────────────────────────────────────
+          // ── ฝั่งนิสิต (Student) ──────────────────────────────────────────────────────────
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
+                <div className="p-2.5 bg-green-500 rounded-xl text-white shadow-lg shadow-green-100">
+                  <CheckCircle size={20} />
                 </div>
                 งานที่เสร็จสิ้น ({completedApplications.length})
               </h2>
@@ -1044,41 +1143,126 @@ export default function ManageProjectsPage() {
                 items={completedApplications}
                 page={page3}
                 setPage={setPage3}
-                renderItem={(app) => (
-                  <div
-                    key={app._id}
-                    className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
-                  >
-                    <div className="p-6 flex-1 flex flex-col gap-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
-                          {app.jobTitle}
-                        </h3>
-                        <span className="text-xs px-2.5 py-1 rounded-lg border uppercase tracking-wide shrink-0 bg-green-50 text-green-600 border-green-100">
-                          เสร็จสิ้น
-                        </span>
-                      </div>
-                      {app.jobDeadline && (
-                        <p className="text-xs text-gray-400">
-                          กำหนดส่ง:{" "}
-                          {new Date(app.jobDeadline).toLocaleDateString(
-                            "th-TH"
+                renderItem={(app) => {
+                  const hasStudentReviewed = !!app.studentReview;
+                  const hasOwnerReviewed = !!app.ownerReview;
+
+                  return (
+                    <div
+                      key={app._id}
+                      className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
+                    >
+                      <div className="p-6 flex-1 flex flex-col gap-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                              {app.jobTitle}
+                            </h3>
+                            <p className="text-[10px] text-gray-400 mt-1 font-bold uppercase tracking-wider">
+                              {app.jobCategory || "งานพิเศษ"}
+                            </p>
+                          </div>
+                          <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
+                            เสร็จสิ้น
+                          </span>
+                        </div>
+
+                        <div
+                          className={`py-3 px-5 rounded-[1.2rem] border transition-all duration-300 flex items-center justify-between ${
+                            hasOwnerReviewed
+                              ? "bg-blue-50/40 border-blue-100/50 shadow-sm shadow-blue-50/20"
+                              : "bg-gray-50/50 border-gray-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-1.5 h-1.5 rounded-full ${hasOwnerReviewed ? "bg-blue-500 animate-pulse" : "bg-gray-300"}`}
+                            />
+                            <span
+                              className={`text-[10px] font-black uppercase tracking-[0.1em] ${hasOwnerReviewed ? "text-blue-600/70" : "text-gray-400"}`}
+                            >
+                              รีวิวจากผู้ว่าจ้าง
+                            </span>
+                          </div>
+
+                          {hasOwnerReviewed ? (
+                            <div className="flex items-center gap-1.5 py-1 px-3 bg-white/80 rounded-full shadow-sm border border-blue-100">
+                              <CheckCircle
+                                size={12}
+                                strokeWidth={3}
+                                className="text-blue-600"
+                              />
+                              <span className="text-[10px] font-black text-blue-700">
+                                ผู้ว่าจ้างรีวิวแล้ว
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 py-1 px-3 bg-gray-100/50 rounded-full border border-gray-200/50">
+                              <Clock
+                                size={12}
+                                strokeWidth={3}
+                                className="text-gray-400"
+                              />
+                              <span className="text-[10px] font-black text-gray-400 uppercase italic tracking-tight">
+                                รอผู้ว่าจ้างรีวิว
+                              </span>
+                            </div>
                           )}
-                        </p>
-                      )}
+                        </div>
+
+                        <div className="flex items-center justify-between w-full pt-1">
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            เสร็จสิ้นเมื่อ{" "}
+                            {app.updatedAt
+                              ? new Date(app.updatedAt).toLocaleDateString(
+                                  "th-TH",
+                                )
+                              : app.appliedDate
+                                ? new Date(app.appliedDate).toLocaleDateString(
+                                    "th-TH",
+                                  )
+                                : "-"}
+                          </span>
+                          <Link
+                            href={`/manage-projects/${app.jobId}/work/${app._id}`}
+                            className="text-xs font-bold text-primary-blue-500 hover:underline flex items-center gap-1"
+                          >
+                            ดูรายละเอียด →
+                          </Link>
+                        </div>
+
+                        <div className="mt-auto pt-1">
+                          {hasStudentReviewed ? (
+                            <div className="flex items-center gap-2 text-primary-blue-500 bg-blue-50/50 w-full justify-center py-3 rounded-xl border border-blue-100/50">
+                              <CheckCircle size={16} strokeWidth={2.5} />
+                              <span className="text-sm font-bold uppercase tracking-tight">
+                                คุณรีวิวผู้ว่าจ้างแล้ว
+                              </span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => openReviewModal(app)}
+                              className="flex items-center justify-center gap-2 w-full py-3 bg-[#0C5BEA] text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95"
+                            >
+                              <Star size={18} fill="currentColor" />{" "}
+                              รีวิวผู้ว่าจ้างเลย!
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                }}
               />
             )}
           </div>
         ) : (
-          /* ฝั่งเจ้าของงาน */
+          // ── ฝั่งเจ้าของงาน (Owner) ──────────────────────────────────────────────────────────
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
                 <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
-                  <Clock size={20} />
+                  <CheckCircle size={20} />
                 </div>
                 งานที่เสร็จสิ้น ({completedOwnerJobs.length})
               </h2>
@@ -1098,61 +1282,163 @@ export default function ManageProjectsPage() {
                 items={completedOwnerJobs}
                 page={page3}
                 setPage={setPage3}
-                renderItem={(job) => (
-                  <div
-                    key={job._id}
-                    className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
-                  >
-                    <div className="p-6 flex-1 flex flex-col gap-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
-                          {job.title}
-                        </h3>
-                        <span className="text-xs px-2.5 py-1 rounded-lg border uppercase tracking-wide shrink-0 bg-green-50 text-green-600 border-green-100">
-                          เสร็จสิ้น
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {/* <div className="flex">
-                    {job.workers.slice(0, 5).map((w, i) => (
-                      <div
-                        key={w._id}
-                        title={w.applicantName}
-                        className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden flex items-center justify-center text-[10px] font-medium text-gray-600 flex-shrink-0"
-                        style={{ marginLeft: i > 0 ? "-6px" : "0", zIndex: 5 - i }}
-                      >
-                        {w.profileImageUrl ? (
-                          <img src={w.profileImageUrl} alt={w.applicantName} className="w-full h-full object-cover" />
-                        ) : (
-                          w.applicantName?.charAt(0) || "?"
-                        )}
-                      </div>
-                    ))}
-                  </div> */}
-                        {/* <span className="text-xs text-gray-500">{job.workers.length} คน</span> */}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          กำหนดส่ง {job.deliveryDate &&
-                            new Date(job.deliveryDate).toLocaleDateString(
-                              "th-TH"
+                renderItem={(job: any) => {
+                  const hiredWorkers = job.workers || [];
+                  const isAllReviewed =
+                    hiredWorkers.length > 0 &&
+                    hiredWorkers.every((w: any) => w.ownerReview);
+
+                  return (
+                    <div
+                      key={job._id}
+                      className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
+                    >
+                      <div className="p-6 flex-1 flex flex-col gap-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                            {job.title}
+                          </h3>
+                          <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
+                            เสร็จสิ้น
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-gray-400">{job.category}</p>
+
+                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 w-full">
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            กำหนดส่ง{" "}
+                            {job.deliveryDate
+                              ? new Date(job.deliveryDate).toLocaleDateString(
+                                  "th-TH",
+                                )
+                              : "-"}
+                          </span>
+
+                          <Link
+                            href={`/manage-projects/${job.jobId || job._id}/overview`}
+                            className={`text-xs font-bold transition-all hover:underline flex items-center gap-1 ${
+                              isAllReviewed
+                                ? "text-primary-blue-500"
+                                : "text-orange-500 animate-pulse"
+                            }`}
+                          >
+                            {isAllReviewed ? (
+                              "ดูรายละเอียด →"
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <Star size={12} fill="currentColor" />{" "}
+                                รีวิวนิสิตเลย! →
+                              </span>
                             )}
-                        </span>
-                        <Link
-                          href={`/manage-projects/${job._id}/overview`}
-                          className="text-xs text-primary-blue-500 font-medium hover:underline"
-                        >
-                          ดูรายละเอียด →
-                        </Link>
+                          </Link>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                }}
               />
             )}
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {isReviewModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsReviewModalOpen(false)}
+              className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl text-center"
+            >
+              <div className="w-16 h-16 bg-yellow-50 text-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Star size={32} fill="currentColor" />
+              </div>
+
+              <h3 className="text-xl font-black text-gray-900 mb-2">
+                ให้คะแนนความประทับใจ
+              </h3>
+              <p className="text-xs text-gray-400 mb-8 font-medium">
+                โปรเจกต์: {selectedApp?.jobTitle || selectedApp?.title}
+              </p>
+
+              {/* Star Rating */}
+              <div className="flex justify-center gap-3 mb-8">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => setRating(num)}
+                    className={`transition-all duration-200 ${rating >= num ? "text-yellow-400 scale-110" : "text-gray-200"}`}
+                  >
+                    <Star
+                      size={36}
+                      fill={rating >= num ? "currentColor" : "none"}
+                      strokeWidth={2.5}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                rows={3}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="เขียนความประทับใจ หรือข้อเสนอแนะ..."
+                className="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm mb-6 transition-all"
+              />
+
+              {/* Anonymous Toggle */}
+              <div className="flex items-center justify-between px-5 py-4 bg-gray-50 rounded-2xl mb-8 border border-gray-100">
+                <div className="text-left">
+                  <p className="text-xs font-bold text-gray-700">
+                    ส่งแบบไม่ระบุตัวตน
+                  </p>
+                  <p className="text-[10px] text-gray-400">
+                    ตัวตนของคุณจะไม่ปรากฏในหน้าโปรไฟล์ของอีกฝ่าย
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsAnonymous(!isAnonymous)}
+                  className={`w-11 h-6 rounded-full transition-colors relative ${isAnonymous ? "bg-blue-600" : "bg-gray-300"}`}
+                >
+                  <motion.div
+                    animate={{ x: isAnonymous ? 22 : 2 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                  />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleSubmitReview}
+                  disabled={isSubmittingReview}
+                  className="w-full py-4 bg-[#0C5BEA] text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmittingReview ? "กำลังบันทึก..." : "ส่งรีวิวและบันทึก"}
+                </button>
+                <button
+                  onClick={() => setIsReviewModalOpen(false)}
+                  className="text-xs font-bold text-gray-400 hover:text-gray-600 transition-all py-2"
+                >
+                  ปิดหน้าต่างนี้
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -266,6 +266,8 @@ export async function GET(req: Request) {
           status:          a.status,
           progress:        a.progress || 0,
           updatedAt:       a.updatedAt,
+          ownerReview:     a.ownerReview || null,
+          studentReview:   a.studentReview || null,
         });
       });
 
@@ -362,6 +364,9 @@ export async function GET(req: Request) {
         jobDeadline:  jobMap[a.jobId.toString()]?.deliveryDate ?? null, // เพิ่มให้ Frontend แสดงผลได้
         status:       a.status,
         appliedDate:  a.appliedDate,
+        updatedAt:    a.updatedAt,
+        ownerReview:   a.ownerReview   || null, 
+        studentReview: a.studentReview || null,
       }));
 
       return NextResponse.json({ applications: result });
@@ -415,6 +420,7 @@ export async function GET(req: Request) {
       // 6. Map ผลลัพธ์กลับไป
       const result = finishedJobs.map((j: any) => ({
         _id:          j._id.toString(),
+        jobId:        j._id.toString(),
         title:        j.title,
         category:     j.category,
         deliveryDate: j.deliveryDate,
@@ -427,7 +433,9 @@ export async function GET(req: Request) {
             applicantName: a.applicantName,
             profileImageUrl: profileMap[a.applicantEmail] || null,
             status: a.status,
-            progress: 100
+            progress: 100,
+            ownerReview: a.ownerReview || null,
+            studentReview: a.studentReview || null,
           })),
         avgProgress: 100,
       }));
