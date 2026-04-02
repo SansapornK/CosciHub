@@ -4,10 +4,11 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface INotification extends Document {
   recipientId: mongoose.Types.ObjectId;  // User ID of the recipient
   senderId?: mongoose.Types.ObjectId;    // User ID of the sender (optional)
-  type: string;                          // Type of notification (e.g., 'project_request', 'project_accepted')
+  type: string;                          // Type of notification 
   title: string;                         // Title of the notification
   message: string;                       // Message content
-  projectId?: mongoose.Types.ObjectId;   // Related project ID (if applicable)
+  jobId?: mongoose.Types.ObjectId;   // Related job ID (if applicable)
+  applicationId?: mongoose.Types.ObjectId; 
   isRead: boolean;                       // Whether the notification has been read
   link?: string;                         // URL to navigate to when clicked
   createdAt: Date;                       // When the notification was created
@@ -29,15 +30,20 @@ const NotificationSchema: Schema = new Schema(
       type: String, 
       required: true,
       enum: [
-        'project_request',        // Freelancer requested to join project
-        'project_invitation',     // Project owner invited freelancer
-        'project_accepted',       // Project was accepted
-        'project_rejected',       // Project was rejected
-        'project_status_change',  // Project status changed
-        'project_progress_update',// Project progress updated
-        'project_completed',      // Project was completed
-        'project_revision',       // Project needs revision
-        'system_message'          // System notification
+        // ── ฝั่งเจ้าของงาน ──────────────────
+        'job_new_application',      // มีนิสิตสมัครงานใหม่
+        'job_work_started',  // นิสิตกดเริ่มงานแล้ว (action: "updateProgress" ครั้งแรก)
+        'job_progress_updated',     // นิสิตอัพเดท progress
+        'job_work_submitted',       // นิสิตส่งงานแล้ว
+
+        // ── ฝั่งนิสิต ───────────────────────
+        'application_accepted',     // ใบสมัครได้รับการยอมรับ
+        'application_rejected',     // ใบสมัครถูกปฏิเสธ
+        'work_revision_requested',  // เจ้าของขอแก้ไขงาน
+        'work_approved',            // เจ้าของยืนยันงานเสร็จ
+
+        // ── ระบบ ────────────────────────────
+        'system_message'
       ]
     },
     title: { 
@@ -48,9 +54,13 @@ const NotificationSchema: Schema = new Schema(
       type: String, 
       required: true 
     },
-    projectId: { 
+    jobId: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'Project' 
+      ref: 'Job' 
+    },
+    applicationId: {                   
+      type: mongoose.Schema.Types.ObjectId,
+      ref:  'Application',
     },
     isRead: { 
       type: Boolean, 

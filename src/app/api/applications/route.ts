@@ -7,6 +7,7 @@ import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import mongoose, { Types } from "mongoose";
+import { notifyNewApplication } from '@/utils/notificationUtils';
 
 // ─── Helper: Sync รายชื่อ ────────────────────────────────
 async function syncJobParticipants(jobId: string) {
@@ -67,6 +68,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    
 
     // สร้างใบสมัครใหม่
     const newApplication = await Application.create({
@@ -82,6 +84,17 @@ export async function POST(req: Request) {
       await syncJobParticipants(safeJobId);
     } catch (syncError) {
       console.error("Sync Error:", syncError);
+    }
+    
+    try {
+      await notifyNewApplication(
+        safeJobId,
+        user._id.toString(),
+        newApplication._id.toString()
+      );
+    } catch (notifyError) {
+      console.error('Notification error:', notifyError);
+      // ไม่ให้ notification error กระทบ response หลัก
     }
 
     return NextResponse.json(

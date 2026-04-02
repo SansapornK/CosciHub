@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useUser } from "../../../providers/UserProvider";
 import NotificationBell from "../notifications/NotificationBell";
 import NotificationPanel from "../notifications/NotificationPanel";
+import { useNotifications } from '@/hooks/useNotifications';
 
 // นำเข้า Icon ที่จำเป็นทั้งหมด
 import { 
@@ -77,6 +78,18 @@ function Navbar() {
   const [navHeight, setNavHeight] = useState<number>(72);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState<boolean>(false);
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    refreshNotifications,
+    hasMore,
+    loadMore,
+  } = useNotifications();
+
 
   const userMenuRef = useRef<HTMLDivElement>(null); 
   const notificationRef = useRef<HTMLDivElement>(null); 
@@ -143,10 +156,22 @@ function Navbar() {
           {status === 'authenticated' ? (
             <div className="flex items-center gap-3 relative">
               <div className="relative" ref={notificationRef}>
-                <NotificationBell onClick={() => {setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false);}} isOpen={isNotificationOpen} />
-                <NotificationPanel isOpen={isNotificationOpen} onClose={() => setIsNotificationOpen(false)} />
-              </div>
-
+                  <NotificationBell unreadCount={unreadCount}  onClick={() => {setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false);}} isOpen={isNotificationOpen}/>                
+                  <NotificationPanel
+                            isOpen={isNotificationOpen}
+                            onClose={() => setIsNotificationOpen(false)}
+                            // ✅ ส่ง props ทั้งหมดลงไป
+                            notifications={notifications}
+                            unreadCount={unreadCount}
+                            loading={loading}
+                            error={error}
+                            markAsRead={markAsRead}
+                            markAllAsRead={markAllAsRead}
+                            refreshNotifications={refreshNotifications}
+                            hasMore={hasMore}
+                            loadMore={loadMore}
+                          />              
+            </div>
               <div className="relative" ref={userMenuRef}>
                 <button onClick={() => {setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false);}} className="rounded-full focus:ring-2 focus:ring-primary-blue-500/50">
                   <UserProfileImage imageUrl={userProfileUrl} name={userName} />

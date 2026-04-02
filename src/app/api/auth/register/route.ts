@@ -77,19 +77,6 @@ export async function POST(req: NextRequest) {
       
       userData.studentId = studentId;
       
-      // รับค่า basePrice
-      const basePriceStr = formData.get('basePrice') as string;
-      if (basePriceStr) {
-        const basePrice = parseInt(basePriceStr, 10);
-        userData.basePrice = !isNaN(basePrice) && basePrice >= 100 ? basePrice : 500;
-      } else {
-        userData.basePrice = 500; // ค่าเริ่มต้น
-      }
-      
-      // รับค่า isOpen
-      const isOpenStr = formData.get('isOpen') as string;
-      userData.isOpen = isOpenStr !== 'false'; // ค่าเริ่มต้นเป็น true
-      
       // รับค่า skills
       const skillsString = formData.get('skills') as string;
       if (skillsString) {

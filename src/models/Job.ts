@@ -1,5 +1,30 @@
 // src/models/Job.ts
-import mongoose from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
+
+export interface IJob extends Document {
+  title: string;
+  category: string;
+  shortDescription: string;
+  description: string;
+  qualifications: string;
+  jobType: "online" | "onsite" | "onsite-online";
+  location?: string;
+  deliveryDate?: Date;
+  budgetMin: number;
+  budgetMax: number;
+  capacity: number;
+  applicationDeadline: Date;
+  owner: string;
+  ownerName?: string;
+  status: "draft" | "published" | "in_progress" | "revision" | "completed" | "closed";
+  applicants: mongoose.Types.ObjectId[];
+  assignedTo: mongoose.Types.ObjectId[];
+  progress: number;
+  postedDate: Date;
+  updatedAt?: Date;
+  completedAt?: Date;
+  allSubmissions: any[]; // สามารถสร้าง Interface แยกสำหรับ Submission ได้ถ้าต้องการความละเอียด
+}
 
 const JobSchema = new mongoose.Schema({
   // ─── ข้อมูลงาน ────────────────────────────────
@@ -73,4 +98,6 @@ JobSchema.index({ assignedTo: 1 });
 JobSchema.index({ category: 1 });
 JobSchema.index({ postedDate: -1 });
 
-export default mongoose.models.Job || mongoose.model("Job", JobSchema);
+const Job: Model<IJob> = mongoose.models.Job || mongoose.model<IJob>("Job", JobSchema);
+
+export default Job;

@@ -25,9 +25,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ userData, onUpdateSuc
   const [firstName, setFirstName] = useState(userData?.firstName || '');
   const [lastName, setLastName] = useState(userData?.lastName || '');
   const [bio, setBio] = useState(userData?.bio || '');
-  const [basePrice, setBasePrice] = useState(userData?.basePrice || 500);
   const [selectedSkills, setSelectedSkills] = useState<string[]>(userData?.skills || []);
-  const [isOpen, setIsOpen] = useState(userData?.isOpen || false);
+
   
   // File state
   const [profileImage, setProfileImage] = useState<File | null>(null);
@@ -74,8 +73,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ userData, onUpdateSuc
       
       // Student-specific fields
       if (userData.role === 'student') {
-        formData.append('isOpen', isOpen.toString());
-        formData.append('basePrice', basePrice.toString());
         formData.append('skills', JSON.stringify(selectedSkills));
         
         // Portfolio handling
@@ -186,17 +183,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ userData, onUpdateSuc
         {/* Student-specific settings */}
         {userData.role === 'student' && (
           <>
-            {/* Work Availability */}
-            <WorkStatusToggle 
-              isOpen={isOpen}
-              onToggle={setIsOpen}
-            />
-            
-            {/* Base Price */}
-            <BasePriceEditor 
-              basePrice={basePrice}
-              onBasePriceChange={setBasePrice}
-            />
             
             {/* Skills */}
             <SkillsEditor 

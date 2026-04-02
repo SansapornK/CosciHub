@@ -1,133 +1,88 @@
 // src/hooks/useNotifications.ts
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import { usePusher } from '@/providers/PusherProvider';
 
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
+export interface Notification {
+  id:            string;
+  type:          string;
+  title:         string;
+  message:       string;
   sender?: {
-    id: string;
-    name: string;
+    id:              string;
+    name:            string;
     profileImageUrl?: string;
   };
-  projectId?: string;
-  isRead: boolean;
-  link?: string;
-  createdAt: string;
+  jobId?:        string;
+  applicationId?: string;
+  isRead:        boolean;
+  link?:         string;
+  createdAt:     string;
 }
 
 interface UseNotificationsReturn {
-  notifications: Notification[];
-  unreadCount: number;
-  loading: boolean;
-  error: string | null;
-  markAsRead: (notificationId: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
+  notifications:        Notification[];
+  unreadCount:          number;
+  loading:              boolean;
+  error:                string | null;
+  markAsRead:           (notificationId: string) => Promise<void>;
+  markAllAsRead:        () => Promise<void>;
   refreshNotifications: () => Promise<void>;
-  hasMore: boolean;
-  loadMore: () => void;
+  hasMore:              boolean;
+  loadMore:             () => void;
 }
 
 export function useNotifications(): UseNotificationsReturn {
   const { data: session, status } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const { subscribeToUserNotifications } = usePusher();
+  const [unreadCount, setUnreadCount]     = useState(0);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState<string | null>(null);
+  const [page, setPage]                   = useState(1);
+  const [hasMore, setHasMore]             = useState(true);
+  const { subscribeToUserNotifications }  = usePusher();
 
-  // Subscribe to real-time notifications
-  useEffect(() => {
-    if (status !== 'authenticated' || !session?.user?.id) return;
+  // ใช้ ref ป้องกัน subscribe ซ้ำ
+  const isSubscribed = useRef(false);
 
-    // Function to handle new notifications
-    const handleNewNotification = (data: any) => {
-      if (data.notification) {
-        // Add the new notification to the list
-        setNotifications(prev => [data.notification, ...prev]);
-        
-        // Increment unread count
-        setUnreadCount(prev => prev + 1);
-      }
-    };
-
-    // Subscribe to notifications for this user
-    const unsubscribe = subscribeToUserNotifications(
-      session.user.id,
-      handleNewNotification
-    );
-
-    // Cleanup subscription on unmount
-    return () => {
-      unsubscribe();
-    };
-  }, [status, session?.user?.id, subscribeToUserNotifications]);
-
-  // Function to fetch notifications
+  // ─── Fetch ────────────────────────────────────────────────────────────────
   const fetchNotifications = useCallback(async (pageNum: number = 1) => {
-    if (status !== 'authenticated' || !session?.user?.id) {
-      setLoading(false);
-      return;
-    }
+    if (status !== 'authenticated') return;
 
     setLoading(true);
     setError(null);
 
     try {
       const response = await axios.get('/api/notifications', {
-        params: {
-          page: pageNum,
-          limit: 10
-        },
-        // ส่ง headers เพื่อช่วยในการตรวจสอบ session
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        }
+        params: { page: pageNum, limit: 10 },
       });
 
+      const { notifications: newNotifs, pagination } = response.data;
+
       if (pageNum === 1) {
-        setNotifications(response.data.notifications);
+        setNotifications(newNotifs);
       } else {
-        setNotifications(prev => [...prev, ...response.data.notifications]);
+        setNotifications((prev) => [...prev, ...newNotifs]);
       }
 
-      setUnreadCount(response.data.pagination.unreadCount);
-      setHasMore(pageNum < response.data.pagination.totalPages);
+      setUnreadCount(pagination.unreadCount);
+      setHasMore(pageNum < pagination.totalPages);
     } catch (err) {
       console.error('Error fetching notifications:', err);
       setError('ไม่สามารถโหลดการแจ้งเตือนได้');
     } finally {
       setLoading(false);
     }
-  }, [status, session?.user?.id]);
+  }, [status]);
 
-  // Function to refresh notifications
+  // ─── Refresh (reset กลับหน้า 1) ──────────────────────────────────────────
   const refreshNotifications = useCallback(async () => {
-    if (status !== 'authenticated') {
-      return;
-    }
-    
     setPage(1);
     await fetchNotifications(1);
-  }, [status, fetchNotifications]);
+  }, [fetchNotifications]);
 
-  // Fetch notifications when component mounts or session changes
-  useEffect(() => {
-    // เรียก API เฉพาะเมื่อ authenticated เท่านั้น
-    if (status === 'authenticated') {
-      refreshNotifications();
-    }
-  }, [status, refreshNotifications]);
-
-  // Function to load more notifications
+  // ─── Load More ────────────────────────────────────────────────────────────
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {
       const nextPage = page + 1;
@@ -136,50 +91,69 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [loading, hasMore, page, fetchNotifications]);
 
-  // Function to mark a notification as read
+  // ─── Mark as Read ─────────────────────────────────────────────────────────
   const markAsRead = useCallback(async (notificationId: string) => {
-    if (status !== 'authenticated' || !session?.user?.id) {
-      return;
-    }
-    
     try {
       await axios.post(`/api/notifications/${notificationId}/read`);
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId ? { ...n, isRead: true } : n
-        )
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
       );
-      
-      // Update unread count
-      const updatedCount = unreadCount - 1;
-      setUnreadCount(Math.max(0, updatedCount));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
-      console.error('Error marking notification as read:', err);
+      console.error('Error marking as read:', err);
     }
-  }, [status, session?.user?.id, unreadCount]);
+  }, []);
 
-  // Function to mark all notifications as read
+  // ─── Mark All as Read ─────────────────────────────────────────────────────
   const markAllAsRead = useCallback(async () => {
-    if (status !== 'authenticated' || !session?.user?.id) {
-      return;
-    }
-    
     try {
       await axios.patch('/api/notifications', { markAll: true });
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, isRead: true }))
-      );
-      
-      // Reset unread count
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (err) {
-      console.error('Error marking all notifications as read:', err);
+      console.error('Error marking all as read:', err);
     }
-  }, [status, session?.user?.id]);
+  }, []);
+
+  // ─── Real-time via Pusher ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (status !== 'authenticated' || !session?.user?.id || isSubscribed.current) return;
+
+    isSubscribed.current = true;
+
+    const unsubscribe = subscribeToUserNotifications(
+      session.user.id,
+      (data: any) => {
+        if (!data.notification) return;
+
+        const newNotif: Notification = data.notification;
+
+        // เพิ่มเข้า list และ +1 unread
+        setNotifications((prev) => {
+          // ป้องกัน duplicate
+          const exists = prev.find((n) => n.id === newNotif.id);
+          if (exists) return prev;
+          return [newNotif, ...prev];
+        });
+        setUnreadCount((prev) => prev + 1);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+      isSubscribed.current = false;
+    };
+  }, [status, session?.user?.id, subscribeToUserNotifications]);
+
+  // ─── Initial Fetch ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchNotifications(1);
+    } else if (status === 'unauthenticated') {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [status]);
 
   return {
     notifications,
@@ -190,6 +164,6 @@ export function useNotifications(): UseNotificationsReturn {
     markAllAsRead,
     refreshNotifications,
     hasMore,
-    loadMore
+    loadMore,
   };
 }

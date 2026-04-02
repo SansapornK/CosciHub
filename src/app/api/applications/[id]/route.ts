@@ -7,7 +7,15 @@ import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import mongoose, { Types } from "mongoose";
-import { constructFrom } from "date-fns";
+import {
+  notifyApplicationAccepted,
+  notifyApplicationRejected,
+  notifyWorkStarted,
+  notifyWorkSubmitted,
+  notifyRevisionRequested,
+  notifyWorkApproved,
+  notifyProgressUpdated,
+} from '@/utils/notificationUtils';
 
 
 export async function GET(
@@ -161,6 +169,14 @@ export async function PATCH(
         $set: { status: "accepted", updatedAt: new Date() },
       });
 
+      try {
+        await notifyApplicationAccepted(
+            application.jobId.toString(),
+            application.applicantId.toString(),
+            id
+        );
+        } catch (e) { console.error(e); }
+
       await syncJobParticipants(application.jobId.toString());
 
       const newAcceptedCount = acceptedCount + 1;
@@ -191,6 +207,13 @@ export async function PATCH(
           updatedAt: new Date(),
         },
       });
+       try {
+        await notifyApplicationRejected(
+            application.jobId.toString(),
+            application.applicantId.toString(),
+            id
+        );
+        } catch (e) { console.error(e); }
 
       await syncJobParticipants(application.jobId.toString());
 
@@ -224,6 +247,13 @@ export async function PATCH(
           $set: { status: "completed" },
         });
       }
+        try {
+            await notifyWorkApproved(
+            application.jobId.toString(),
+            application.applicantId.toString(),
+            id
+        );
+        } catch (e) { console.error(e); }
 
       return NextResponse.json({ success: true, message: "ยืนยันงานเสร็จสิ้นแล้ว" });
     }
@@ -240,6 +270,13 @@ export async function PATCH(
           updatedAt: new Date(),
         },
       });
+      try {
+        await notifyRevisionRequested(
+            application.jobId.toString(),
+            application.applicantId.toString(),
+            id
+        );
+        } catch (e) { console.error(e); }
       return NextResponse.json({ success: true, message: "ส่งคำขอแก้ไขแล้ว" });
     }
 
@@ -250,6 +287,8 @@ export async function PATCH(
         return NextResponse.json({ error: "ไม่สามารถอัปเดต progress ได้" }, { status: 400 });
       }
       const newProgress = Math.min(100, Math.max(0, Number(progress)));
+      const isFirstStart = application.status === "accepted";
+
       await Application.findByIdAndUpdate(id, {
         $set: {
           progress: newProgress,
@@ -257,6 +296,28 @@ export async function PATCH(
           updatedAt: new Date(),
         },
       });
+
+        // แจ้งว่าเริ่มงานครั้งแรก
+        if (isFirstStart) {
+            try {
+            await notifyWorkStarted(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id
+            );
+            } catch (e) { console.error(e); }
+        }
+
+        // แจ้ง milestone progress
+        try {
+            await notifyProgressUpdated(
+            application.jobId.toString(),
+            application.applicantId.toString(),
+            id,
+            newProgress
+            );
+        } catch (e) { console.error(e); }
+
       await updateJobAverageProgress(application.jobId.toString());
 
       return NextResponse.json({ success: true, progress: newProgress });
@@ -264,18 +325,6 @@ export async function PATCH(
 
     // ── submit (นิสิตส่งงาน) ───────────────
     if (action === "submit" && isStudent) {
-
-      await Application.findByIdAndUpdate(id, {
-      $set: { 
-        status: "submitted", 
-        progress: 100, 
-        workLink: workLink, 
-        attachments: attachments || [], // รับ Array ของไฟล์มาเก็บ
-        // note: note,         
-        updatedAt: new Date() 
-      },
-    });
-
 
       if (!["in_progress", "revision", "accepted", "submitted"].includes(application.status)) {
         return NextResponse.json({ error: "ไม่สามารถส่งงานได้ในสถานะนี้" }, { status: 400 });
@@ -302,7 +351,15 @@ export async function PATCH(
       // 4. Sync progress และรายชื่อตามเดิม
       await updateJobAverageProgress(application.jobId.toString());
 
-      return NextResponse.json({ success: true, message: "ส่งงานเรียบร้อยแล้ว รอเจ้าของตรวจสอบ" });
+      try {
+        await notifyWorkSubmitted(
+            application.jobId.toString(),
+            application.applicantId.toString(),
+            id
+        );
+        } catch (e) { console.error(e); }
+
+      return NextResponse.json({ success: true, message: "ส่งงานเรียบร้อยแล้ว รอผู้ว่าจ้างตรวจสอบ" });
     }
 
     return NextResponse.json({ error: "action ไม่ถูกต้อง" }, { status: 400 });
