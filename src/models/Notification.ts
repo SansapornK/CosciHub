@@ -41,6 +41,10 @@ const NotificationSchema: Schema = new Schema(
         'application_rejected',     // ใบสมัครถูกปฏิเสธ
         'work_revision_requested',  // เจ้าของขอแก้ไขงาน
         'work_approved',            // เจ้าของยืนยันงานเสร็จ
+        
+         // ── รีวิว ────────────────────────────────
+        'review_received_by_student',   // นิสิตได้รับรีวิวจากผู้ว่าจ้าง
+        'review_received_by_owner',     // ผู้ว่าจ้างได้รับรีวิวจากนิสิต
 
         // ── ระบบ ────────────────────────────
         'system_message'

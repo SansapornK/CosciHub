@@ -16,6 +16,7 @@ export interface IJob extends Document {
   applicationDeadline: Date;
   owner: string;
   ownerName?: string;
+  contactInfo?: string;
   status: "draft" | "published" | "in_progress" | "revision" | "completed" | "closed";
   applicants: mongoose.Types.ObjectId[];
   assignedTo: mongoose.Types.ObjectId[];
@@ -46,9 +47,10 @@ const JobSchema = new mongoose.Schema({
   applicationDeadline: { type: Date, required: true },
 
   // ─── เจ้าของงาน ─────────────────────────────────
-  // ✅ ใช้ String ต่อไป (backward compat กับ data เดิม)
+  //  ใช้ String ต่อไป (backward compat กับ data เดิม)
   owner:     { type: String, required: true },
   ownerName: { type: String },
+  contactInfo: { type: String, required: true },
 
   status: {
     type: String,

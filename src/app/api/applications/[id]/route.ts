@@ -15,6 +15,8 @@ import {
   notifyRevisionRequested,
   notifyWorkApproved,
   notifyProgressUpdated,
+  notifyStudentReviewReceived, 
+  notifyOwnerReviewReceived,    
 } from '@/utils/notificationUtils';
 
 
@@ -152,7 +154,7 @@ export async function PATCH(
       return NextResponse.json({ error: "ไม่มีสิทธิ์อัปเดตใบสมัครนี้" }, { status: 403 });
     }
 
-    // ─── ✅ 1. submitReview ──────────────────────────────────────────
+    // ───  1. submitReview ──────────────────────────────────────────
     if (action === "submitReview") {
       const updateData: any = {};
 
@@ -181,6 +183,29 @@ export async function PATCH(
         return NextResponse.json({ error: "ไม่มีสิทธิ์เข้าถึงส่วนนี้" }, { status: 400 });
       }
       const updated = await Application.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+
+        // ส่ง Notification หลัง save สำเร็จ
+        try {
+            if (role === 'student' && isStudent) {
+            // นิสิตรีวิว → แจ้งผู้ว่าจ้าง
+            await notifyOwnerReviewReceived(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id,
+                Number(rating)
+            );
+            } else if (role === 'owner' && isOwner) {
+            // ผู้ว่าจ้างรีวิว → แจ้งนิสิต
+            await notifyStudentReviewReceived(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id,
+                Number(rating)
+            );
+            }
+        } catch (e) {
+            console.error('Review notification error:', e);
+        }
 
       // ถ้าเป็นเจ้าของงานรีวิว ต้อง Sync สถานะ Job ใหญ่ด้วย
       if (role === 'owner') {
@@ -269,7 +294,7 @@ export async function PATCH(
       return NextResponse.json({ success: true, message: "ปฏิเสธใบสมัครแล้ว" });
     }
 
-    // ─── 2. approve (ยืนยันงานเสร็จ) ──────────────────────────────────
+    // ─── approve (ยืนยันงานเสร็จ) ──────────────────────────────────
     if (action === "approve" && isOwner) {
       if (application.status !== "submitted") return NextResponse.json({ error: "งานยังไม่ถูกส่ง" }, { status: 400 });
       
@@ -368,7 +393,7 @@ export async function PATCH(
       return NextResponse.json({ success: true, progress: newProgress });
     }
 
-    // ─── 3. submit (นิสิตส่งงาน - คลีนโค้ดแล้ว) ───────────────────────
+    // ─── submit (นิสิตส่งงาน) ───────────────────────
     if (action === "submit" && isStudent) {
 
       if (!["in_progress", "revision", "accepted", "submitted"].includes(application.status)) {
@@ -399,6 +424,23 @@ export async function PATCH(
 
       return NextResponse.json({ success: true, message: "ส่งงานเรียบร้อยแล้ว รอผู้ว่าจ้างตรวจสอบ" });
     }
+
+    // ─── withdraw (ยกเลิกใบสมัคร ก่อนเริ่มงาน) ──────
+    if (action === "withdraw" && isStudent) {
+        // ยกเลิกได้เฉพาะ pending หรือ accepted เท่านั้น
+        if (!["pending", "accepted"].includes(application.status)) {
+            return NextResponse.json(
+            { error: "ไม่สามารถยกเลิกได้ เนื่องจากเริ่มทำงานไปแล้ว" },
+            { status: 400 }
+            );
+        }
+
+        await Application.findByIdAndDelete(id);
+        await syncJobParticipants(application.jobId.toString());
+
+        return NextResponse.json({ success: true, message: "ยกเลิกการสมัครแล้ว" });
+    }
+
     return NextResponse.json({ error: "action ไม่ถูกต้อง" }, { status: 400 });
 
   } catch (error: any) {

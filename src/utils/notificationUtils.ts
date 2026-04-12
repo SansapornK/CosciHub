@@ -747,6 +747,60 @@ export async function notifyProgressUpdated(
   }
 }
 
+// ─── 9. แจ้งนิสิต: ผู้ว่าจ้างให้รีวิวแล้ว ──────────────────────────────────
+export async function notifyStudentReviewReceived(
+  jobId: string,
+  applicantId: string,
+  applicationId: string,
+) {
+  try {
+    const data = await getJobAndUsers(jobId, applicantId);
+    if (!data) return { success: false, error: 'Data not found' };
+    const { job, owner } = data;
+
+    return await createNotification({
+      recipientId:   applicantId,
+      senderId:      owner._id.toString(),
+      type:          'review_received_by_student',
+      title:         'คุณได้รับรีวิวจากผู้ว่าจ้าง! 🎉',
+      message:       `งาน "${job.title} ผู้ว่าจ้างรีวิวให้คุณเรียบร้อยแล้ว"`,
+      jobId,
+      applicationId,
+      link:          `/manage-projects/${jobId}/work/${applicationId}`,
+    });
+  } catch (error) {
+    console.error('notifyStudentReviewReceived error:', error);
+    return { success: false };
+  }
+}
+
+// ─── 10. แจ้งผู้ว่าจ้าง: นิสิตให้รีวิวแล้ว ──────────────────────────────────
+export async function notifyOwnerReviewReceived(
+  jobId: string,
+  applicantId: string,
+  applicationId: string,
+) {
+  try {
+    const data = await getJobAndUsers(jobId, applicantId);
+    if (!data) return { success: false, error: 'Data not found' };
+    const { job, applicant, owner } = data;
+
+    return await createNotification({
+      recipientId:   owner._id.toString(),
+      senderId:      applicantId,
+      type:          'review_received_by_owner',
+      title:         'คุณได้รับรีวิวจากนิสิต! 🎉',
+      message:       `งาน "${job.title}" นิสิตรีวิวให้คุณเรียบร้อยแล้ว`,
+      jobId,
+      applicationId,
+      link:          `/manage-projects/${jobId}/overview`,
+    });
+  } catch (error) {
+    console.error('notifyOwnerReviewReceived error:', error);
+    return { success: false };
+  }
+}
+
 // ─── Mark as Read ─────────────────────────────────────────────────────────────
 export async function markNotificationAsRead(notificationId: string) {
   try {
