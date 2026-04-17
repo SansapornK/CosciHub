@@ -14,6 +14,7 @@ export interface IUser extends Document {
   profileImageUrl?: string;
   portfolioUrl?: string;
   bio?: string;
+  contactInfo?: string[];  // ช่องทางการติดต่อ (array)
   emailVerified: boolean;
   verificationStatus?: 'pending' | 'approved' | 'rejected' | 'not_required';
   verifiedBy?: string;   // อีเมลอาจารย์ที่ approve/reject
@@ -47,11 +48,12 @@ const UserSchema: Schema = new Schema(
       default: undefined
     },
     profileImageUrl: { type: String },
-    portfolioUrl: { 
+    portfolioUrl: {
       type: String,
       default: function() { return this.role === 'student' ? null : undefined; }
     },
     bio: { type: String },
+    contactInfo: { type: [String], default: [] },  // ช่องทางการติดต่อ (array)
     emailVerified: { type: Boolean, default: false },
     galleryImages: {
       type: [String],

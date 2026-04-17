@@ -9,6 +9,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Loading from "../../../../components/common/Loading";
 import { toast, Toaster } from "react-hot-toast";
+import EmployerWithdrawModal from "../../../../components/modals/EmployerWithdrawModal";
+import StudentContactModal from "../../../../components/modals/StudentContactModal";
 
 // ─── Interfaces ───────────────────────────────────
 interface Applicant {
@@ -22,6 +24,7 @@ interface Applicant {
   bio: string;
   profileImageUrl: string | null;
   major: string;
+  contactInfo?: string[];
 //   basePrice: number;
 }
 
@@ -55,11 +58,15 @@ function ApplicantCard({
   applicant,
   onAccept,
   onReject,
+  onWithdraw,
+  onContact,
   isLoading,
 }: {
   applicant: Applicant;
   onAccept: (appId: string) => void;
   onReject: (appId: string) => void;
+  onWithdraw: (applicant: Applicant) => void;
+  onContact: (applicant: Applicant) => void;
   isLoading: boolean;
 }) {
     const statusConfig: Record<string, { label: string; className: string }> = {
@@ -94,9 +101,19 @@ function ApplicantCard({
             </p>
           </div>
         </div>
-        <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${s.className}`}>
-          {s.label}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${s.className}`}>
+            {s.label}
+          </span>
+          {applicant.status === "accepted" && (
+            <button
+              onClick={() => onContact(applicant)}
+              className="text-xs text-primary-blue-600 hover:underline transition-colors"
+            >
+              ติดต่อผู้สมัคร
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Bio */}
@@ -126,7 +143,7 @@ function ApplicantCard({
         </div>
       )}
 
-      {/* Action Buttons — แสดงเฉพาะ pending */}
+      {/* Action Buttons */}
       {applicant.status === "pending" ? (
         <div className="flex gap-2 pt-1">
           {applicant.userId && (
@@ -151,6 +168,25 @@ function ApplicantCard({
             disabled={isLoading}
           >
             รับเข้าทำงาน
+          </button>
+        </div>
+      ) : applicant.status === "accepted" ? (
+        <div className="flex gap-2 pt-1">
+          {applicant.userId && (
+            <Link
+              href={`/user/freelancer/${applicant.userId}`}
+              target="_blank"
+              className="flex-1 text-center text-sm border border-gray-300 text-gray-600 rounded-lg py-2 hover:bg-gray-50 transition-colors"
+            >
+              ดูโปรไฟล์
+            </Link>
+          )}
+          <button
+            className="flex-1 text-sm border border-red-400 text-red-500 rounded-lg py-2 hover:bg-red-50 transition-colors disabled:opacity-50"
+            onClick={() => onWithdraw(applicant)}
+            disabled={isLoading}
+          >
+            ยกเลิกการจ้าง
           </button>
         </div>
       ) : (
@@ -182,6 +218,8 @@ export default function ApplicantsPage() {
   const [error, setError]           = useState<string | null>(null);
   const [pendingCount, setPendingCount]   = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
+  const [withdrawApplicant, setWithdrawApplicant] = useState<Applicant | null>(null);
+  const [contactApplicant, setContactApplicant] = useState<Applicant | null>(null);
 
   // ─── Redirect ─────────────────────────────────
   useEffect(() => {
@@ -224,11 +262,7 @@ export default function ApplicantsPage() {
 
       if (res.data.success) {
         toast.success(res.data.message);
-        if (res.data.isFull) {
-          setTimeout(() => router.push('/manage-projects'), 1200);
-        } else {
-          await fetchData();
-        }
+        await fetchData();
       } else {
         toast.error(res.data.error || 'เกิดข้อผิดพลาด');
       }
@@ -261,6 +295,11 @@ export default function ApplicantsPage() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  // ─── Withdraw (Employer) ───────────────────────────────────
+  const handleWithdrawSuccess = async () => {
+    await fetchData();
   };
 
   // ─── Render ───────────────────────────────────
@@ -373,11 +412,29 @@ export default function ApplicantsPage() {
                 applicant={applicant}
                 onAccept={handleAccept}
                 onReject={handleReject}
+                onWithdraw={setWithdrawApplicant}
+                onContact={setContactApplicant}
                 isLoading={actionLoading}
               />
             ))}
         </div>
       )}
+
+      <EmployerWithdrawModal
+        isOpen={!!withdrawApplicant}
+        applicant={withdrawApplicant}
+        onClose={() => setWithdrawApplicant(null)}
+        onSuccess={handleWithdrawSuccess}
+      />
+
+      <StudentContactModal
+        isOpen={!!contactApplicant}
+        student={contactApplicant ? {
+          applicantName: contactApplicant.applicantName,
+          contactInfo: contactApplicant.contactInfo
+        } : null}
+        onClose={() => setContactApplicant(null)}
+      />
     </div>
   );
 }

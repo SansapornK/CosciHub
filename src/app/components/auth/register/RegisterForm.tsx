@@ -50,11 +50,12 @@ export interface RegisterData {
   email: string;
   isEmailVerified: boolean;
   teacherEmails?: string[];
-  password?: string;      
-  confirmPassword?: string; 
+  password?: string;
+  confirmPassword?: string;
   profileImage?: File;
   portfolioFile?: File;
   bio?: string;
+  contactInfo?: string[];  
   galleryImages?: File[];
   interestedJobs?: string[];
   acceptedTerms: boolean;
@@ -139,9 +140,10 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     email: "",
     isEmailVerified: false,
     teacherEmails: ['', ''],
-    password: "",        
-    confirmPassword: "",  
+    password: "",
+    confirmPassword: "",
     bio: "",
+    contactInfo: [''],  // เริ่มต้นมี 1 ช่อง
     acceptedTerms: false,
   });
 
@@ -373,7 +375,14 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         if (!registerData.acceptedTerms) return false;
         
         return true;
-      case 5: // Profile (optional fields, always valid)
+      case 5: // Profile
+        // ต้องมีช่องทางการติดต่อ อย่างน้อย 1 ช่องที่ไม่ว่าง
+        const validContactInfo = (registerData.contactInfo || []).filter(info => info.trim() !== '');
+        if (validContactInfo.length === 0) return false;
+
+        // Alumni ต้องมีรูปโปรไฟล์ (เพื่อส่งให้อาจารย์ยืนยันตัวตน)
+        if (registerData.role === 'alumni' && !registerData.profileImage) return false;
+
         return true;
       default:
         return false;
@@ -470,7 +479,15 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       if (registerData.interestedJobs && registerData.interestedJobs.length > 0) {
         formData.append('interestedJobs', JSON.stringify(registerData.interestedJobs));
       }
-      
+
+      // Add contact info if provided (filter out empty strings)
+      if (registerData.contactInfo && registerData.contactInfo.length > 0) {
+        const validContactInfo = registerData.contactInfo.filter(info => info.trim() !== '');
+        if (validContactInfo.length > 0) {
+          formData.append('contactInfo', JSON.stringify(validContactInfo));
+        }
+      }
+
       // Add profile image if provided
       if (registerData.profileImage) {
         formData.append('profileImage', registerData.profileImage);
@@ -507,8 +524,6 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           formData.append('profileImage', registerData.profileImage);
         }
         if (registerData.teacherEmails) {
-          // ส่งเป็น JSON String หรือ Loop append ก็ได้ ขึ้นอยู่กับ Backend รับยังไง
-          // ในที่นี้สมมติส่งเป็น JSON
           formData.append('teacherEmails', JSON.stringify(registerData.teacherEmails));
         }
       }

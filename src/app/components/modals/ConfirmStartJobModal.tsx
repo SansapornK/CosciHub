@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface JobApplication {
   _id: string;
   jobTitle: string;
-  contactInfo?: string;
+  contactInfo?: string[];
 }
 
 interface ConfirmStartJobModalProps {
@@ -71,9 +71,19 @@ export default function ConfirmStartJobModal({
               <p className="text-[11px] font-medium text-blue-600 uppercase tracking-wider mb-1">
                 ช่องทางการติดต่อผู้ว่าจ้าง
               </p>
-              <p className="text-sm font-medium text-gray-700 break-words">
-                {app.contactInfo || "ไม่ได้ระบุช่องทางการติดต่อ"}
-              </p>
+              {app.contactInfo && app.contactInfo.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  {app.contactInfo.map((contact, index) => (
+                    <p key={index} className="text-sm font-medium text-gray-700 break-words">
+                      • {contact}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-gray-400">
+                  ไม่ได้ระบุช่องทางการติดต่อ
+                </p>
+              )}
             </div>
 
             <p className="text-[12px] text-gray-600 leading-relaxed mb-3 ">

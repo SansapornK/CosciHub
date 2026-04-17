@@ -192,7 +192,6 @@ export async function PATCH(
                 application.jobId.toString(),
                 application.applicantId.toString(),
                 id,
-                Number(rating)
             );
             } else if (role === 'owner' && isOwner) {
             // ผู้ว่าจ้างรีวิว → แจ้งนิสิต
@@ -200,7 +199,6 @@ export async function PATCH(
                 application.jobId.toString(),
                 application.applicantId.toString(),
                 id,
-                Number(rating)
             );
             }
         } catch (e) {
@@ -439,6 +437,42 @@ export async function PATCH(
         await syncJobParticipants(application.jobId.toString());
 
         return NextResponse.json({ success: true, message: "ยกเลิกการสมัครแล้ว" });
+    }
+
+    // ─── employerWithdraw (ผู้ว่าจ้างยกเลิกการจ้างนิสิต) ──────
+    if (action === "employerWithdraw" && isOwner) {
+        // ยกเลิกได้เฉพาะ accepted เท่านั้น (ยังไม่เริ่มงาน)
+        if (application.status !== "accepted") {
+            return NextResponse.json(
+            { error: "ไม่สามารถยกเลิกได้ เนื่องจากนิสิตเริ่มทำงานไปแล้ว หรือสถานะไม่ถูกต้อง" },
+            { status: 400 }
+            );
+        }
+
+        // ลบ application
+        await Application.findByIdAndDelete(id);
+        await syncJobParticipants(application.jobId.toString());
+
+        // ตรวจสอบจำนวนคนที่รับหลังจากยกเลิก
+        const capacity = job.capacity || 1;
+        const acceptedCount = await Application.countDocuments({
+            jobId: application.jobId,
+            status: { $in: ["accepted", "in_progress", "submitted", "revision", "completed"] },
+        });
+
+        // ถ้าจำนวนคนที่รับไม่ครบ capacity แล้วให้เปลี่ยน job status กลับเป็น published
+        if (acceptedCount < capacity && job.status === "in_progress") {
+            await (Job as any).findByIdAndUpdate(application.jobId, {
+            $set: { status: "published" },
+            });
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: "ยกเลิกการจ้างนิสิตแล้ว",
+            acceptedCount,
+            capacity
+        });
     }
 
     return NextResponse.json({ error: "action ไม่ถูกต้อง" }, { status: 400 });

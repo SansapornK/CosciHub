@@ -145,7 +145,7 @@ export async function GET(req: Request) {
 
       const emails = applications.map((a: any) => a.applicantEmail);
       const users  = await User.find({ email: { $in: emails } })
-        .select("name email skills bio profileImageUrl major basePrice")
+        .select("name email skills bio profileImageUrl major contactInfo")
         .lean();
 
       const userMap: Record<string, any> = {};
@@ -163,6 +163,7 @@ export async function GET(req: Request) {
         profileImageUrl: userMap[a.applicantEmail]?.profileImageUrl || null,
         major:           userMap[a.applicantEmail]?.major           || "",
         basePrice:       userMap[a.applicantEmail]?.basePrice       || 0,
+        contactInfo:     userMap[a.applicantEmail]?.contactInfo     || [],
         userId:          userMap[a.applicantEmail]?._id?.toString() || null,
       }));
 
@@ -194,17 +195,32 @@ export async function GET(req: Request) {
       const jobMap: Record<string, any> = {};
       jobs.forEach((j: any) => { jobMap[j._id.toString()] = j; });
 
-      const result = applications.map((a: any) => ({
-        _id:          a._id.toString(),
-        jobId:        a.jobId.toString(),
-        jobTitle:     jobMap[a.jobId.toString()]?.title    ?? "ไม่พบข้อมูล",
-        jobCategory:  jobMap[a.jobId.toString()]?.category ?? "",
-        jobOwner:     jobMap[a.jobId.toString()]?.owner    ?? "",
-        jobDeadline:  jobMap[a.jobId.toString()]?.deliveryDate ?? null,
-        status:       a.status,
-        progress:     a.progress || 0,
-        updatedAt:    a.updatedAt,
-      }));
+      // Populate owner's contactInfo from User model
+      const ownerNames = [...new Set(jobs.map((j: any) => j.owner))];
+      const ownerUsers = await User.find({ name: { $in: ownerNames } })
+        .select("name contactInfo")
+        .lean();
+
+      const ownerContactMap: Record<string, string[]> = {};
+      ownerUsers.forEach((u: any) => {
+        ownerContactMap[u.name] = u.contactInfo || [];
+      });
+
+      const result = applications.map((a: any) => {
+        const jobOwnerName = jobMap[a.jobId.toString()]?.owner ?? "";
+        return {
+          _id:          a._id.toString(),
+          jobId:        a.jobId.toString(),
+          jobTitle:     jobMap[a.jobId.toString()]?.title    ?? "ไม่พบข้อมูล",
+          jobCategory:  jobMap[a.jobId.toString()]?.category ?? "",
+          jobOwner:     jobOwnerName,
+          contactInfo:  ownerContactMap[jobOwnerName] || [],
+          jobDeadline:  jobMap[a.jobId.toString()]?.deliveryDate ?? null,
+          status:       a.status,
+          progress:     a.progress || 0,
+          updatedAt:    a.updatedAt,
+        };
+      });
 
       return NextResponse.json({ applications: result });
     }
@@ -462,19 +478,34 @@ export async function GET(req: Request) {
       const jobMap: Record<string, any> = {};
       jobs.forEach((j: any) => { jobMap[j._id.toString()] = j; });
 
-      const result = applications.map((a: any) => ({
-        _id:           a._id.toString(),
-        jobId:         a.jobId.toString(),
-        jobTitle:      jobMap[a.jobId.toString()]?.title       ?? "ไม่พบข้อมูล",
-        jobCategory:   jobMap[a.jobId.toString()]?.category    ?? "",
-        jobBudgetMin:  jobMap[a.jobId.toString()]?.budgetMin   ?? 0,
-        jobBudgetMax:  jobMap[a.jobId.toString()]?.budgetMax   ?? 0,
-        jobOwner:      jobMap[a.jobId.toString()]?.owner       ?? "",
-        jobDeadline:   jobMap[a.jobId.toString()]?.applicationDeadline ?? null,
-        jobStatus:     jobMap[a.jobId.toString()]?.status      ?? "",
-        status:        a.status,
-        appliedDate:   a.appliedDate,
-      }));
+      // Populate owner's contactInfo from User model
+      const ownerNames = [...new Set(jobs.map((j: any) => j.owner))];
+      const ownerUsers = await User.find({ name: { $in: ownerNames } })
+        .select("name contactInfo")
+        .lean();
+
+      const ownerContactMap: Record<string, string[]> = {};
+      ownerUsers.forEach((u: any) => {
+        ownerContactMap[u.name] = u.contactInfo || [];
+      });
+
+      const result = applications.map((a: any) => {
+        const jobOwnerName = jobMap[a.jobId.toString()]?.owner ?? "";
+        return {
+          _id:           a._id.toString(),
+          jobId:         a.jobId.toString(),
+          jobTitle:      jobMap[a.jobId.toString()]?.title       ?? "ไม่พบข้อมูล",
+          jobCategory:   jobMap[a.jobId.toString()]?.category    ?? "",
+          jobBudgetMin:  jobMap[a.jobId.toString()]?.budgetMin   ?? 0,
+          jobBudgetMax:  jobMap[a.jobId.toString()]?.budgetMax   ?? 0,
+          jobOwner:      jobOwnerName,
+          contactInfo:   ownerContactMap[jobOwnerName] || [],
+          jobDeadline:   jobMap[a.jobId.toString()]?.applicationDeadline ?? null,
+          jobStatus:     jobMap[a.jobId.toString()]?.status      ?? "",
+          status:        a.status,
+          appliedDate:   a.appliedDate,
+        };
+      });
 
       return NextResponse.json({ applications: result });
     }

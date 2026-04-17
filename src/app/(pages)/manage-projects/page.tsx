@@ -12,9 +12,7 @@ import {
   Briefcase,
   Clock,
   CheckCircle,
-  LayoutDashboard,
   Users,
-  ArrowRight,
   DollarSign,
   Star,
 } from "lucide-react";
@@ -396,29 +394,6 @@ export default function ManageProjectsPage() {
     reviewCount: reviewedApps.length,
   };
 
-  // if (isFreelancer) {
-  //   const completedApps = jobApplications.filter(
-  //     (app) => app.status === "completed"
-  //   );
-
-  //   dashboardStats.totalCompleted = completedApps.length;
-
-  //   // คำนวณรายได้สะสม (ใช้ค่า budgetMin เป็นเกณฑ์)
-  //   dashboardStats.totalEarnings = completedApps.reduce(
-  //     (sum, app) => sum + (app.jobBudgetMin || 0),
-  //     0
-  //   );
-
-  //   // ตัวอย่างการหาค่าเฉลี่ยในฝั่ง Frontend หลังจาก fetch ข้อมูลมาแล้ว
-  //   const myCompletedJobs = jobApplications.filter(app => app.status === 'completed' && app.ownerReview);
-
-  //   const totalRating = myCompletedJobs.reduce((sum, app) => sum + (app.ownerReview.rating || 0), 0);
-  //   const avgRating = myCompletedJobs.length > 0 ? (totalRating / myCompletedJobs.length).toFixed(1) : "0.0";
-
-  //   // นำ avgRating ไปใส่ใน dashboardStats.avgRating
-  // }
-
-  // Status badge config สำหรับ job application
 
   // ฟังก์ชันเปิด Modal
   const openReviewModal = (app: any) => {
