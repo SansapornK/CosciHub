@@ -164,7 +164,6 @@ export async function POST(req: Request) {
       applicationDeadline: new Date(data.applicationDeadline),
       ownerId: user._id,
       owner: user.name,
-      contactInfo: data.contactInfo || user.email,
       status: jobStatus,
       postedDate: new Date(),
     });

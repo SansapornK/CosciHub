@@ -16,7 +16,6 @@ export interface IJob extends Document {
   applicationDeadline: Date;
   ownerId: mongoose.Types.ObjectId;
   ownerName?: string;
-  contactInfo?: string;
   status:
     | "draft"
     | "published"
@@ -60,7 +59,6 @@ const JobSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  contactInfo: { type: String, required: true },
 
   status: {
     type: String,
