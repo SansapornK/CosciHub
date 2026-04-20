@@ -5,20 +5,21 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import Loading from "../../components/common/Loading";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { usePusher } from "../../../providers/PusherProvider";
 import Link from "next/link";
 import {
   Briefcase,
   Clock,
   CheckCircle,
-  LayoutDashboard,
   Users,
-  ArrowRight,
   DollarSign,
   Star,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ConfirmStartJobModal from "../../components/modals/ConfirmStartJobModal";
+import WithdrawApplicationModal from "../../components/modals/WithdrawApplicationModal";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40, filter: "blur(4px)" },
@@ -186,6 +187,10 @@ export default function ManageProjectsPage() {
   const [comment, setComment] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // --- States สำหรับ Modal เริ่มงาน และ ยกเลิกใบสมัคร ---
+  const [confirmApp, setConfirmApp] = useState<JobApplication | null>(null);
+  const [withdrawApp, setWithdrawApp] = useState<JobApplication | null>(null);
 
   // ─── Effects ────────────────────────────────────────────────────────────────
 
@@ -398,30 +403,6 @@ export default function ManageProjectsPage() {
     reviewCount: reviewedApps.length,
   };
 
-  // if (isFreelancer) {
-  //   const completedApps = jobApplications.filter(
-  //     (app) => app.status === "completed"
-  //   );
-
-  //   dashboardStats.totalCompleted = completedApps.length;
-
-  //   // คำนวณรายได้สะสม (ใช้ค่า budgetMin เป็นเกณฑ์)
-  //   dashboardStats.totalEarnings = completedApps.reduce(
-  //     (sum, app) => sum + (app.jobBudgetMin || 0),
-  //     0
-  //   );
-
-  //   // ตัวอย่างการหาค่าเฉลี่ยในฝั่ง Frontend หลังจาก fetch ข้อมูลมาแล้ว
-  //   const myCompletedJobs = jobApplications.filter(app => app.status === 'completed' && app.ownerReview);
-
-  //   const totalRating = myCompletedJobs.reduce((sum, app) => sum + (app.ownerReview.rating || 0), 0);
-  //   const avgRating = myCompletedJobs.length > 0 ? (totalRating / myCompletedJobs.length).toFixed(1) : "0.0";
-
-  //   // นำ avgRating ไปใส่ใน dashboardStats.avgRating
-  // }
-
-  // Status badge config สำหรับ job application
-
   // ฟังก์ชันเปิด Modal
   const openReviewModal = (app: any) => {
     setSelectedApp(app);
@@ -464,7 +445,7 @@ export default function ManageProjectsPage() {
   const appStatusConfig: Record<string, { label: string; className: string }> =
     {
       pending: {
-        label: "รอการพิจารณา",
+        label: "รอพิจารณา",
         className: "bg-yellow-100 text-yellow-700",
       },
       accepted: {
@@ -479,8 +460,6 @@ export default function ManageProjectsPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto w-full">
-      <Toaster position="bottom-left" />
-
       {isFreelancer ? (
         <div className="flex justify-between items-center mt-8">
           <h2 className="text-3xl font-black text-[#0C5BEA] flex items-center gap-3">
@@ -490,13 +469,15 @@ export default function ManageProjectsPage() {
       ) : (
         <div className="flex justify-between items-center mt-8">
           <h2 className="text-3xl font-black text-[#0C5BEA] flex items-center gap-3">
-            {/* <div className="p-2.5 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-100">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div> */}
             ติดตามงาน
           </h2>
+          <Link
+            href="/manage-projects/my-jobs"
+            className="px-6 py-2.5 rounded-full text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100 flex items-center gap-2"
+          >
+            <BriefcaseBusiness className="w-4 h-4" />
+            งานของฉัน
+          </Link>
         </div>
       )}
 
@@ -705,7 +686,7 @@ export default function ManageProjectsPage() {
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         {/* Title + badge */}
                         <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                             {app.jobTitle}
                           </h3>
                           <span
@@ -733,39 +714,59 @@ export default function ManageProjectsPage() {
                         </div>
 
                         {/* ปุ่ม */}
-                        {app.status === "accepted" ? (
-                          <button
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              try {
-                                await axios.patch(
-                                  `/api/applications/${app._id}`,
-                                  {
-                                    action: "updateProgress",
-                                    progress: 0,
-                                  },
-                                );
-                                toast.success("เริ่มงานแล้ว!");
-                                await fetchJobApplications();
-                              } catch (err: any) {
-                                toast.error(
-                                  err.response?.data?.error || "เกิดข้อผิดพลาด",
-                                );
-                              }
-                            }}
-                            className="btn-primary block text-sm text-center py-2 rounded-full w-full"
-                          >
-                            เริ่มงาน
-                          </button>
-                        ) : (
-                          <Link
-                            href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                            className="text-xs text-primary-blue-500 font-medium text-right group-hover:underline"
-                          >
-                            ดูรายละเอียดงาน →
-                          </Link>
-                        )}
+                        {/* ปุ่ม — กำหนด min-h ให้คงที่ทุก status */}
+                        <div className="min-h-[40px] flex flex-col justify-end mt-auto">
+                          {app.status === "accepted" ? (
+                            <div className="flex gap-2 items-center">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setConfirmApp(app);
+                                }}
+                                className="flex-[2] btn-primary text-sm text-center rounded-full"
+                              >
+                                เริ่มงาน
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setWithdrawApp(app);
+                                }}
+                                className="flex-1 bg-white text-red-500 text-xs border border-red-400 hover:bg-red-50 px-2 py-2 rounded-full transition-colors"
+                              >
+                                ยกเลิกใบสมัคร
+                              </button>
+                            </div>
+                          ) : app.status === "pending" ? (
+                            <div className="flex items-center justify-between pb-2">
+                              <Link
+                                href={`/find-job/${app.jobId}`}
+                                className="text-xs text-primary-blue-500 font-medium hover:underline"
+                              >
+                                ดูรายละเอียดงาน →
+                              </Link>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setWithdrawApp(app);
+                                }}
+                                className="text-xs text-red-400 hover:underline transition-colors"
+                              >
+                                ยกเลิกใบสมัคร
+                              </button>
+                            </div>
+                          ) : (
+                            <Link
+                              href={`/find-job/${app.jobId}`}
+                              className="text-xs text-primary-blue-500 font-medium text-right hover:underline"
+                            >
+                              ดูรายละเอียดงาน →
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -811,16 +812,16 @@ export default function ManageProjectsPage() {
                     <div className="p-6 flex-1 flex flex-col gap-3">
                       {/* Title + badge */}
                       <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                        <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                           {job.title}
                         </h3>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           {job.acceptedCount >= job.capacity ? (
-                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100">
+                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-700 border-green-100">
                               คัดเลือกครบแล้ว
                             </span>
                           ) : job.pendingCount > 0 ? (
-                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-purple-50 text-purple-600 border-purple-100">
+                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-yellow-50 text-yellow-700 border-yellow-100">
                               รอพิจารณา {job.pendingCount}
                             </span>
                           ) : null}
@@ -895,15 +896,15 @@ export default function ManageProjectsPage() {
                   > = {
                     in_progress: {
                       label: "กำลังทำงาน",
-                      color: "bg-yellow-50 text-yellow-600 border-yellow-100",
+                      color: "bg-yellow-50 text-yellow-700 border-yellow-100",
                     },
                     submitted: {
                       label: "ส่งงานแล้ว",
-                      color: "bg-purple-50 text-purple-600 border-purple-100",
+                      color: "bg-purple-50 text-purple-700 border-purple-100",
                     },
                     revision: {
                       label: "แก้ไขงาน",
-                      color: "bg-orange-50 text-orange-600 border-orange-100",
+                      color: "bg-orange-50 text-orange-700 border-orange-100",
                     },
                   };
                   const s =
@@ -915,7 +916,7 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                             {app.jobTitle}
                           </h3>
                           <span
@@ -1030,7 +1031,7 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-6 flex-1">
                         <div className="flex justify-between items-start gap-4 mb-5">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                             {job.title}
                           </h3>
                           <span
@@ -1163,7 +1164,7 @@ export default function ManageProjectsPage() {
                           </span>
                         </div>
 
-                        <p className="text-[10px] text-gray-400 mt-1 font-bold uppercase tracking-wider">
+                        <p className="text-xs text-gray-400">
                           {app.jobCategory || "งานพิเศษ"}
                         </p>
 
@@ -1241,7 +1242,7 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                             {job.title}
                           </h3>
                           <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
@@ -1249,7 +1250,9 @@ export default function ManageProjectsPage() {
                           </span>
                         </div>
 
-                        <p className="text-xs text-gray-400">{job.category || "งานพิเศษ" }</p>
+                        <p className="text-xs text-gray-400">
+                          {job.category || "งานพิเศษ"}
+                        </p>
 
                         <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 w-full">
                           <span className="text-[10px] text-gray-400 font-medium">
@@ -1385,6 +1388,18 @@ export default function ManageProjectsPage() {
           </div>
         )}
       </AnimatePresence>
+      <ConfirmStartJobModal
+        app={confirmApp}
+        onClose={() => setConfirmApp(null)}
+        onSuccess={fetchJobApplications}
+        isOpen
+      />
+      <WithdrawApplicationModal
+        app={withdrawApp}
+        onClose={() => setWithdrawApp(null)}
+        onSuccess={fetchJobApplications}
+        isOpen
+      />
     </div>
   );
 }

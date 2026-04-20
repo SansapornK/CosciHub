@@ -14,6 +14,7 @@ export interface IUser extends Document {
   profileImageUrl?: string;
   resumeUrl?: string;
   bio?: string;
+  contactInfo?: string[];  // ช่องทางการติดต่อ (array)
   experiences?: string[];
   emailVerified: boolean;
   verificationStatus?: "pending" | "approved" | "rejected" | "not_required";
@@ -59,6 +60,7 @@ const UserSchema: Schema = new Schema(
       },
     },
     bio: { type: String },
+    contactInfo: { type: [String], default: [] },  // ช่องทางการติดต่อ (array)
     experiences: {
       type: [String],
       default: [],

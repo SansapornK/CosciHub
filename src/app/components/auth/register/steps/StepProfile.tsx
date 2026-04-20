@@ -76,7 +76,25 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
   const handleBioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateData({ bio: e.target.value });
   };
-  
+
+  // Handle contact info changes
+  const handleContactInfoChange = (index: number, value: string) => {
+    const newContactInfo = [...(data.contactInfo || [''])];
+    newContactInfo[index] = value;
+    updateData({ contactInfo: newContactInfo });
+  };
+
+  const addContactInfo = () => {
+    const newContactInfo = [...(data.contactInfo || ['']), ''];
+    updateData({ contactInfo: newContactInfo });
+  };
+
+  const removeContactInfo = (index: number) => {
+    const newContactInfo = (data.contactInfo || ['']).filter((_, i) => i !== index);
+    // Keep at least one field
+    updateData({ contactInfo: newContactInfo.length > 0 ? newContactInfo : [''] });
+  };
+
   const removeProfileImage = () => {
     // Clear preview image
     if (previewImage) {
@@ -96,13 +114,6 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
   
-  // สำหรับนิสิตเท่านั้น: ฟังก์ชันตั้งค่าราคาเริ่มต้น
-  const handleBasePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 100) {
-      updateData({ basePrice: value });
-    }
-  };
 
   return (
     <div className="flex flex-col gap-4 w-full items-center">
@@ -137,7 +148,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
               htmlFor="profile-image"
               className="px-3 py-1 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 text-sm inline-block"
             >
-              เลือกรูปภาพ
+              เลือกรูปภาพ{data.role === 'alumni' && <span className="text-red-500"> *</span>}
             </label>
             <input
               type="file"
@@ -179,6 +190,73 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
           value={data.bio}
           onChange={handleBioChange}
         />
+      </div>
+
+      {/* Contact Info - Required */}
+      <div className="w-full">
+        <label className="block text-gray-700 text-sm mb-1">
+          ช่องทางการติดต่อ <span className="text-red-500">*</span>
+        </label>
+         <p className="text-gray-400 text-sm mb-2">
+          ช่องทางที่ผู้ว่าจ้างสามารถติดต่อคุณได้ เช่น Line, E-mail, เบอร์โทร เป็นต้น
+        </p>
+        <div className="flex flex-col gap-2">
+          {(data.contactInfo || ['']).map((contact, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="text"
+                className="input flex-1"
+                placeholder="เช่น Line ID: xxx, E-mail: xxx@gmail.com, โทร: 081-234-5678"
+                value={contact}
+                onChange={(e) => handleContactInfoChange(index, e.target.value)}
+              />
+              {(data.contactInfo || ['']).length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeContactInfo(index)}
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  title="ลบช่องทางนี้"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 6L6 18"></path>
+                    <path d="M6 6l12 12"></path>
+                  </svg>
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addContactInfo}
+            className="flex items-center gap-2 text-sm text-primary-blue-500 hover:text-primary-blue-600 font-medium w-fit"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            เพิ่มช่องทางการติดต่อ
+          </button>
+        </div>
       </div>
 
       {/* แสดงฟิลด์เฉพาะสำหรับนิสิตเท่านั้น */}

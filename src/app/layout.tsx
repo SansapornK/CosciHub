@@ -28,7 +28,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <UserProvider>
             <PusherProvider>
               <ScrollToTop />
-              <Toaster position="top-right" />
+              <Toaster position="top-center" />
               <Navbar />
               <div className="py-20 px-0 md:px-0 lg:px-0 xl:px-0 min-h-screen">
                 {children}
