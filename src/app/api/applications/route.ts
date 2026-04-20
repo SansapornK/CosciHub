@@ -50,6 +50,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "ไม่พบข้อมูลผู้ใช้ในระบบ" }, { status: 404 });
     }
 
+    // ตรวจสอบว่าเป็นนิสิตเท่านั้นที่สมัครงานได้
+    if (user.role !== 'student') {
+      return NextResponse.json(
+        { error: "เฉพาะนิสิตเท่านั้นที่สามารถสมัครงานได้" },
+        { status: 403 }
+      );
+    }
+
     const { jobId } = await req.json();
     const safeJobId = jobId?.toString().trim();
 

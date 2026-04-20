@@ -15,6 +15,7 @@ import {
   Users,
   DollarSign,
   Star,
+  BriefcaseBusiness
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ConfirmStartJobModal from "../../components/modals/ConfirmStartJobModal";
@@ -445,7 +446,7 @@ export default function ManageProjectsPage() {
   const appStatusConfig: Record<string, { label: string; className: string }> =
     {
       pending: {
-        label: "รอการพิจารณา",
+        label: "รอพิจารณา",
         className: "bg-yellow-100 text-yellow-700",
       },
       accepted: {
@@ -471,13 +472,15 @@ export default function ManageProjectsPage() {
       ) : (
         <div className="flex justify-between items-center mt-8">
           <h2 className="text-3xl font-black text-[#0C5BEA] flex items-center gap-3">
-            {/* <div className="p-2.5 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-100">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div> */}
             ติดตามงาน
           </h2>
+                      <Link
+                href="/manage-projects/my-jobs"
+                className="px-6 py-2.5 rounded-full text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100 flex items-center gap-2"
+                >
+                <BriefcaseBusiness className="w-4 h-4" />
+                งานของฉัน
+            </Link>
         </div>
       )}
 
@@ -686,7 +689,7 @@ export default function ManageProjectsPage() {
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         {/* Title + badge */}
                         <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                             {app.jobTitle}
                           </h3>
                           <span
@@ -812,16 +815,16 @@ export default function ManageProjectsPage() {
                     <div className="p-6 flex-1 flex flex-col gap-3">
                       {/* Title + badge */}
                       <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                        <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                           {job.title}
                         </h3>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           {job.acceptedCount >= job.capacity ? (
-                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100">
+                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-700 border-green-100">
                               คัดเลือกครบแล้ว
                             </span>
                           ) : job.pendingCount > 0 ? (
-                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-purple-50 text-purple-600 border-purple-100">
+                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-yellow-50 text-yellow-700 border-yellow-100">
                               รอพิจารณา {job.pendingCount}
                             </span>
                           ) : null}
@@ -896,15 +899,15 @@ export default function ManageProjectsPage() {
                   > = {
                     in_progress: {
                       label: "กำลังทำงาน",
-                      color: "bg-yellow-50 text-yellow-600 border-yellow-100",
+                      color: "bg-yellow-50 text-yellow-700 border-yellow-100",
                     },
                     submitted: {
                       label: "ส่งงานแล้ว",
-                      color: "bg-purple-50 text-purple-600 border-purple-100",
+                      color: "bg-purple-50 text-purple-700 border-purple-100",
                     },
                     revision: {
                       label: "แก้ไขงาน",
-                      color: "bg-orange-50 text-orange-600 border-orange-100",
+                      color: "bg-orange-50 text-orange-700 border-orange-100",
                     },
                   };
                   const s =
@@ -916,7 +919,7 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                             {app.jobTitle}
                           </h3>
                           <span
@@ -1031,7 +1034,7 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-6 flex-1">
                         <div className="flex justify-between items-start gap-4 mb-5">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                             {job.title}
                           </h3>
                           <span
@@ -1156,14 +1159,14 @@ export default function ManageProjectsPage() {
                       <div className="p-6 flex-1 flex flex-col gap-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                            <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                               {app.jobTitle}
                             </h3>
                             <p className="text-xs text-gray-400 mt-2">
                               {app.jobCategory || "งานพิเศษ"}
                             </p>
                           </div>
-                          <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
+                          <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-700 border-green-100 shrink-0">
                             เสร็จสิ้น
                           </span>
                         </div>
@@ -1253,7 +1256,7 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
                             {job.title}
                           </h3>
                           <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">

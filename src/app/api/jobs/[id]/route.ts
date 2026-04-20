@@ -83,6 +83,21 @@ export async function PATCH(
       }
     }
 
+    // Validate สำหรับปิดรับสมัคร (เปลี่ยนเป็น closed)
+    if (data.status === "closed" && existing.status === "published") {
+      // ตรวจสอบว่าไม่มี application ที่กำลังดำเนินการอยู่
+      const activeApplications = await Application.countDocuments({
+        jobId: id,
+        status: { $in: ["accepted", "in_progress", "submitted", "revision"] },
+      });
+      if (activeApplications > 0) {
+        return NextResponse.json(
+          { error: "ไม่สามารถปิดรับสมัครได้ เนื่องจากมีผู้สมัครที่กำลังดำเนินการอยู่" },
+          { status: 400 }
+        );
+      }
+    }
+
     const allowedStatus = ["published", "draft", "closed"];
     const updatedJob = await (Job as any).findByIdAndUpdate(
       id,
@@ -112,6 +127,8 @@ export async function PATCH(
       { message: "อัปเดตงานสำเร็จ", job: updatedJob },
       { status: 200 }
     );
+
+    
   } catch (error: any) {
     console.error("[PATCH /api/jobs/[id]] Error:", error);
     return NextResponse.json(
@@ -143,6 +160,19 @@ export async function DELETE(
     }
     if (job.owner !== user?.name) {
       return NextResponse.json({ error: "ไม่มีสิทธิ์ลบงานนี้" }, { status: 403 });
+    }
+
+    // ตรวจสอบว่ามี application ที่ยังไม่เสร็จหรือไม่
+    const activeApplications = await Application.countDocuments({
+      jobId: id,
+      status: { $in: ["accepted", "in_progress", "submitted", "revision"] },
+    });
+
+    if (activeApplications > 0) {
+      return NextResponse.json(
+        { error: "ไม่สามารถลบงานนี้ได้ เนื่องจากมีนิสิตกำลังดำเนินการอยู่งานนี้" },
+        { status: 400 }
+      );
     }
 
     await (Job as any).findByIdAndDelete(id);

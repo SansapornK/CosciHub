@@ -16,7 +16,7 @@ export interface IJob extends Document {
   applicationDeadline: Date;
   owner: string;
   ownerName?: string;
-  status: "draft" | "published" | "in_progress" | "revision" | "completed" | "closed";
+  status: "draft" | "published" | "in_progress" | "awaiting" | "completed" | "closed";
   applicants: mongoose.Types.ObjectId[];
   assignedTo: mongoose.Types.ObjectId[];
   progress: number;
@@ -54,9 +54,9 @@ const JobSchema = new mongoose.Schema({
     type: String,
     enum: [
       "draft",
-      "published", 
+      "published",
       "in_progress",
-      "revision",
+      "awaiting",
       "completed",
       "closed",
     ],

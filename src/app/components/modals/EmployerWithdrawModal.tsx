@@ -92,7 +92,7 @@ export default function EmployerWithdrawModal({
             <div className="px-5 py-4 bg-amber-50 rounded-2xl mb-6 border border-amber-100">
               <p className="text-sm text-amber-700 leading-relaxed">
                 การยกเลิกนี้จะทำให้จำนวนคนที่รับลดลง<br />
-                และอาจทำให้สถานะของงานเปลี่ยนแปลง
+                และอาจทำให้งานกลับไปประกาศที่หน้าค้นหางาน
               </p>
             </div>
 

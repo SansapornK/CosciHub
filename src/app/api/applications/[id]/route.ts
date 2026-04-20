@@ -15,8 +15,10 @@ import {
   notifyRevisionRequested,
   notifyWorkApproved,
   notifyProgressUpdated,
-  notifyStudentReviewReceived, 
-  notifyOwnerReviewReceived,    
+  notifyStudentReviewReceived,
+  notifyOwnerReviewReceived,
+  notifyApplicationWithdrawnByStudent,
+  notifyApplicationWithdrawnByEmployer,
 } from '@/utils/notificationUtils';
 
 
@@ -433,8 +435,32 @@ export async function PATCH(
             );
         }
 
+        // แจ้งเจ้าของงานว่านิสิตยกเลิกใบสมัคร
+        console.log('[withdraw] Calling notifyApplicationWithdrawnByStudent...');
+        try {
+            const notiResult = await notifyApplicationWithdrawnByStudent(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id
+            );
+            console.log('[withdraw] Notification result:', notiResult);
+        } catch (e) { console.error('[withdraw] Notification error:', e); }
+
         await Application.findByIdAndDelete(id);
         await syncJobParticipants(application.jobId.toString());
+
+        //  ตรวจสอบและคืน job status ถ้า capacity ยังไม่เต็ม
+        const capacity = job.capacity || 1;
+        const acceptedCount = await Application.countDocuments({
+            jobId: application.jobId,
+            status: { $in: ["accepted", "in_progress", "submitted", "revision", "completed"] },
+        });
+
+        if (acceptedCount < capacity && job.status === "in_progress") {
+            await (Job as any).findByIdAndUpdate(application.jobId, {
+                $set: { status: "published" }, // ✅ เปิดรับสมัครใหม่
+            });
+        }
 
         return NextResponse.json({ success: true, message: "ยกเลิกการสมัครแล้ว" });
     }
@@ -448,6 +474,17 @@ export async function PATCH(
             { status: 400 }
             );
         }
+
+        // แจ้งนิสิตว่าผู้ว่าจ้างยกเลิกใบสมัคร
+        console.log('[employerWithdraw] Calling notifyApplicationWithdrawnByEmployer...');
+        try {
+            const notiResult = await notifyApplicationWithdrawnByEmployer(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id
+            );
+            console.log('[employerWithdraw] Notification result:', notiResult);
+        } catch (e) { console.error('[employerWithdraw] Notification error:', e); }
 
         // ลบ application
         await Application.findByIdAndDelete(id);

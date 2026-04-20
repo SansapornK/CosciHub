@@ -192,12 +192,12 @@ const JobDetailPage = () => {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    <button 
+                                    <button
                                         onClick={handleApplyClick}
                                         disabled={hasApplied || applying}
-                                        className={`flex-grow py-4 px-6 rounded-2xl text-lg font-bold transition-all active:scale-95 shadow-lg 
-                                            ${hasApplied 
-                                                ? "bg-gray-200 text-gray-500 cursor-not-allowed shadow-none" 
+                                        className={`flex-grow py-4 px-6 rounded-2xl text-lg font-bold transition-all active:scale-95 shadow-lg
+                                            ${hasApplied
+                                                ? "bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
                                                 : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"}`}
                                     >
                                         {hasApplied ? "คุณสมัครงานนี้แล้ว" : (applying ? "กำลังสมัคร..." : "สมัครงานนี้")}
