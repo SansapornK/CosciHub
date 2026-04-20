@@ -145,9 +145,9 @@ export default function CreateJobPage() {
         capacity: formData.capacity,
         applicationDeadline: formData.applicationDeadline|| new Date().toISOString(),
         status:   submitStatus,  
+        contactInfo: session?.user?.email,
       };
 
-      // ส่งไปยัง /api/jobs
       await axios.post("/api/jobs", payload);
 
       if (submitStatus === "draft") {

@@ -19,8 +19,6 @@ import {
   Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ConfirmStartJobModal from "../../components/modals/ConfirmStartJobModal";
-import WithdrawApplicationModal from "../../components/modals/WithdrawApplicationModal";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40, filter: "blur(4px)" },
@@ -174,7 +172,6 @@ export default function ManageProjectsPage() {
   const [completedOwnerJobs, setCompletedOwnerJobs] = useState<
     CompletedOwnerJob[]
   >([]);
-
   const [page1, setPage1] = useState(0); // Row 1
   const [page2, setPage2] = useState(0); // Row 2
   const [page3, setPage3] = useState(0); //Row 3
@@ -189,10 +186,6 @@ export default function ManageProjectsPage() {
   const [comment, setComment] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-
-  // --- States สำหรับ Modal เริ่มงาน และ ยกเลิกใบสมัคร ---
-  const [confirmApp, setConfirmApp] = useState<JobApplication | null>(null);
-  const [withdrawApp, setWithdrawApp] = useState<JobApplication | null>(null);
 
   // ─── Effects ────────────────────────────────────────────────────────────────
 
@@ -222,6 +215,8 @@ export default function ManageProjectsPage() {
     setJobAppLoading(true);
     try {
       const isFreelancer = session?.user?.role === "student";
+      // ✅ เพิ่มบรรทัดนี้
+      const userId = (session?.user as any)?.id || (session?.user as any)?._id;
 
       if (isFreelancer) {
         const res = await axios.get("/api/applications", {
@@ -230,13 +225,17 @@ export default function ManageProjectsPage() {
         setJobApplications(res.data.applications || []);
       } else {
         const res = await axios.get("/api/applications", {
-          params: { role: "owner" },
+          // ✅ เพิ่ม ownerId
+          params: { role: "owner", ownerId: userId },
         });
         setOwnerJobs(res.data.jobs || []);
       }
+
       const activeRes = await axios.get("/api/applications", {
         params: {
           role: isFreelancer ? "student" : "owner",
+          // ✅ เพิ่ม ownerId เฉพาะฝั่ง owner
+          ...(!isFreelancer && { ownerId: userId }),
           phase: "inProgress",
         },
       });
@@ -245,9 +244,12 @@ export default function ManageProjectsPage() {
       } else {
         setActiveOwnerJobs(activeRes.data.jobs || []);
       }
+
       const completedRes = await axios.get("/api/applications", {
         params: {
           role: isFreelancer ? "student" : "owner",
+          // ✅ เพิ่ม ownerId เฉพาะฝั่ง owner
+          ...(!isFreelancer && { ownerId: userId }),
           phase: "completed",
         },
       });
@@ -296,7 +298,7 @@ export default function ManageProjectsPage() {
     const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
     const paginated = items.slice(
       page * ITEMS_PER_PAGE,
-      (page + 1) * ITEMS_PER_PAGE
+      (page + 1) * ITEMS_PER_PAGE,
     );
 
     return (
@@ -373,14 +375,14 @@ export default function ManageProjectsPage() {
   ];
 
   const uniqueCompletedApps = Array.from(
-    new Map(allCompletedList.map((app) => [app._id, app])).values()
+    new Map(allCompletedList.map((app) => [app._id, app])).values(),
   );
 
   const reviewedApps = uniqueCompletedApps.filter((app) => app.ownerReview);
 
   const totalRatingScore = reviewedApps.reduce(
     (sum, app) => sum + (app.ownerReview?.rating || 0),
-    0
+    0,
   );
   const avgRatingValue =
     reviewedApps.length > 0
@@ -431,14 +433,6 @@ export default function ManageProjectsPage() {
   // ฟังก์ชันส่งรีวิวไปยัง API
   const handleSubmitReview = async () => {
     if (!selectedApp) return;
-
-    console.log("Payload:", {
-      action: "submitReview",
-      role: session?.user?.role,
-      rating,
-      comment,
-      isAnonymous,
-    });
 
     try {
       setIsSubmittingReview(true);
@@ -664,7 +658,7 @@ export default function ManageProjectsPage() {
                     (a) =>
                       a.status === "pending" ||
                       a.status === "rejected" ||
-                      a.status === "accepted"
+                      a.status === "accepted",
                   ).length
                 }
                 )
@@ -696,7 +690,7 @@ export default function ManageProjectsPage() {
                   (a) =>
                     a.status === "pending" ||
                     a.status === "rejected" ||
-                    a.status === "accepted"
+                    a.status === "accepted",
                 )}
                 page={page1}
                 setPage={setPage1}
@@ -733,65 +727,45 @@ export default function ManageProjectsPage() {
                           <p className="text-xs text-gray-400">
                             สมัครเมื่อ{" "}
                             {new Date(app.appliedDate).toLocaleDateString(
-                              "th-TH"
+                              "th-TH",
                             )}
                           </p>
                         </div>
 
                         {/* ปุ่ม */}
-                        {/* ปุ่ม — กำหนด min-h ให้คงที่ทุก status */}
-                        <div className="min-h-[40px] flex flex-col justify-end mt-auto">
-                          {app.status === "accepted" ? (
-                            <div className="flex gap-2 items-center">
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setConfirmApp(app);
-                                }}
-                                className="flex-[2] btn-primary text-sm text-center rounded-full"
-                              >
-                                เริ่มงาน
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setWithdrawApp(app);
-                                }}
-                                className="flex-1 bg-white text-red-500 text-xs border border-red-400 hover:bg-red-50 px-2 py-2 rounded-full transition-colors"
-                              >
-                                ยกเลิกใบสมัคร
-                              </button>
-                            </div>
-                          ) : app.status === "pending" ? (
-                            <div className="flex items-center justify-between pb-2">
-                              <Link
-                                href={`/find-job/${app.jobId}`}
-                                className="text-xs text-primary-blue-500 font-medium hover:underline"
-                              >
-                                ดูรายละเอียดงาน →
-                              </Link>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setWithdrawApp(app);
-                                }}
-                                className="text-xs text-red-400 hover:underline transition-colors"
-                              >
-                                ยกเลิกใบสมัคร
-                              </button>
-                            </div>
-                          ) : (
-                            <Link
-                              href={`/find-job/${app.jobId}`}
-                              className="text-xs text-primary-blue-500 font-medium text-right hover:underline"
-                            >
-                              ดูรายละเอียดงาน →
-                            </Link>
-                          )}
-                        </div>
+                        {app.status === "accepted" ? (
+                          <button
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              try {
+                                await axios.patch(
+                                  `/api/applications/${app._id}`,
+                                  {
+                                    action: "updateProgress",
+                                    progress: 0,
+                                  },
+                                );
+                                toast.success("เริ่มงานแล้ว!");
+                                await fetchJobApplications();
+                              } catch (err: any) {
+                                toast.error(
+                                  err.response?.data?.error || "เกิดข้อผิดพลาด",
+                                );
+                              }
+                            }}
+                            className="btn-primary block text-sm text-center py-2 rounded-full w-full"
+                          >
+                            เริ่มงาน
+                          </button>
+                        ) : (
+                          <Link
+                            href={`/manage-projects/${app.jobId}/work/${app._id}`}
+                            className="text-xs text-primary-blue-500 font-medium text-right group-hover:underline"
+                          >
+                            ดูรายละเอียดงาน →
+                          </Link>
+                        )}
                       </div>
                     </div>
                   );
@@ -968,13 +942,13 @@ export default function ManageProjectsPage() {
                           <p className="text-xs text-gray-400">
                             กำหนดส่ง:{" "}
                             {new Date(app.jobDeadline).toLocaleDateString(
-                              "th-TH"
+                              "th-TH",
                             )}
                           </p>
                         )}
                         <Link
                           href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                          className="btn-primary block text-sm text-center rounded-full w-full mt-auto"
+                          className="btn-primary block text-sm text-center py-2 rounded-full w-full mt-auto"
                         >
                           {app.status === "submitted"
                             ? "ดูรายละเอียดงาน"
@@ -1110,7 +1084,7 @@ export default function ManageProjectsPage() {
                             <span className="text-xs text-gray-400">
                               กำหนดส่ง{" "}
                               {new Date(job.deliveryDate).toLocaleDateString(
-                                "th-TH"
+                                "th-TH",
                               )}
                             </span>
                           )}
@@ -1172,65 +1146,54 @@ export default function ManageProjectsPage() {
                 setPage={setPage3}
                 renderItem={(app) => {
                   const hasStudentReviewed = !!app.studentReview;
+                  const hasOwnerReviewed = !!app.ownerReview;
 
                   return (
                     <div
                       key={app._id}
                       className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
                     >
-                      <div className="p-6 flex-1 flex flex-col gap-4">
+                      <div className="p-6 flex-1 flex flex-col gap-3">
                         <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
-                              {app.jobTitle}
-                            </h3>
-                            <p className="text-xs text-gray-400 mt-2">
-                              {app.jobCategory || "งานพิเศษ"}
-                            </p>
-                          </div>
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                            {app.jobTitle}
+                          </h3>
                           <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
                             เสร็จสิ้น
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between w-full pt-1">
+                        <p className="text-[10px] text-gray-400 mt-1 font-bold uppercase tracking-wider">
+                          {app.jobCategory || "งานพิเศษ"}
+                        </p>
+
+                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 w-full">
                           <span className="text-[10px] text-gray-400 font-medium">
-                            เสร็จสิ้นเมื่อ{" "}
-                            {app.updatedAt
-                              ? new Date(app.updatedAt).toLocaleDateString(
-                                  "th-TH"
-                                )
-                              : app.appliedDate
-                              ? new Date(app.appliedDate).toLocaleDateString(
-                                  "th-TH"
+                            กำหนดส่ง{" "}
+                            {app.deliveryDate
+                              ? new Date(app.deliveryDate).toLocaleDateString(
+                                  "th-TH",
                                 )
                               : "-"}
                           </span>
+
                           <Link
                             href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                            className="text-xs font-bold text-primary-blue-500 hover:underline flex items-center gap-1"
+                            className={`text-xs font-bold transition-all hover:underline flex items-center gap-1 ${
+                              hasStudentReviewed
+                                ? "text-primary-blue-500"
+                                : "text-orange-500 animate-pulse"
+                            }`}
                           >
-                            ดูรายละเอียด →
-                          </Link>
-                        </div>
-
-                        <div className="mt-auto pt-1">
-                          {hasStudentReviewed ? (
-                            <div className="flex items-center gap-2 text-primary-blue-500 bg-blue-50/50 w-full justify-center py-3 rounded-xl border border-blue-100/50">
-                              <CheckCircle size={16} strokeWidth={2.5} />
-                              <span className="text-sm font-bold uppercase tracking-tight">
-                                คุณรีวิวผู้ว่าจ้างแล้ว
+                            {hasStudentReviewed ? (
+                              "ดูรายละเอียด →"
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <Star size={12} fill="currentColor" />{" "}
+                                รีวิวผู้ว่าจ้างเลย! →
                               </span>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => openReviewModal(app)}
-                              className="flex items-center justify-center gap-2 w-full py-3 bg-[#0C5BEA] text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95"
-                            >
-                              <Star size={18} fill="currentColor" />{" "}
-                              รีวิวผู้ว่าจ้างเลย!
-                            </button>
-                          )}
+                            )}
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -1269,7 +1232,7 @@ export default function ManageProjectsPage() {
                   const hiredWorkers = job.workers || [];
                   const isAllReviewed =
                     hiredWorkers.length > 0 &&
-                    hiredWorkers.every((w: any) => w.ownerReview);
+                    hiredWorkers.every((w: any) => !!w.ownerReview?.rating);
 
                   return (
                     <div
@@ -1286,22 +1249,20 @@ export default function ManageProjectsPage() {
                           </span>
                         </div>
 
-                        <p className="text-xs text-gray-400">{job.category}</p>
+                        <p className="text-xs text-gray-400">{job.category || "งานพิเศษ" }</p>
 
                         <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 w-full">
                           <span className="text-[10px] text-gray-400 font-medium">
                             กำหนดส่ง{" "}
                             {job.deliveryDate
                               ? new Date(job.deliveryDate).toLocaleDateString(
-                                  "th-TH"
+                                  "th-TH",
                                 )
                               : "-"}
                           </span>
 
                           <Link
-                            href={`/manage-projects/${
-                              job.jobId || job._id
-                            }/overview`}
+                            href={`/manage-projects/${job.jobId || job._id}/overview`}
                             className={`text-xs font-bold transition-all hover:underline flex items-center gap-1 ${
                               isAllReviewed
                                 ? "text-primary-blue-500"
@@ -1364,11 +1325,7 @@ export default function ManageProjectsPage() {
                   <button
                     key={num}
                     onClick={() => setRating(num)}
-                    className={`transition-all duration-200 ${
-                      rating >= num
-                        ? "text-yellow-400 scale-110"
-                        : "text-gray-200"
-                    }`}
+                    className={`transition-all duration-200 ${rating >= num ? "text-yellow-400 scale-110" : "text-gray-200"}`}
                   >
                     <Star
                       size={36}
@@ -1399,9 +1356,7 @@ export default function ManageProjectsPage() {
                 </div>
                 <button
                   onClick={() => setIsAnonymous(!isAnonymous)}
-                  className={`w-11 h-6 rounded-full transition-colors relative ${
-                    isAnonymous ? "bg-blue-600" : "bg-gray-300"
-                  }`}
+                  className={`w-11 h-6 rounded-full transition-colors relative ${isAnonymous ? "bg-blue-600" : "bg-gray-300"}`}
                 >
                   <motion.div
                     animate={{ x: isAnonymous ? 22 : 2 }}
@@ -1430,19 +1385,6 @@ export default function ManageProjectsPage() {
           </div>
         )}
       </AnimatePresence>
-
-      <ConfirmStartJobModal
-        app={confirmApp}
-        onClose={() => setConfirmApp(null)}
-        onSuccess={fetchJobApplications}
-        isOpen
-      />
-      <WithdrawApplicationModal
-        app={withdrawApp}
-        onClose={() => setWithdrawApp(null)}
-        onSuccess={fetchJobApplications}
-        isOpen
-      />
     </div>
   );
 }

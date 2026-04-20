@@ -97,7 +97,6 @@ export default function WorkManagementPage() {
       if (data) {
         setNewProgress(data.progress || 0);
         setWorkLink(data.workLink || "");
-        // setStudentNote(data.note || "");
         setOwnerFeedback(data.feedback || "");
         setExistingFiles(data.attachments || []);
       }
@@ -168,7 +167,7 @@ export default function WorkManagementPage() {
 
         setLoading(true);
         const uploadToast = toast.loading("กำลังอัปโหลดไฟล์...");
-        setUploadProgress({}); // Reset progress
+        setUploadProgress({});
 
         try {
           const uploadedAttachments = await Promise.all(
@@ -182,7 +181,6 @@ export default function WorkManagementPage() {
                   jobId: workData.jobId._id,
                 },
                 {
-                  // ✅ เพิ่ม Progress Bar Logic
                   onUploadProgress: (progressEvent) => {
                     const percentCompleted = Math.round(
                       (progressEvent.loaded * 100) / (progressEvent.total || 1),
@@ -217,14 +215,13 @@ export default function WorkManagementPage() {
         payload.feedback = ownerFeedback;
       }
 
-      // 2. ส่ง Payload ทั้งหมดไปบันทึกลง Application Collection
       await axios.patch(`/api/applications/${applicationId}`, payload);
 
       toast.success(
         action === "submit" ? "ส่งงานเรียบร้อยแล้ว!" : "บันทึกข้อมูลสำเร็จ",
       );
       setIsEditingSubmission(false);
-      setSelectedFiles([]); // ล้างไฟล์ที่เลือกไว้หลังส่งสำเร็จ
+      setSelectedFiles([]); 
       setUploadProgress({});
       fetchWorkDetail();
     } catch (err: any) {
@@ -234,7 +231,7 @@ export default function WorkManagementPage() {
     }
   };
 
-  // 1. Loading State
+  // Loading State
   if (loading)
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
@@ -242,7 +239,7 @@ export default function WorkManagementPage() {
       </div>
     );
 
-  // 2. Error Guard Clause: ตรวจสอบข้อมูลสำคัญให้ครบก่อน Render
+  // Error Guard Clause
   if (!workData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center px-6">

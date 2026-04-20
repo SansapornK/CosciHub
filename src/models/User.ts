@@ -1,5 +1,5 @@
 // src/models/User.ts
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IUser extends Document {
   name: string;
@@ -7,18 +7,19 @@ export interface IUser extends Document {
   lastName: string;
   email: string;
   password?: string;
-  role: 'student' | 'alumni' | 'teacher';
+  role: "student" | "alumni" | "teacher";
   studentId?: string;
   major: string;
-  skills?: string[];  // ทำให้เป็น optional
+  skills?: string[]; // ทำให้เป็น optional
   profileImageUrl?: string;
-  portfolioUrl?: string;
+  resumeUrl?: string;
   bio?: string;
+  experiences?: string[];
   emailVerified: boolean;
-  verificationStatus?: 'pending' | 'approved' | 'rejected' | 'not_required';
-  verifiedBy?: string;   // อีเมลอาจารย์ที่ approve/reject
+  verificationStatus?: "pending" | "approved" | "rejected" | "not_required";
+  verifiedBy?: string; // อีเมลอาจารย์ที่ approve/reject
   verifiedAt?: Date;
-  galleryImages?: string[];  // ทำให้เป็น optional
+  galleryImages?: string[]; // ทำให้เป็น optional
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,40 +31,52 @@ const UserSchema: Schema = new Schema(
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true, select: false },
-    role: { 
-      type: String, 
-      required: true, 
-      enum: ['student', 'alumni', 'teacher'] 
+    role: {
+      type: String,
+      required: true,
+      enum: ["student", "alumni", "teacher"],
     },
-    studentId: { 
-      type: String, 
-      required: function() { return this.role === 'student'; },
-      sparse: true
+    studentId: {
+      type: String,
+      required: function () {
+        return this.role === "student";
+      },
+      sparse: true,
     },
     major: { type: String, required: true },
     skills: {
       type: [String],
-      required: function() { return this.role === 'student'; },
-      default: undefined
+      required: function () {
+        return this.role === "student";
+      },
+      default: undefined,
     },
     profileImageUrl: { type: String },
-    portfolioUrl: { 
+    resumeUrl: {
       type: String,
-      default: function() { return this.role === 'student' ? null : undefined; }
+      default: function () {
+        return this.role === "student" ? null : undefined;
+      },
     },
     bio: { type: String },
+    experiences: {
+      type: [String],
+      default: [],
+    },
     emailVerified: { type: Boolean, default: false },
     galleryImages: {
       type: [String],
-      required: function() { return this.role === 'student'; },
-      default: []
+      required: function () {
+        return this.role === "student";
+      },
+      default: [],
     },
     verificationStatus: {
       type: String,
-      enum: ['pending', 'approved', 'rejected', 'not_required'],
+      enum: ["pending", "approved", "rejected", "not_required"],
       default: function (this: IUser) {
         // alumni ต้องรอการยืนยัน, role อื่นไม่ต้อง
-        return this.role === 'alumni' ? 'pending' : 'not_required';
+        return this.role === "alumni" ? "pending" : "not_required";
       },
     },
     verifiedBy: {
@@ -75,25 +88,26 @@ const UserSchema: Schema = new Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Create a unique index for studentId only for students
 UserSchema.index(
-  { studentId: 1 }, 
-  { 
-    unique: true, 
-    partialFilterExpression: { role: 'student' }
-  }
+  { studentId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { role: "student" },
+  },
 );
 
 // New Index : ช่วยให้ query alumni ที่รอยืนยันได้เร็วขึ้น
 UserSchema.index(
   { verificationStatus: 1 },
-  { partialFilterExpression: { role: 'alumni' } }
+  { partialFilterExpression: { role: "alumni" } },
 );
 
 // Fix for TypeScript to handle mongoose models with Next.js hot reloading
-const UserModel: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+const UserModel: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
 
 export default UserModel;

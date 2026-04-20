@@ -7,7 +7,7 @@ import User from "@/models/User";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import mongoose, { Types } from "mongoose";
-import { notifyNewApplication } from '@/utils/notificationUtils';
+import { notifyNewApplication } from "@/utils/notificationUtils";
 
 // ─── Helper: Sync รายชื่อ ────────────────────────────────
 async function syncJobParticipants(jobId: string) {
@@ -17,21 +17,33 @@ async function syncJobParticipants(jobId: string) {
   if (!mongoose.isValidObjectId(cleanId)) return;
 
   const allApplications = await Application.find({ jobId: cleanId }).lean();
-  
-  const allApplicantIds = [...new Set(allApplications.map((app: any) => app.applicantId))];
-  
-  const assignedWorkerIds = [...new Set(allApplications
-    .filter((app: any) => 
-      ["accepted", "in_progress", "submitted", "revision", "completed"].includes(app.status)
-    )
-    .map((app: any) => app.applicantId))];
+
+  const allApplicantIds = [
+    ...new Set(allApplications.map((app: any) => app.applicantId)),
+  ];
+
+  const assignedWorkerIds = [
+    ...new Set(
+      allApplications
+        .filter((app: any) =>
+          [
+            "accepted",
+            "in_progress",
+            "submitted",
+            "revision",
+            "completed",
+          ].includes(app.status),
+        )
+        .map((app: any) => app.applicantId),
+    ),
+  ];
 
   const JobModel = (mongoose.models.Job || Job) as any;
   await JobModel.findByIdAndUpdate(cleanId, {
     $set: {
-      applicants: allApplicantIds,    
-      assignedTo: assignedWorkerIds  
-    }
+      applicants: allApplicantIds,
+      assignedTo: assignedWorkerIds,
+    },
   });
 }
 
@@ -47,7 +59,10 @@ export async function POST(req: Request) {
 
     const user = await User.findOne({ email: session.user.email });
     if (!user) {
-      return NextResponse.json({ error: "ไม่พบข้อมูลผู้ใช้ในระบบ" }, { status: 404 });
+      return NextResponse.json(
+        { error: "ไม่พบข้อมูลผู้ใช้ในระบบ" },
+        { status: 404 },
+      );
     }
 
     const { jobId } = await req.json();
@@ -65,19 +80,17 @@ export async function POST(req: Request) {
     if (job.owner === user.name) {
       return NextResponse.json(
         { error: "คุณไม่สามารถสมัครงานที่คุณเป็นเจ้าของได้" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
 
-    // สร้างใบสมัครใหม่
     const newApplication = await Application.create({
-      jobId:          safeJobId,
-      applicantId:    user._id,
+      jobId: safeJobId,
+      applicantId: user._id,
       applicantEmail: user.email,
-      applicantName:  user.name,
-      status:         "pending",
-      appliedDate:    new Date(),
+      applicantName: user.name,
+      status: "pending",
+      appliedDate: new Date(),
     });
 
     try {
@@ -85,29 +98,34 @@ export async function POST(req: Request) {
     } catch (syncError) {
       console.error("Sync Error:", syncError);
     }
-    
+
     try {
       await notifyNewApplication(
         safeJobId,
         user._id.toString(),
-        newApplication._id.toString()
+        newApplication._id.toString(),
       );
     } catch (notifyError) {
-      console.error('Notification error:', notifyError);
+      console.error("Notification error:", notifyError);
       // ไม่ให้ notification error กระทบ response หลัก
     }
 
     return NextResponse.json(
       { message: "ส่งใบสมัครเรียบร้อยแล้ว", application: newApplication },
-      { status: 201 }
+      { status: 201 },
     );
-
   } catch (error: any) {
     console.error("[POST /api/applications] Error:", error);
     if (error.code === 11000) {
-      return NextResponse.json({ error: "คุณได้ส่งใบสมัครงานนี้ไปแล้ว" }, { status: 400 });
+      return NextResponse.json(
+        { error: "คุณได้ส่งใบสมัครงานนี้ไปแล้ว" },
+        { status: 400 },
+      );
     }
-    return NextResponse.json({ error: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" }, { status: 500 });
+    return NextResponse.json(
+      { error: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" },
+      { status: 500 },
+    );
   }
 }
 
@@ -123,54 +141,90 @@ export async function GET(req: Request) {
 
     await dbConnect();
 
+    const user = await User.findOne({ email: session.user.email });
+    if (!user)
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+
     const { searchParams } = new URL(req.url);
-    const role  = searchParams.get("role");
+    const role = searchParams.get("role");
     const jobId = searchParams.get("jobId");
     const phase = searchParams.get("phase");
+    const ownerId = searchParams.get("ownerId");
+
+    let ownerFilter: Record<string, any>;
+    if (ownerId && mongoose.isValidObjectId(ownerId)) {
+      ownerFilter = { ownerId: new mongoose.Types.ObjectId(ownerId) };
+    } else {
+      ownerFilter = { owner: user.name };
+    }
 
     // ══════════════════════════════════════════════════════
     // CASE 1: ?jobId=xxx → ดึง applications ของ job นั้น
     // ══════════════════════════════════════════════════════
     if (jobId) {
       const user = await User.findOne({ email: session.user.email });
-      if (!user) return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
+      if (!user)
+        return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
 
-      const job = await (Job as any).findById(jobId).lean() as any;
-      if (!job) return NextResponse.json({ error: "ไม่พบงาน" }, { status: 404 });
-      if (job.owner !== user.name) return NextResponse.json({ error: "ไม่มีสิทธิ์" }, { status: 403 });
+      const job = (await (Job as any).findById(jobId).lean()) as any;
+      if (!job)
+        return NextResponse.json({ error: "ไม่พบงาน" }, { status: 404 });
+
+      const isOwner = job.ownerId
+        ? job.ownerId.toString() === user._id.toString()
+        : job.owner === user.name;
+
+      if (!isOwner)
+        return NextResponse.json({ error: "ไม่มีสิทธิ์" }, { status: 403 });
 
       const applications = await Application.find({ jobId })
         .sort({ appliedDate: -1 })
         .lean();
 
       const emails = applications.map((a: any) => a.applicantEmail);
-      const users  = await User.find({ email: { $in: emails } })
+      const users = await User.find({ email: { $in: emails } })
         .select("name email skills bio profileImageUrl major basePrice")
         .lean();
 
       const userMap: Record<string, any> = {};
-      users.forEach((u: any) => { userMap[u.email] = u; });
+      users.forEach((u: any) => {
+        userMap[u.email] = u;
+      });
 
       const result = applications.map((a: any) => ({
-        _id:             a._id.toString(),
-        applicantEmail:  a.applicantEmail,
-        applicantName:   a.applicantName,
-        status:          a.status,
-        appliedDate:     a.appliedDate,
-        rejectionNote:   a.rejectionNote || null,
-        skills:          userMap[a.applicantEmail]?.skills         || [],
-        bio:             userMap[a.applicantEmail]?.bio             || "",
+        _id: a._id.toString(),
+        applicantEmail: a.applicantEmail,
+        applicantName: a.applicantName,
+        status: a.status,
+        appliedDate: a.appliedDate,
+        rejectionNote: a.rejectionNote || null,
+        skills: userMap[a.applicantEmail]?.skills || [],
+        bio: userMap[a.applicantEmail]?.bio || "",
         profileImageUrl: userMap[a.applicantEmail]?.profileImageUrl || null,
-        major:           userMap[a.applicantEmail]?.major           || "",
-        basePrice:       userMap[a.applicantEmail]?.basePrice       || 0,
-        userId:          userMap[a.applicantEmail]?._id?.toString() || null,
+        major: userMap[a.applicantEmail]?.major || "",
+        basePrice: userMap[a.applicantEmail]?.basePrice || 0,
+        userId: userMap[a.applicantEmail]?._id?.toString() || null,
       }));
 
       return NextResponse.json({
-        job: { _id: job._id.toString(), title: job.title, category: job.category, capacity: job.capacity || 1, status: job.status },
+        job: {
+          _id: job._id.toString(),
+          title: job.title,
+          category: job.category,
+          capacity: job.capacity || 1,
+          status: job.status,
+        },
         applications: result,
-        pendingCount:  result.filter(a => a.status === "pending").length,
-        acceptedCount: result.filter(a => ["accepted", "in_progress", "submitted", "revision", "completed"].includes(a.status)).length,
+        pendingCount: result.filter((a) => a.status === "pending").length,
+        acceptedCount: result.filter((a) =>
+          [
+            "accepted",
+            "in_progress",
+            "submitted",
+            "revision",
+            "completed",
+          ].includes(a.status),
+        ).length,
       });
     }
 
@@ -183,27 +237,31 @@ export async function GET(req: Request) {
       const applications = await Application.find({
         applicantEmail: session.user.email,
         status: { $in: ACTIVE },
-      }).sort({ updatedAt: -1 }).lean();
+      })
+        .sort({ updatedAt: -1 })
+        .lean();
 
       const jobIds = applications.map((a: any) => a.jobId);
-      const jobs   = await (Job as any)
+      const jobs = await (Job as any)
         .find({ _id: { $in: jobIds } })
         .select("title category budgetMin budgetMax owner deliveryDate")
         .lean();
 
       const jobMap: Record<string, any> = {};
-      jobs.forEach((j: any) => { jobMap[j._id.toString()] = j; });
+      jobs.forEach((j: any) => {
+        jobMap[j._id.toString()] = j;
+      });
 
       const result = applications.map((a: any) => ({
-        _id:          a._id.toString(),
-        jobId:        a.jobId.toString(),
-        jobTitle:     jobMap[a.jobId.toString()]?.title    ?? "ไม่พบข้อมูล",
-        jobCategory:  jobMap[a.jobId.toString()]?.category ?? "",
-        jobOwner:     jobMap[a.jobId.toString()]?.owner    ?? "",
-        jobDeadline:  jobMap[a.jobId.toString()]?.deliveryDate ?? null,
-        status:       a.status,
-        progress:     a.progress || 0,
-        updatedAt:    a.updatedAt,
+        _id: a._id.toString(),
+        jobId: a.jobId.toString(),
+        jobTitle: jobMap[a.jobId.toString()]?.title ?? "ไม่พบข้อมูล",
+        jobCategory: jobMap[a.jobId.toString()]?.category ?? "",
+        jobOwner: jobMap[a.jobId.toString()]?.owner ?? "",
+        jobDeadline: jobMap[a.jobId.toString()]?.deliveryDate ?? null,
+        status: a.status,
+        progress: a.progress || 0,
+        updatedAt: a.updatedAt,
       }));
 
       return NextResponse.json({ applications: result });
@@ -214,35 +272,43 @@ export async function GET(req: Request) {
     // ══════════════════════════════════════════════════════
     if (role === "owner" && phase === "inProgress") {
       const user = await User.findOne({ email: session.user.email });
-      if (!user) return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
 
-      const ACTIVE = ["accepted", "in_progress", "submitted", "revision", "completed"];
+      if (!user)
+        return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
 
-      // ดึงงานทั้งหมดของ owner ไม่กรอง status
+      const ACTIVE = [
+        "accepted",
+        "in_progress",
+        "submitted",
+        "revision",
+        "completed",
+      ];
+
       const allOwnedJobs = await (Job as any)
-        .find({ owner: user.name })
-        .select("_id title category budgetMin budgetMax deliveryDate status capacity")
+        .find(ownerFilter)
+        .select(
+          "_id title category budgetMin budgetMax deliveryDate status capacity",
+        )
         .lean();
 
       if (allOwnedJobs.length === 0) return NextResponse.json({ jobs: [] });
 
       const allJobIds = allOwnedJobs.map((j: any) => j._id);
 
-      // ดึง applications ที่อยู่ใน ACTIVE status
       const applications = await Application.find({
         jobId: { $in: allJobIds },
         status: { $in: ACTIVE },
-      }).sort({ updatedAt: -1 }).lean();
+      })
+        .sort({ updatedAt: -1 })
+        .lean();
 
       if (applications.length === 0) return NextResponse.json({ jobs: [] });
 
-      // ค้นหา jobIds ที่มี active applications
-      
       const activeJobIdSet = new Set(
-    applications
-      .filter((a: any) => a.status !== "completed")
-      .map((a: any) => a.jobId.toString())
-  );
+        applications
+          .filter((a: any) => a.status !== "completed")
+          .map((a: any) => a.jobId.toString()),
+      );
 
       const emails = applications.map((a: any) => a.applicantEmail);
       const userProfiles = await User.find({ email: { $in: emails } })
@@ -259,30 +325,34 @@ export async function GET(req: Request) {
         const key = a.jobId.toString();
         if (!appMap[key]) appMap[key] = [];
         appMap[key].push({
-          _id:             a._id.toString(),
-          applicantName:   a.applicantName,
-          applicantEmail:  a.applicantEmail,
+          _id: a._id.toString(),
+          applicantName: a.applicantName,
+          applicantEmail: a.applicantEmail,
           profileImageUrl: profileMap[a.applicantEmail] || null,
-          status:          a.status,
-          progress:        a.progress || 0,
-          updatedAt:       a.updatedAt,
-          ownerReview:     a.ownerReview || null,
-          studentReview:   a.studentReview || null,
+          status: a.status,
+          progress: a.progress || 0,
+          updatedAt: a.updatedAt,
+          ownerReview: a.ownerReview?.rating ? a.ownerReview : null,
+          studentReview: a.studentReview?.rating ? a.studentReview : null,
         });
       });
 
-      // กรองเฉพาะงานที่มี active worker
       const result = allOwnedJobs
         .filter((j: any) => activeJobIdSet.has(j._id.toString()))
         .map((j: any) => {
           const workers = appMap[j._id.toString()] ?? [];
-          
+
           const statusCounts = {
-            waitingToStart: workers.filter((w: any) => w.status === "accepted").length,
-            inProgress:     workers.filter((w: any) => w.status === "in_progress").length,
-            submitted:      workers.filter((w: any) => w.status === "submitted").length,
-            revision:       workers.filter((w: any) => w.status === "revision").length,
-            completed:      workers.filter((w: any) => w.status === "completed").length,
+            waitingToStart: workers.filter((w: any) => w.status === "accepted")
+              .length,
+            inProgress: workers.filter((w: any) => w.status === "in_progress")
+              .length,
+            submitted: workers.filter((w: any) => w.status === "submitted")
+              .length,
+            revision: workers.filter((w: any) => w.status === "revision")
+              .length,
+            completed: workers.filter((w: any) => w.status === "completed")
+              .length,
           };
 
           let aggregateBadge: { label: string; color: string };
@@ -316,18 +386,20 @@ export async function GET(req: Request) {
           const avgProgress =
             workers.length > 0
               ? Math.round(
-                  workers.reduce((sum: number, w: any) => sum + (w.progress || 0), 0) /
-                    workers.length
+                  workers.reduce(
+                    (sum: number, w: any) => sum + (w.progress || 0),
+                    0,
+                  ) / workers.length,
                 )
               : 0;
 
           return {
-            _id:            j._id.toString(),
-            title:          j.title,
-            category:       j.category,
-            deliveryDate:   j.deliveryDate,
-            jobStatus:      j.status,
-            capacity:       j.capacity || 1,
+            _id: j._id.toString(),
+            title: j.title,
+            category: j.category,
+            deliveryDate: j.deliveryDate,
+            jobStatus: j.status,
+            capacity: j.capacity || 1,
             workers,
             statusCounts,
             aggregateBadge,
@@ -344,29 +416,34 @@ export async function GET(req: Request) {
     if (role === "student" && phase === "completed") {
       const applications = await Application.find({
         applicantEmail: session.user.email,
-        status: "completed", // กรองเฉพาะที่เสร็จแล้วจริงๆ
-      }).sort({ updatedAt: -1 }).lean();
+        status: "completed",
+      })
+        .sort({ updatedAt: -1 })
+        .lean();
 
       const jobIds = applications.map((a: any) => a.jobId);
-      const jobs = await (Job as any).find({ _id: { $in: jobIds } })
+      const jobs = await (Job as any)
+        .find({ _id: { $in: jobIds } })
         .select("title category owner deliveryDate")
         .lean();
 
       const jobMap: Record<string, any> = {};
-      jobs.forEach((j: any) => { jobMap[j._id.toString()] = j; });
+      jobs.forEach((j: any) => {
+        jobMap[j._id.toString()] = j;
+      });
 
       const result = applications.map((a: any) => ({
-        _id:          a._id.toString(),
-        jobId:        a.jobId.toString(),
-        jobTitle:     jobMap[a.jobId.toString()]?.title    ?? "ไม่พบข้อมูล",
-        jobCategory:  jobMap[a.jobId.toString()]?.category ?? "",
-        jobOwner:     jobMap[a.jobId.toString()]?.owner    ?? "",
-        jobDeadline:  jobMap[a.jobId.toString()]?.deliveryDate ?? null, // เพิ่มให้ Frontend แสดงผลได้
-        status:       a.status,
-        appliedDate:  a.appliedDate,
-        updatedAt:    a.updatedAt,
-        ownerReview:   a.ownerReview   || null, 
-        studentReview: a.studentReview || null,
+        _id: a._id.toString(),
+        jobId: a.jobId.toString(),
+        jobTitle: jobMap[a.jobId.toString()]?.title ?? "ไม่พบข้อมูล",
+        jobCategory: jobMap[a.jobId.toString()]?.category ?? "",
+        jobOwner: jobMap[a.jobId.toString()]?.owner ?? "",
+        jobDeadline: jobMap[a.jobId.toString()]?.deliveryDate ?? null,
+        status: a.status,
+        appliedDate: a.appliedDate,
+        updatedAt: a.updatedAt,
+        ownerReview: a.ownerReview?.rating ? a.ownerReview : null,
+        studentReview: a.studentReview?.rating ? a.studentReview : null,
       }));
 
       return NextResponse.json({ applications: result });
@@ -377,65 +454,81 @@ export async function GET(req: Request) {
     // ══════════════════════════════════════════════════════
     if (role === "owner" && phase === "completed") {
       const user = await User.findOne({ email: session.user.email });
-      if (!user) return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
+      if (!user)
+        return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
 
-      // 1. ดึงงานทั้งหมดที่เป็นเจ้าของ
-      const ownedJobs = await (Job as any).find({ owner: user.name }).lean();
+      const ownedJobs = await (Job as any).find(ownerFilter).lean();
+
       if (ownedJobs.length === 0) return NextResponse.json({ jobs: [] });
 
       const allJobIds = ownedJobs.map((j: any) => j._id);
 
-      // 2. ดึงใบสมัครทั้งหมดของงานเหล่านั้นมาเพื่อเช็คสถานะทุกคน
       const allApplications = await Application.find({
-        jobId: { $in: allJobIds }
+        jobId: { $in: allJobIds },
+        $or: [{ status: "completed" }, { studentReview: { $exists: true } }],
       }).lean();
 
-      // 3. จัดกลุ่มใบสมัครตาม JobId
       const appsByJob: Record<string, any[]> = {};
-      allApplications.forEach(app => {
+      allApplications.forEach((app) => {
         const jId = app.jobId.toString();
         if (!appsByJob[jId]) appsByJob[jId] = [];
         appsByJob[jId].push(app);
       });
 
-      // 4. กรองเฉพาะงานที่ "นิสิตที่ถูกรับเข้าทำงานทุกคน (Accepted/Hired) ต้องมีสถานะเป็น completed"
-      const finishedJobs = ownedJobs.filter(job => {
+      const finishedJobs = ownedJobs.filter((job) => {
         const jobApps = appsByJob[job._id.toString()] || [];
-        
-        // กรองเอาเฉพาะคนที่ถูกจ้าง (ไม่นับคนที่รอพิจารณาหรือถูกปฏิเสธ)
-        const hiredApps = jobApps.filter(app => 
-          ["accepted", "in_progress", "submitted", "revision", "completed"].includes(app.status)
+
+        const hiredApps = jobApps.filter((app) =>
+          [
+            "accepted",
+            "in_progress",
+            "submitted",
+            "revision",
+            "completed",
+          ].includes(app.status),
         );
 
-        // เงื่อนไข: ต้องมีคนถูกจ้างอย่างน้อย 1 คน และ "ทุกคน" ในกลุ่มนั้นต้อง status === "completed"
-        return hiredApps.length > 0 && hiredApps.every(app => app.status === "completed");
+        return (
+          hiredApps.length > 0 &&
+          hiredApps.every((app) => app.status === "completed")
+        );
       });
 
-      // 5. ดึงรูปโปรไฟล์นิสิตมาแสดง
-      const hiredEmails = allApplications.map(a => a.applicantEmail);
-      const userProfiles = await User.find({ email: { $in: hiredEmails } }).select("email profileImageUrl").lean();
+      const hiredEmails = allApplications.map((a) => a.applicantEmail);
+      const userProfiles = await User.find({ email: { $in: hiredEmails } })
+        .select("email profileImageUrl")
+        .lean();
       const profileMap: Record<string, string | null> = {};
-      userProfiles.forEach((u: any) => { profileMap[u.email] = u.profileImageUrl || null; });
+      userProfiles.forEach((u: any) => {
+        profileMap[u.email] = u.profileImageUrl || null;
+      });
 
-      // 6. Map ผลลัพธ์กลับไป
       const result = finishedJobs.map((j: any) => ({
-        _id:          j._id.toString(),
-        jobId:        j._id.toString(),
-        title:        j.title,
-        category:     j.category,
+        _id: j._id.toString(),
+        jobId: j._id.toString(),
+        title: j.title,
+        category: j.category,
         deliveryDate: j.deliveryDate,
-        jobStatus:    j.status,
-        capacity:     j.capacity || 1,
-        workers:      (appsByJob[j._id.toString()] || [])
-          .filter(a => ["accepted", "in_progress", "submitted", "revision", "completed"].includes(a.status))
-          .map(a => ({
+        jobStatus: j.status,
+        capacity: j.capacity || 1,
+        workers: (appsByJob[j._id.toString()] || [])
+          .filter((a) =>
+            [
+              "accepted",
+              "in_progress",
+              "submitted",
+              "revision",
+              "completed",
+            ].includes(a.status),
+          )
+          .map((a) => ({
             _id: a._id.toString(),
             applicantName: a.applicantName,
             profileImageUrl: profileMap[a.applicantEmail] || null,
             status: a.status,
             progress: 100,
-            ownerReview: a.ownerReview || null,
-            studentReview: a.studentReview || null,
+            ownerReview: a.ownerReview?.rating ? a.ownerReview : null,
+            studentReview: a.studentReview?.rating ? a.studentReview : null,
           })),
         avgProgress: 100,
       }));
@@ -449,31 +542,38 @@ export async function GET(req: Request) {
     if (role === "student") {
       const applications = await Application.find({
         applicantEmail: session.user.email,
-      }).sort({ appliedDate: -1 }).lean();
+      })
+        .sort({ appliedDate: -1 })
+        .lean();
 
-      if (applications.length === 0) return NextResponse.json({ applications: [] });
+      if (applications.length === 0)
+        return NextResponse.json({ applications: [] });
 
       const jobIds = applications.map((a: any) => a.jobId);
-      const jobs   = await (Job as any)
+      const jobs = await (Job as any)
         .find({ _id: { $in: jobIds } })
-        .select("title category budgetMin budgetMax owner applicationDeadline status")
+        .select(
+          "title category budgetMin budgetMax owner applicationDeadline status",
+        )
         .lean();
 
       const jobMap: Record<string, any> = {};
-      jobs.forEach((j: any) => { jobMap[j._id.toString()] = j; });
+      jobs.forEach((j: any) => {
+        jobMap[j._id.toString()] = j;
+      });
 
       const result = applications.map((a: any) => ({
-        _id:           a._id.toString(),
-        jobId:         a.jobId.toString(),
-        jobTitle:      jobMap[a.jobId.toString()]?.title       ?? "ไม่พบข้อมูล",
-        jobCategory:   jobMap[a.jobId.toString()]?.category    ?? "",
-        jobBudgetMin:  jobMap[a.jobId.toString()]?.budgetMin   ?? 0,
-        jobBudgetMax:  jobMap[a.jobId.toString()]?.budgetMax   ?? 0,
-        jobOwner:      jobMap[a.jobId.toString()]?.owner       ?? "",
-        jobDeadline:   jobMap[a.jobId.toString()]?.applicationDeadline ?? null,
-        jobStatus:     jobMap[a.jobId.toString()]?.status      ?? "",
-        status:        a.status,
-        appliedDate:   a.appliedDate,
+        _id: a._id.toString(),
+        jobId: a.jobId.toString(),
+        jobTitle: jobMap[a.jobId.toString()]?.title ?? "ไม่พบข้อมูล",
+        jobCategory: jobMap[a.jobId.toString()]?.category ?? "",
+        jobBudgetMin: jobMap[a.jobId.toString()]?.budgetMin ?? 0,
+        jobBudgetMax: jobMap[a.jobId.toString()]?.budgetMax ?? 0,
+        jobOwner: jobMap[a.jobId.toString()]?.owner ?? "",
+        jobDeadline: jobMap[a.jobId.toString()]?.applicationDeadline ?? null,
+        jobStatus: jobMap[a.jobId.toString()]?.status ?? "",
+        status: a.status,
+        appliedDate: a.appliedDate,
       }));
 
       return NextResponse.json({ applications: result });
@@ -484,11 +584,14 @@ export async function GET(req: Request) {
     // ══════════════════════════════════════════════════════
     if (role === "owner") {
       const user = await User.findOne({ email: session.user.email });
-      if (!user) return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
+      if (!user)
+        return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
 
       const ownedJobs = await (Job as any)
-        .find({ owner: user.name })
-        .select("_id title category budgetMin budgetMax applicationDeadline status capacity")
+        .find(ownerFilter)
+        .select(
+          "_id title category budgetMin budgetMax applicationDeadline status capacity",
+        )
         .lean();
 
       if (ownedJobs.length === 0) return NextResponse.json({ jobs: [] });
@@ -496,38 +599,49 @@ export async function GET(req: Request) {
       const ownedJobIds = ownedJobs.map((j: any) => j._id);
       const applications = await Application.find({
         jobId: { $in: ownedJobIds },
-      }).sort({ appliedDate: -1 }).lean();
+      })
+        .sort({ appliedDate: -1 })
+        .lean();
 
       const appMap: Record<string, any[]> = {};
       applications.forEach((a: any) => {
         const key = a.jobId.toString();
         if (!appMap[key]) appMap[key] = [];
         appMap[key].push({
-          _id:            a._id.toString(),
-          applicantName:  a.applicantName,
+          _id: a._id.toString(),
+          applicantName: a.applicantName,
           applicantEmail: a.applicantEmail,
-          status:         a.status,
-          appliedDate:    a.appliedDate,
+          status: a.status,
+          appliedDate: a.appliedDate,
         });
       });
 
       const result = ownedJobs
         .map((j: any) => ({
-          _id:                 j._id.toString(),
-          title:               j.title,
-          category:            j.category,
-          budgetMin:           j.budgetMin,
-          budgetMax:           j.budgetMax,
+          _id: j._id.toString(),
+          title: j.title,
+          category: j.category,
+          budgetMin: j.budgetMin,
+          budgetMax: j.budgetMax,
           applicationDeadline: j.applicationDeadline,
-          jobStatus:           j.status,
-          capacity:     j.capacity || 1,         
-          applications:        appMap[j._id.toString()] ?? [],
-          pendingCount:        (appMap[j._id.toString()] ?? []).filter(a => a.status === "pending").length,
-          acceptedCount:       (appMap[j._id.toString()] ?? []) 
-                                .filter(a => ["accepted", "in_progress", "submitted", "revision", "completed"].includes(a.status)).length,
-          totalCount:          (appMap[j._id.toString()] ?? []).length,
+          jobStatus: j.status,
+          capacity: j.capacity || 1,
+          applications: appMap[j._id.toString()] ?? [],
+          pendingCount: (appMap[j._id.toString()] ?? []).filter(
+            (a) => a.status === "pending",
+          ).length,
+          acceptedCount: (appMap[j._id.toString()] ?? []).filter((a) =>
+            [
+              "accepted",
+              "in_progress",
+              "submitted",
+              "revision",
+              "completed",
+            ].includes(a.status),
+          ).length,
+          totalCount: (appMap[j._id.toString()] ?? []).length,
         }))
-        .filter(j => j.totalCount > 0);
+        .filter((j) => j.totalCount > 0);
 
       return NextResponse.json({ jobs: result });
     }
@@ -537,11 +651,13 @@ export async function GET(req: Request) {
     // ══════════════════════════════════════════════════════
     return NextResponse.json(
       { error: "กรุณาระบุ jobId, role หรือ phase ให้ถูกต้อง" },
-      { status: 400 }
+      { status: 400 },
     );
-
   } catch (error: any) {
     console.error("[GET /api/applications] Error:", error);
-    return NextResponse.json({ error: "เกิดข้อผิดพลาด", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "เกิดข้อผิดพลาด", details: error.message },
+      { status: 500 },
+    );
   }
 }

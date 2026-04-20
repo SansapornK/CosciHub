@@ -2,24 +2,32 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IApplication extends Document {
-  jobId:          mongoose.Types.ObjectId;
-  applicantId?:   mongoose.Types.ObjectId;   // optional — backward compat
+  jobId: mongoose.Types.ObjectId;
+  applicantId?: mongoose.Types.ObjectId; // optional — backward compat
   applicantEmail: string;
-  applicantName:  string;
-  status: "pending" | "accepted" | "in_progress" | "submitted" | "revision" | "completed" | "rejected";  rejectionNote?: string;
-  progress:       number;
-  appliedDate:    Date;
-  updatedAt?:     Date;
+  applicantName: string;
+  status:
+    | "pending"
+    | "accepted"
+    | "in_progress"
+    | "submitted"
+    | "revision"
+    | "completed"
+    | "rejected";
+  rejectionNote?: string;
+  progress: number;
+  appliedDate: Date;
+  updatedAt?: Date;
   workLink?: string;
   attachments?: { fileName: string; fileUrl: string; fileSize: number }[];
   // note?: string;
-  ownerReview: {
+  ownerReview?: {
     rating: number;
     comment: string;
     isAnonymous: boolean;
     createdAt: Date;
   };
-  studentReview: {
+  studentReview?: {
     rating: number;
     comment: string;
     isAnonymous: boolean;
@@ -41,11 +49,19 @@ const ApplicationSchema: Schema = new Schema({
     default: null,
   },
   applicantEmail: { type: String, required: true },
-  applicantName:  { type: String, required: true },
+  applicantName: { type: String, required: true },
 
   status: {
     type: String,
-    enum: ["pending", "accepted", "in_progress", "submitted", "revision", "completed", "rejected"],
+    enum: [
+      "pending",
+      "accepted",
+      "in_progress",
+      "submitted",
+      "revision",
+      "completed",
+      "rejected",
+    ],
     default: "pending",
   },
   progress: {
@@ -55,49 +71,45 @@ const ApplicationSchema: Schema = new Schema({
     default: 0,
   },
   rejectionNote: { type: String, default: null },
-  appliedDate:   { type: Date, default: Date.now },
-  updatedAt:     { type: Date, default: null },
+  appliedDate: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: null },
 
   workLink: { type: String, default: "" },
 
-  attachments: [{
-    fileName: String,
-    fileUrl:  String,
-    fileSize: Number
-  }],
+  attachments: [
+    {
+      fileName: String,
+      fileUrl: String,
+      fileSize: Number,
+    },
+  ],
   // note: { type: String, default: "" },
 
-  feedback: { 
-    type: String, 
-    default: null 
+  feedback: {
+    type: String,
+    default: null,
   },
 
   studentReview: {
-    rating: { type: Number, min: 1, max: 5, default: null },
-    comment: { type: String, default: "" },
-    isAnonymous: { type: Boolean, default: true },
-    createdAt: { type: Date, default: null }
+    rating: { type: Number, min: 1, max: 5 },
+    comment: { type: String },
+    isAnonymous: { type: Boolean },
+    createdAt: { type: Date },
   },
-
   ownerReview: {
-    rating: { type: Number, min: 1, max: 5, default: null },
-    comment: { type: String, default: "" },
-    isAnonymous: { type: Boolean, default: true },
-    createdAt: { type: Date, default: null }
-  }
-
+    rating: { type: Number, min: 1, max: 5 },
+    comment: { type: String },
+    isAnonymous: { type: Boolean },
+    createdAt: { type: Date },
+  },
 });
-
 
 ApplicationSchema.index({ jobId: 1, applicantEmail: 1 }, { unique: true });
 ApplicationSchema.index({ jobId: 1, status: 1 });
 ApplicationSchema.index({ applicantEmail: 1, appliedDate: -1 });
 ApplicationSchema.index({ applicantEmail: 1, status: 1 });
 
-ApplicationSchema.index(
-  { jobId: 1, applicantId: 1 },
-  { sparse: true }
-);
+ApplicationSchema.index({ jobId: 1, applicantId: 1 }, { sparse: true });
 
 const ApplicationModel: Model<IApplication> =
   mongoose.models.Application ||

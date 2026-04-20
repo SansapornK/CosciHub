@@ -42,16 +42,16 @@ export default function MyJobsPage() {
 
   // Fetch งานของฉัน โดยกรองจาก owner = ชื่อผู้ใช้
   useEffect(() => {
-    if (status !== "authenticated" || !session?.user?.name) return;
+    if (status !== "authenticated" || !session?.user) return;
 
     const fetchMyJobs = async () => {
       setLoading(true);
       try {
         const res = await axios.get("/api/jobs", {
             params: { 
-                owner: session.user.name, 
+                ownerId: (session.user as any).id || (session.user as any)._id, 
                 limit: 50,
-                includeDraft: true,  // ✅ ดึง draft ด้วย
+                includeDraft: true, 
             },
         });
         setJobs(res.data.jobs);

@@ -17,7 +17,7 @@ cloudinary.config({
  * Upload a file to Cloudinary
  * @param file Base64 encoded file to upload
  * @param userId User ID for creating folder structure
- * @param type Type of file ('profileImage', 'portfolio', or 'gallery')
+ * @param type Type of file ('profileImage', 'resume', or 'gallery')
  * @param publicId Optional public ID to use (for gallery images)
  * @returns URL of the uploaded file
  */
@@ -25,7 +25,7 @@ cloudinary.config({
 export async function uploadToCloudinary(
   file: string, 
   userId: string, 
-  type: 'profileImage' | 'portfolio' | 'gallery',
+  type: 'profileImage' | 'resume' | 'gallery',
   publicId?: string
 ): Promise<string> {
   // สร้าง folder path ตามประเภทไฟล์
@@ -37,25 +37,26 @@ export async function uploadToCloudinary(
     // ตรวจสอบประเภทไฟล์
     const isPDF = file.includes('application/pdf');
     
-    // สำหรับไฟล์ PDF (portfolio)
-    if (type === 'portfolio' && isPDF) {
+    // สำหรับไฟล์ PDF (resume)
+    if (type === 'resume' && isPDF) {
+      const finalPublicId = publicId ? `${publicId}.pdf` : 'resume.pdf';
+      
       const result = await cloudinary.uploader.upload(file, {
         folder: folderPath,
-        resource_type: 'raw',  // แก้ไขจาก 'image' เป็น 'raw' สำหรับ PDF
-        public_id: 'portfolio',
+        resource_type: 'raw', 
+        public_id: finalPublicId,
         overwrite: true,
         type: 'upload'
       });
-
-      // เพิ่ม fl_attachment เพื่อบังคับให้ดาวน์โหลด
-      return result.secure_url;
+      
+      return result.secure_url; 
     }
     
     // สำหรับรูปภาพและไฟล์อื่นๆ
     const result = await cloudinary.uploader.upload(file, {
       folder: folderPath,
-      resource_type: type === 'portfolio' ? 'auto' : 'image',
-      public_id: publicId || (type === 'portfolio' ? 'portfolio' : (type === 'profileImage' ? 'profile' : undefined)),
+      resource_type: type === 'resume' ? 'auto' : 'image',
+      public_id: publicId || (type === 'resume' ? 'resume' : (type === 'profileImage' ? 'profile' : undefined)),
       overwrite: type !== 'gallery',
     });
 
@@ -95,17 +96,27 @@ export async function deleteFromCloudinary(url: string): Promise<boolean> {
       pathAfterUpload = pathAfterUpload.substring(versionMatch[0].length);
     }
     
+    
     // This should now be the full path without version: users/123456/gallery/image_123.jpg
     // Extract the file extension
     const extension = pathAfterUpload.substring(pathAfterUpload.lastIndexOf('.'));
     
     // Remove the extension to get the public ID
-    const publicId = pathAfterUpload.substring(0, pathAfterUpload.lastIndexOf('.'));
+    // const publicId = pathAfterUpload.substring(0, pathAfterUpload.lastIndexOf('.'));
+
+    const isRaw = url.includes('/raw/') || url.toLowerCase().endsWith('.pdf') || url.toLowerCase().endsWith('.docx');
     
+    const publicId = isRaw 
+      ? pathAfterUpload 
+      : pathAfterUpload.substring(0, pathAfterUpload.lastIndexOf('.'));
+
     console.log('Extracted public ID:', publicId);
     
     // Delete the file using the full public ID
-    const result = await cloudinary.uploader.destroy(publicId);
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: isRaw ? 'raw' : 'image',
+      invalidate: true
+    });
     console.log('Cloudinary delete result:', result);
     
     return result.result === 'ok';

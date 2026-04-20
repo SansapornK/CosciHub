@@ -1,15 +1,29 @@
-'use client'; 
+"use client";
 
 import Head from "next/head";
 import Link from "next/link";
-import React, { useState, useEffect, JSX } from "react"; 
+import React, { useState, useEffect, JSX } from "react";
 import JobList from "./components/lists/JobList";
 import axios from "axios";
-import Loading from "./components/common/Loading"; 
+import Loading from "./components/common/Loading";
 import { useSession } from "next-auth/react";
 import JobCard from "./components/cards/JobCard";
-import { calculateTimeAgo, getCategoryIcon } from "@/app/components/utils/jobHelpers";
-import { Bookmark, DollarSign, User, Tag, Briefcase, ArrowRight } from 'lucide-react'; 
+import {
+  calculateTimeAgo,
+  getCategoryIcon,
+} from "@/app/components/utils/jobHelpers";
+import {
+  Bookmark,
+  DollarSign,
+  User,
+  Tag,
+  Briefcase,
+  ArrowRight,
+  Sparkles,
+  ChevronDown, 
+  ChevronUp, 
+  LayoutGrid,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // --- Configuration ---
@@ -23,12 +37,18 @@ const CI_COLORS = {
 
 // --- Animation Variants ---
 const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
+  hidden: {
+    opacity: 0,
+    y: 60,
+  },
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
-  }
+    transition: {
+      duration: 1.0,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
 };
 
 const staggerContainer = {
@@ -36,19 +56,47 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.3,
+    },
+  },
 };
 
 const hoverScale = {
-  hover: { 
+  hover: {
     scale: 1.03,
     boxShadow: "0px 10px 30px rgba(12, 91, 234, 0.1)",
-    transition: { duration: 0.3, ease: "easeInOut" }
-  }
+    transition: { duration: 0.3, ease: "easeInOut" },
+  },
 };
 
+const varFadeInUp = {
+  hidden: { opacity: 0, y: 40, filter: "blur(4px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+// แอนิเมชันสำหรับรูปภาพ (ขยายตัวเล็กน้อย)
+const varImageReveal = {
+  hidden: { opacity: 0, scale: 1.1 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+// คอนเทนเนอร์สำหรับคุมจังหวะลูกๆ (Stagger)
+const varStaggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.2 },
+  },
+};
 
 // --- Hero Slides ---
 const HERO_SLIDES = [
@@ -57,37 +105,40 @@ const HERO_SLIDES = [
     title: "COSCI Hub แพลตฟอร์มหางานพิเศษ",
     subtitle: "สำหรับนิสิต อาจารย์ และศิษย์เก่าชาวนวัต",
     highlight: "ชาวนวัต",
-    description: "แพลตฟอร์มหางานพิเศษ สำหรับนิสิตวิทยาลัยนวัตกรรมสื่อสารสังคม เพื่อเป็นช่องทางในการหารายได้เสริมระหว่างศึกษา รวมถึงแสดงผลงานและทักษะความสามารถเพื่อใช้ในการหางานในอนาคต",
+    description:
+      "แพลตฟอร์มหางานพิเศษ สำหรับนิสิตวิทยาลัยนวัตกรรมสื่อสารสังคม เพื่อเป็นช่องทางในการหารายได้เสริมระหว่างศึกษา รวมถึงแสดงผลงานและทักษะความสามารถเพื่อใช้ในการหางานในอนาคต",
     primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
-    secondaryButton: null, 
+    secondaryButton: null,
   },
   {
     image: "/images/heroImage2.jpg",
     title: "ค้นหางานพิเศษที่ตรงใจ",
     subtitle: "เติมเต็มทักษะ สร้างรายได้เสริม",
     highlight: "ตรงใจ",
-    description: "สำรวจโอกาสงานพิเศษหลากหลายหมวดหมู่ ที่รอให้คุณมาโชว์ศักยภาพและเก็บประสบการณ์ก่อนก้าวสู่โลกการทำงานจริง",
+    description:
+      "สำรวจโอกาสงานพิเศษหลากหลายหมวดหมู่ ที่รอให้คุณมาโชว์ศักยภาพและเก็บประสบการณ์ก่อนก้าวสู่โลกการทำงานจริง",
     primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
-    secondaryButton: null, 
+    secondaryButton: null,
   },
   {
     image: "/images/heroImage3.jpg",
     title: "โครงการพิเศษจากคณาจารย์",
     subtitle: "แหล่งรวมโปรเจกต์งานวิจัยและพัฒนา",
     highlight: "คณาจารย์",
-    description: "โอกาสในการร่วมงานกับคณาจารย์ในโครงการที่น่าสนใจ เพื่อเพิ่มพูนความรู้เฉพาะทาง และสร้างพอร์ตโฟลิโอที่แข็งแกร่ง",
+    description:
+      "โอกาสในการร่วมงานกับคณาจารย์ในโครงการที่น่าสนใจ เพื่อเพิ่มพูนความรู้เฉพาะทาง และสร้างพอร์ตโฟลิโอที่แข็งแกร่ง",
     primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
-    secondaryButton: null, 
+    secondaryButton: null,
   },
 ];
 
-const HeroCarousel = ({ images, setCurrentSlide }) => { 
+const HeroCarousel = ({ images, setCurrentSlide }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const totalImages = images.length;
-  const slideDuration = 5000; 
+  const slideDuration = 5000;
 
   useEffect(() => {
-    setCurrentSlide(currentIndex); 
+    setCurrentSlide(currentIndex);
   }, [currentIndex, setCurrentSlide]);
 
   useEffect(() => {
@@ -96,23 +147,23 @@ const HeroCarousel = ({ images, setCurrentSlide }) => {
     }, slideDuration);
     return () => clearInterval(interval);
   }, [totalImages, slideDuration]);
-  
+
   return (
     <div className="absolute inset-0 w-full h-full z-0">
       <AnimatePresence initial={false}>
         <motion.img
           key={currentIndex}
-          src={images[currentIndex].image} 
+          src={images[currentIndex].image}
           alt="Hero background"
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1.5, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: 'center' }} 
+          style={{ objectPosition: "center" }}
         />
       </AnimatePresence>
-      
+
       {/* Overlay darkening for text readability */}
       <div className="absolute inset-0 bg-black/20 z-10" />
 
@@ -122,7 +173,7 @@ const HeroCarousel = ({ images, setCurrentSlide }) => {
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-[#F4FE57] scale-125' : 'bg-white/50 hover:bg-white'}`}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentIndex ? "bg-[#F4FE57] scale-125" : "bg-white/50 hover:bg-white"}`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
@@ -135,23 +186,27 @@ const HeroCarousel = ({ images, setCurrentSlide }) => {
 // --- Category Card ---
 const CategoryCard = ({ title, icon, bgColor, path }) => (
   <motion.div variants={fadeInUp}>
-    <Link 
-      href={path || '/find-job'} 
+    <Link
+      href={path || "/find-job"}
       className="group flex flex-col items-center p-2 transition-all duration-300 w-full min-w-[100px] md:min-w-[120px]"
     >
-      <div className={`
+      <div
+        className={`
         ${bgColor} 
         rounded-full p-4 mb-3 flex items-center justify-center 
         size-14 md:size-16 
         transform transition-all duration-300 
         group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-blue-200
-      `}>
-        {icon} 
+      `}
+      >
+        {icon}
       </div>
-      
-      <h4 className="text-[10px] md:text-[11px] font-bold text-gray-700 text-center 
+
+      <h4
+        className="text-[10px] md:text-[11px] font-bold text-gray-700 text-center 
                      group-hover:text-[#0C5BEA] transition-colors 
-                     leading-tight break-words px-1 h-auto">
+                     leading-tight break-words px-1 h-auto"
+      >
         {title}
       </h4>
     </Link>
@@ -163,254 +218,266 @@ const MAJOR = [
     id: "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย",
     title: "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-        >
-          <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-          <circle cx="9" cy="9" r="2"/>
-          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+      >
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+        <circle cx="9" cy="9" r="2" />
+        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "cyber",
     title: "การจัดการธุรกิจไซเบอร์",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="M12 16v5"/>
-        <path d="M16 14v7"/>
-        <path d="M20 10v11"/>
-        <path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15"/>
-        <path d="M4 18v3"/>
-        <path d="M8 14v7"/>
+        <path d="M12 16v5" />
+        <path d="M16 14v7" />
+        <path d="M20 10v11" />
+        <path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15" />
+        <path d="M4 18v3" />
+        <path d="M8 14v7" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "นวัตกรรมคอมพิวเตอร์เพื่อการสื่อสาร",
     title: "นวัตกรรมคอมพิวเตอร์เพื่อการสื่อสาร",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/>
-        <path d="M20.054 15.987H3.946"/>
+        <path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z" />
+        <path d="M20.054 15.987H3.946" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การผลิตภาพยนตร์และสื่อดิจิทัล",
     title: "การผลิตภาพยนตร์และสื่อดิจิทัล",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/>
-        <rect x="2" y="6" width="14" height="12" rx="2"/>
+        <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" />
+        <rect x="2" y="6" width="14" height="12" rx="2" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การแสดงและกำกับการแสดงภาพยนตร์",
     title: "การแสดงและกำกับการแสดงภาพยนตร์",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/>
-        <path d="m6.2 5.3 3.1 3.9"/>
-        <path d="m12.4 3.4 3.1 4"/>
-        <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>
+        <path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z" />
+        <path d="m6.2 5.3 3.1 3.9" />
+        <path d="m12.4 3.4 3.1 4" />
+        <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การออกแบบเพื่องานภาพยนตร์และสื่อดิจิทัล",
     title: "การออกแบบเพื่องานภาพยนตร์และสื่อดิจิทัล",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="m11 10 3 3"/>
-        <path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/>
-        <path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/>
+        <path d="m11 10 3 3" />
+        <path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z" />
+        <path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การจัดการภาพยนตร์และสื่อดิจิทัล",
     title: "การจัดการภาพยนตร์และสื่อดิจิทัล",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/>
-        <path d="M14 2v5a1 1 0 0 0 1 1h5"/>
-        <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/>
+        <path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
+        <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+        <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อการท่องเที่ยว",
     title: "การสื่อสารเพื่อการท่องเที่ยว",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/>
-        <path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/>
-        <path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/>
-        <circle cx="12" cy="12" r="10"/>
+        <path d="M21.54 15H17a2 2 0 0 0-2 2v4.54" />
+        <path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17" />
+        <path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05" />
+        <circle cx="12" cy="12" r="10" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อสุขภาพ",
     title: "การสื่อสารเพื่อสุขภาพ",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
-        <path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>
+        <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
+        <path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อการจัดการนวัตกรรม",
     title: "การสื่อสารเพื่อการจัดการนวัตกรรม",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
-        <path d="M9 18h6"/>
-        <path d="M10 22h4"/>
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+        <path d="M9 18h6" />
+        <path d="M10 22h4" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อเศรษฐศาสตร์",
     title: "การสื่อสารเพื่อเศรษฐศาสตร์",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
       >
-        <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
-        <path d="m19 9-5 5-4-4-3 3"/>
+        <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+        <path d="m19 9-5 5-4-4-3 3" />
       </svg>
     ),
-    bgColor: "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+    bgColor:
+      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
 ];
 // ---------------------------------------------
@@ -419,62 +486,104 @@ const MAJOR = [
 
 const ABOUT_FEATURES = [
   {
-    title: 'เข้าถึงงานพิเศษได้ง่าย',
-    description: 'เลือกงานพิเศษที่ตรงกับสาขาวิชาและความถนัดได้',
+    title: "เข้าถึงงานพิเศษได้ง่าย",
+    description: "เลือกงานพิเศษที่ตรงกับสาขาวิชาและความถนัดได้",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-primary-blue-500"><path d="M12 12h.01"/><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M22 13a18.15 18.15 0 0 1-20 0"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>
-    ), 
-  },
-  {
-    title: 'ติดตามความคืบหน้า',
-    description: 'ตรวจสอบสถานะการทำงานแบบเรียลไทม์',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-10 w-10 text-primary-blue-500"
+      >
+        <path d="M12 12h.01" />
+        <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+        <path d="M22 13a18.15 18.15 0 0 1-20 0" />
+        <rect width="20" height="14" x="2" y="6" rx="2" />
       </svg>
-    ), 
+    ),
   },
   {
-    title: 'ระบบรีวิวการทำงาน',
-    description: 'สร้างโปรไฟล์ให้น่าเชื่อถือด้วยคะแนนรีวิวจากผู้ใช้งานจริง',
+    title: "ติดตามความคืบหน้า",
+    description: "ตรวจสอบสถานะการทำงานแบบเรียลไทม์",
     icon: (
-      <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-10 w-10 text-primary-blue-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+        />
+      </svg>
+    ),
+  },
+  {
+    title: "ระบบรีวิวการทำงาน",
+    description: "สร้างโปรไฟล์ให้น่าเชื่อถือด้วยคะแนนรีวิวจากผู้ใช้งานจริง",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className="h-10 w-10 text-primary-blue-500"
       >
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
-    ), 
+    ),
   },
   {
-    title: 'สะสมประสบการณ์จริง',
-    description: 'พัฒนทักษะและต่อยอดสู่การทำงานจริงในอนาคต',
+    title: "สะสมประสบการณ์จริง",
+    description: "พัฒนทักษะและต่อยอดสู่การทำงานจริงในอนาคต",
     icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-10 w-10 text-primary-blue-500"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-10 w-10 text-primary-blue-500"
+      >
+        <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+        <path d="M22 10v6" />
+        <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+      </svg>
     ),
   },
 ];
 
 const AboutFeatureCard = ({ title, description, icon }) => (
-  <motion.div 
-    variants={fadeInUp} 
-    whileHover={{ 
+  <motion.div
+    variants={fadeInUp}
+    whileHover={{
       scale: 1.03,
       boxShadow: "0px 10px 30px rgba(12, 91, 234, 0.1)",
-      transition: { duration: 0.3, ease: "easeInOut" }
+      transition: { duration: 0.3, ease: "easeInOut" },
     }}
     className="bg-white rounded-2xl w-full flex flex-col items-center max-w-xs text-center p-8 border border-gray-100 gap-4"
   >
-    <div className="flex items-center justify-center p-6 bg-[#6D91D3]/10 rounded-full mb-2 text-[#0C5BEA]"> 
-        {icon}
+    <div className="flex items-center justify-center p-6 bg-[#6D91D3]/10 rounded-full mb-2 text-[#0C5BEA]">
+      {icon}
     </div>
     <h4 className="text-lg font-semibold text-gray-800">{title}</h4>
     <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
@@ -499,7 +608,8 @@ interface JobCardData {
 
 const CONNECT_SECTION_DATA = {
   header: "พื้นที่เชื่อมต่อระหว่างการเรียนรู้กับการทำงานจริงอย่างมีคุณภาพ",
-  description: "ช่วยให้นิสิตสามารถหางานที่ตรงกับความสามารถ ขณะที่อาจารย์ ศิษย์เก่า และบุคลากรในมหาวิทยาลัยฯ สามารถตรวจสอบผลงานและให้คำแนะนำแก่นิสิต เพื่อเปิดโอกาสให้นิสิตได้ฝึกทักษะจากงานจริง",
+  description:
+    "ช่วยให้นิสิตสามารถหางานที่ตรงกับความสามารถ ขณะที่อาจารย์ ศิษย์เก่า และบุคลากรในมหาวิทยาลัยฯ สามารถตรวจสอบผลงานและให้คำแนะนำแก่นิสิต เพื่อเปิดโอกาสให้นิสิตได้ฝึกทักษะจากงานจริง",
   left: {
     text: "พัฒนาทักษะจาก การทำงานจริง กับผู้ว่าจ้างที่น่าเชื่อถือ สร้างประสบการณ์ และรายได้ระหว่างเรียน",
     image: "/images/female.png",
@@ -510,6 +620,211 @@ const CONNECT_SECTION_DATA = {
   },
 };
 
+const FeatureSection = ({
+  title,
+  description,
+  icon,
+  image,
+  isReversed,
+  bgColor,
+  textColor,
+  highlightColor,
+}) => {
+  const isBlueBg =
+    bgColor.includes("bg-[#0C5BEA]") || bgColor.includes("bg-[#6D91D3]");
+
+  return (
+    <motion.section
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.4 }} // เล่นแอนิเมชันเมื่อเห็น Section 40%
+      variants={varStaggerContainer}
+      className={`w-full py-24 md:py-32 ${bgColor} ${textColor} overflow-hidden`}
+    >
+      <div
+        className={`max-w-7xl mx-auto px-6 md:px-12 flex flex-col ${isReversed ? "md:flex-row-reverse" : "md:flex-row"} items-center gap-12 md:gap-20`}
+      >
+        {/* ──ฝั่งข้อความ── */}
+        <motion.div
+          variants={varFadeInUp}
+          className="flex-1 flex flex-col items-start text-start"
+        >
+          {/* Icon Box */}
+          <div
+            className={`p-4 rounded-2xl mb-6 ${isBlueBg ? "bg-white/10 text-[#F4FE57]" : "bg-[#6D91D3]/10 text-[#0C5BEA]"}`}
+          >
+            {icon}
+          </div>
+
+          {/* Title with Highlight Yellow */}
+          <h3
+            className={`text-3xl md:text-4xl lg:text-5xl font-black leading-tight tracking-tight mb-6 drop-shadow-sm`}
+          >
+            {title.split(" ").map((word, i) => (
+              <span
+                key={i}
+                className={
+                  word.includes("งานพิเศษ") ||
+                  word.includes("ความคืบหน้า") ||
+                  word.includes("พูดคุย") ||
+                  word.includes("ประสบการณ์")
+                    ? highlightColor
+                    : ""
+                }
+              >
+                {word}{" "}
+              </span>
+            ))}
+          </h3>
+
+          {/* Description */}
+          <p
+            className={`text-base md:text-lg ${isBlueBg ? "text-white/80" : "text-gray-600"} leading-relaxed max-w-xl font-light mb-10`}
+          >
+            {description}
+          </p>
+
+          {/* Decorative Line */}
+          <div
+            className={`h-1.5 w-20 ${isBlueBg ? "bg-[#F4FE57]" : "bg-[#0C5BEA]"} rounded-full`}
+          />
+        </motion.div>
+
+        {/* ──ฝั่งรูปภาพ (Modern Mockup)── */}
+        <motion.div
+          variants={varImageReveal}
+          className="flex-1 w-full relative group"
+        >
+          {/* Background Decorative Circle */}
+          <div
+            className={`absolute -inset-10 rounded-full opacity-20 blur-3xl ${isBlueBg ? "bg-[#F4FE57]" : "bg-[#6D91D3]"}`}
+          />
+
+          {/* Image with Shadow & Border */}
+          <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl shadow-black/10 border-4 border-white/50 transform group-hover:scale-105 transition-transform duration-500">
+            <img
+              src={image}
+              alt={title}
+              className="w-full h-auto object-cover aspect-[4/3]"
+            />
+          </div>
+        </motion.div>
+      </div>
+    </motion.section>
+  );
+};
+
+// ─── 3. อัปเดตข้อมูล FEATURES (เพิ่มรูปภาพและปรับคำ) ───
+
+const MODERN_FEATURES = [
+  {
+    title: "เข้าถึง งานพิเศษ ได้ง่าย",
+    description: "เลือกงานที่ตรงกับสาขาวิชาและความถนัด สะดวก รวดเร็ว ทันใจ",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-10 w-10"
+      >
+        <path d="M12 12h.01" />
+        <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+        <path d="M22 13a18.15 18.15 0 0 1-20 0" />
+        <rect width="20" height="14" x="2" y="6" rx="2" />
+      </svg>
+    ), // SVG เดิม
+    image: "/images/feat-easy-access.jpg", // ✅ ใส่พาธรูปภาพจริง
+    isReversed: false,
+    bgColor: "bg-white",
+    textColor: "text-gray-900",
+    highlightColor: "text-[#0C5BEA]",
+  },
+  {
+    title: "ติดตาม ความคืบหน้า เรียลไทม์",
+    description: "ตรวจสอบสถานะการทำงาน ตารางเวลา และเดดไลน์ ได้ทุกที่ทุกเวลา",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-10 w-10 text-primary-blue-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+        />
+      </svg>
+    ), // SVG เดิม
+    image: "/images/feat-track-progress.jpg", // ✅ ใส่พาธรูปภาพจริง
+    isReversed: true, // ✅ สลับฝั่ง
+    bgColor: "bg-[#6D91D3]/10",
+    textColor: "text-gray-900",
+    highlightColor: "text-[#0C5BEA]",
+  },
+  {
+    title: "พูดคุย สะดวกผ่านระบบแชท",
+    description:
+      "สื่อสารตรงกับผู้ว่าจ้าง บรีฟงาน ส่งไฟล์ จบครบในแพลตฟอร์มเดียว",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-10 w-10 text-primary-blue-500"
+      >
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ), // SVG เดิม
+    image: "/images/feat-chat.jpg", // ✅ ใส่พาธรูปภาพจริง
+    isReversed: false,
+    bgColor: "bg-[#0C5BEA]", // ✅ พื้นหลังน้ำเงินเข้ม
+    textColor: "text-white",
+    highlightColor: "text-[#F4FE57]", // ✅ ไฮไลท์สีเหลือง
+  },
+  {
+    title: "สะสม ประสบการณ์ จริง",
+    description:
+      "พัฒนทักษะนอกห้องเรียน สร้างพอร์ตโฟลิโอให้โดดเด่น พร้อมก้าวสู่การทำงาน",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-10 w-10 text-primary-blue-500"
+      >
+        <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+        <path d="M22 10v6" />
+        <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+      </svg>
+    ), // SVG เดิม
+    image: "/images/feat-experience.jpg", // ✅ ใส่พาธรูปภาพจริง
+    isReversed: true, // ✅ สลับฝั่ง
+    bgColor: "bg-white",
+    textColor: "text-gray-900",
+    highlightColor: "text-[#0C5BEA]",
+  },
+];
 
 // --- 4. Main Component ---
 export default function Home() {
@@ -523,14 +838,15 @@ export default function Home() {
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
 
-  const primaryBtnClass = 'bg-[#0C5BEA] text-white font-semibold py-3.5 px-8 rounded-full shadow-lg shadow-[#0C5BEA]/20 transition-all hover:bg-[#0C5BEA]/90 hover:shadow-[#0C5BEA]/30 active:scale-95 flex items-center gap-2';
+  const primaryBtnClass =
+    "bg-[#0C5BEA] text-white font-semibold py-3.5 px-8 rounded-full shadow-lg shadow-[#0C5BEA]/20 transition-all hover:bg-[#0C5BEA]/90 hover:shadow-[#0C5BEA]/30 active:scale-95 flex items-center gap-2";
 
   // recommended jobs
   useEffect(() => {
     const fetchRecommendedJobs = async () => {
       try {
         const res = await axios.get("/api/jobs", {
-          params: { limit: 3, sort: "latest" } 
+          params: { limit: 3, sort: "latest" },
         });
         setRecommendedJobs(res.data.jobs);
       } catch (error) {
@@ -574,258 +890,317 @@ export default function Home() {
     }
   };
 
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
     <>
-    <motion.div initial="hidden" animate="visible" className="bg-[#FFFFFF]"> 
-      <div> 
-        {/* --- Hero section --- */}
-        <section className="relative w-full h-[550px] md:h-[650px] overflow-hidden">
-          <HeroCarousel images={HERO_SLIDES} setCurrentSlide={setCurrentSlideIndex} />
+      <motion.div initial="hidden" animate="visible" className="bg-[#FFFFFF]">
+        <div>
+          {/* --- Hero section --- */}
+          <section className="relative w-full h-[550px] md:h-[650px] overflow-hidden">
+            <HeroCarousel
+              images={HERO_SLIDES}
+              setCurrentSlide={setCurrentSlideIndex}
+            />
 
-          <div className="absolute inset-0 flex justify-start items-end z-20 px-6 md:px-16 lg:px-24 pb-12 md:pb-20"> 
-            <AnimatePresence mode="wait">
-              <motion.div 
-                key={currentSlideIndex}
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="relative flex flex-col items-start text-start text-white max-w-2xl"
-              >
-                <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-                  <span className="text-lg md:text-xl lg:text-2xl font-black inline-block">
-                    {currentSlideData.title?.replace(currentSlideData.highlight || '', '')}
-                  </span>
-                  
-                  {currentSlideData.highlight && (
-                    <span className="text-[#F4FE57] text-lg md:text-xl lg:text-2xl font-black relative inline-block ml-2">
-                      {currentSlideData.highlight}
-                      <motion.span 
-                        initial={{ width: 0 }}
-                        animate={{ width: "100%" }}
-                        transition={{ delay: 0.5, duration: 0.8 }}
-                        className="absolute -bottom-1 left-0 h-1 bg-[#F4FE57] rounded-full shadow-[0_0_10px_rgba(244,254,87,0.6)]"
-                      />
+            <div className="absolute inset-0 flex justify-start items-end z-20 px-6 md:px-16 lg:px-24 pb-12 md:pb-20">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlideIndex}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative flex flex-col items-start text-start text-white max-w-2xl"
+                >
+                  <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+                    <span className="text-lg md:text-xl lg:text-2xl font-black inline-block">
+                      {currentSlideData.title?.replace(
+                        currentSlideData.highlight || "",
+                        "",
+                      )}
                     </span>
-                  )}
-                  
-                  <br className="hidden md:block"/>
-                  
-                  <span className="text-base md:text-lg lg:text-xl font-bold opacity-90 block mt-1 tracking-normal">
-                    {currentSlideData.subtitle}
-                  </span>
-                </h1>
 
-                <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-xl font-medium drop-shadow-md">
-                  {currentSlideData.description}
-                </p>
+                    {currentSlideData.highlight && (
+                      <span className="text-[#F4FE57] text-lg md:text-xl lg:text-2xl font-black relative inline-block ml-2">
+                        {currentSlideData.highlight}
+                        <motion.span
+                          initial={{ width: 0 }}
+                          animate={{ width: "100%" }}
+                          transition={{ delay: 0.5, duration: 0.8 }}
+                          className="absolute -bottom-1 left-0 h-1 bg-[#F4FE57] rounded-full shadow-[0_0_10px_rgba(244,254,87,0.6)]"
+                        />
+                      </span>
+                    )}
 
-                <div className="flex gap-4 mt-8">
-                  <Link href={currentSlideData.primaryButton.link}>
-                    <motion.button 
-                      whileHover={{ scale: 1.05, backgroundColor: "#FFFFFF", color: "#0C5BEA" }} 
-                      whileTap={{ scale: 0.95 }} 
-                      className="bg-[#0C5BEA] text-white text-sm md:text-base font-bold py-3 px-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-[#0C5BEA] transition-all flex items-center gap-2 group"
-                    >
-                      {currentSlideData.primaryButton.text} 
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </motion.button>
-                  </Link>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </section>
-      </div>
+                    <br className="hidden md:block" />
 
-      <section className="bg-blue-50 w-full flex flex-col gap-8 py-5 px-5 justify-center text-center rounded-b-3xl shadow-lg">
-         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-11 gap-4 lg:gap-6 justify-center">
-            {MAJOR.map((category) => (
-              <CategoryCard 
-                key={category.id} 
-                {...category} 
-                path={`/find-job?major=${category.id}`} 
-              />
-            ))}
-          </div>
-      </section>
+                    <span className="text-base md:text-lg lg:text-xl font-bold opacity-90 block mt-1 tracking-normal">
+                      {currentSlideData.subtitle}
+                    </span>
+                  </h1>
 
-      {/* --- Job Recommendation Section--- */}
-      <section className="w-full flex flex-col gap-3 mt-5 mb-10 justify-center text-center py-10 px-12">
-        <h2 className="text-xl font-bold text-primary-gray-500 text-start">
-          งานแนะนำสำหรับนิสิต
-        </h2>
+                  <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-xl font-medium drop-shadow-md">
+                    {currentSlideData.description}
+                  </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4 px-4 sm:px-0">
-          {loadingJobs ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-xl" />
-              ))}
+                  <div className="flex gap-4 mt-8">
+                    <Link href={currentSlideData.primaryButton.link}>
+                      <motion.button
+                        whileHover={{
+                          scale: 1.05,
+                          backgroundColor: "#FFFFFF",
+                          color: "#0C5BEA",
+                        }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-[#0C5BEA] text-white text-sm md:text-base font-bold py-3 px-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-[#0C5BEA] transition-all flex items-center gap-2 group"
+                      >
+                        {currentSlideData.primaryButton.text}
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </motion.button>
+                    </Link>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
-          ) : recommendedJobs.length > 0 ? (
-            recommendedJobs.map((job: any) => (
-              <JobCard 
-                key={job._id} 
-                isLoggedIn={isLoggedIn}
-                isBookmarked={savedJobIds.includes(job._id)} 
-                onToggleBookmark={() => handleToggleBookmark(job._id)} 
-                data={{
-                  id: job._id,
-                  icon: getCategoryIcon(job.category),
-                  title: job.title,
-                  type: job.category,
-                  postedBy: job.owner,
-                  details: job.shortDescription,
-                  minCompensation: job.budgetMin.toLocaleString(), 
-                  maxCompensation: job.budgetMax ? job.budgetMax.toLocaleString() : null,
-                  currency: "บาท",
-                  timeAgo: calculateTimeAgo(job.postedDate), 
-                  isVisible: true,
-                }} 
-              />
-            ))
-          ) : (
-            <p className="col-span-full text-gray-500">ยังไม่มีงานแนะนำในขณะนี้</p>
-          )}
+          </section>
         </div>
-          
-        {/* ปุ่มดูงานทั้งหมด */}
-        <Link href="/find-job" className="mt-6">
-          <button className="bg-primary-blue-500 text-white font-medium text-base py-3 px-6 rounded-full shadow-md hover:bg-primary-blue-600 transition-colors hover:shadow-lg">
-            ดูงานทั้งหมด <Briefcase className="w-5 h-5 ml-2 inline"/>
-          </button>
-        </Link>
-      </section>
 
-      {/* --- About Section --- */}
-        <section className="w-full flex flex-col gap-1 mt-5 mb-15 justify-center text-center px-12">
-          
-          {/* Header Area */}
-          <div className="flex flex-col items-center px-4 md:px-0 justify-end"> 
-            
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center justify-start gap-3">
-                <img 
-                    src="/logo/cosci-hub-logo.png" 
-                    alt="COSCI Hub Logo" 
-                    className="h-10 md:h-12 w-auto" 
-                />
-                คืออะไร?
-            </h2>
-            
-            <p className="text-lg md:text-xl font-normal text-gray-700 mt-2">
-                แพลตฟอร์มเรียนรู้การทำงานผ่านประสบการณ์จริง
-            </p>
-
-            <div className="w-full text-center"> 
-                <p className="text-base text-gray-600 mt-8 font-bold">
-                    รวมทุกขั้นตอนของการทำงานอยู่ในที่เดียว
-                </p>
-            </div>
-
-          </div>
-          
-          {/* Features Grid */}
-          {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {ABOUT_FEATURES.map((feature, index) => (
-              <AboutFeatureCard 
-                key={index}
-                {...feature} 
-              />
-            ))}
-          </div> */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-5">
-            {ABOUT_FEATURES.map((feature, index) => (
-              <AboutFeatureCard 
-                key={index}
-                {...feature} 
+        <section className="bg-blue-50 w-full flex flex-col gap-8 py-5 px-5 justify-center text-center rounded-b-3xl shadow-lg">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-11 gap-4 lg:gap-6 justify-center">
+            {MAJOR.map((category) => (
+              <CategoryCard
+                key={category.id}
+                {...category}
+                path={`/find-job?major=${category.id}`}
               />
             ))}
           </div>
         </section>
+
+        {/* --- Job Recommendation Section--- */}
+        <section className="w-full flex flex-col gap-3 mt-5 mb-10 justify-center text-center py-10 px-12">
+          <motion.div
+            variants={fadeInUp}
+            className="flex items-center justify-between mb-6"
+          >
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+              งานแนะนำ<span className="text-[#0C5BEA]">สำหรับนิสิต</span>
+            </h2>
+            <Link
+              href="/find-job"
+              className="text-sm font-semibold text-[#0C5BEA] hover:text-[#6D91D3] flex items-center gap-1.5 transition-colors group"
+            >
+              ดูทั้งหมด{" "}
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4 px-4 sm:px-0">
+            {loadingJobs ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-64 bg-gray-100 animate-pulse rounded-xl"
+                  />
+                ))}
+              </div>
+            ) : recommendedJobs.length > 0 ? (
+              recommendedJobs.map((job: any) => (
+                <JobCard
+                  key={job._id}
+                  isLoggedIn={isLoggedIn}
+                  isBookmarked={savedJobIds.includes(job._id)}
+                  onToggleBookmark={() => handleToggleBookmark(job._id)}
+                  data={{
+                    id: job._id,
+                    icon: getCategoryIcon(job.category),
+                    title: job.title,
+                    type: job.category,
+                    postedBy: job.owner,
+                    details: job.shortDescription,
+                    minCompensation: job.budgetMin.toLocaleString(),
+                    maxCompensation: job.budgetMax
+                      ? job.budgetMax.toLocaleString()
+                      : null,
+                    currency: "บาท",
+                    timeAgo: calculateTimeAgo(job.postedDate),
+                    isVisible: true,
+                  }}
+                />
+              ))
+            ) : (
+              <p className="col-span-full text-gray-500">
+                ยังไม่มีงานแนะนำในขณะนี้
+              </p>
+            )}
+          </div>
+
+          {/* ปุ่มดูงานทั้งหมด */}
+          <Link href="/find-job" className="mt-6">
+            <button className="bg-primary-blue-500 text-white font-medium text-base py-3 px-6 rounded-full shadow-md hover:bg-primary-blue-600 transition-colors hover:shadow-lg">
+              ดูงานทั้งหมด <Briefcase className="w-5 h-5 ml-2 inline" />
+            </button>
+          </Link>
+        </section>
+
+        {/* --- About Section ปรับปรุงใหม่ --- */}
+        <motion.section
+          variants={fadeInUp}
+          viewport={{ once: true, amount: 0.3 }}
+          initial="hidden"
+          whileInView="visible"
+          className="w-full flex flex-col gap-1 my-20 justify-center text-center px-6 md:px-12 max-w-7xl mx-auto"
+        >
+          <div className="flex flex-col items-center justify-center mb-12">
+            <motion.div
+              variants={fadeInUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: false, amount: 0.5 }}
+              className="flex items-center justify-center gap-4 mb-4"
+            >
+              <img
+                src="/logo/cosci-hub-logo.png"
+                alt="COSCI Hub Logo"
+                className="h-12 md:h-14 w-auto"
+              />
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+                คืออะไร?
+              </h2>
+            </motion.div>
+
+            <motion.p
+              variants={fadeInUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{ delay: 0.1 }}
+              className="text-xl font-black text-gray-900 tracking-tight leading-tight mt-2 max-w-2xl text-center"
+            >
+              แพลตฟอร์มที่รวบรวมงานพิเศษสำหรับ
+              <span className="text-[#0C5BEA] font-semibold">นิสิต COSCI </span>{" "}
+              <br />{" "}
+              <span className="text-[#0C5BEA] text-l">
+                เพื่อประสบการณ์ที่มากกว่าการเรียนรู้
+              </span>
+            </motion.p>
+          </div>
+
+          <motion.div
+            variants={staggerContainer}
+            viewport={{ once: true }}
+            initial="hidden"
+            whileInView="visible"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-6 justify-items-center"
+          >
+            {ABOUT_FEATURES.map((feature, index) => (
+              <AboutFeatureCard key={index} {...feature} />
+            ))}
+          </motion.div>
+        </motion.section>
+
+        {/* --- 🚀 New Feature Sections (แยกเป็น Section) --- */}
+        <div className="w-full flex flex-col border-t border-gray-100 mt-20">
+          {/* Loop แสดงผล 4 ฟีเจอร์แยกเป็น Section */}
+          {MODERN_FEATURES.map((feature, index) => (
+            <FeatureSection key={index} {...feature} />
+          ))}
+        </div>
 
         {/* --- Connect Section --- */}
-        <section className="w-full py-12 md:py-16"> 
-          <div className="lg:px-10 text-start mb-8 px-6"> 
+        <section className="w-full py-12 md:py-16">
+          <div className="lg:px-10 text-start mb-8 px-6">
             <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
               {CONNECT_SECTION_DATA.header}
             </h2>
-            <p className="text-sm text-gray-600 max-w-3xl leading-relaxed"> 
+            <p className="text-sm text-gray-600 max-w-3xl leading-relaxed">
               {CONNECT_SECTION_DATA.description}
             </p>
           </div>
 
           {/* Overlapping Bubbles Container */}
-        <div className="relative flex flex-col md:flex-row justify-center items-center mx-auto md:px-0">
+          <div className="relative flex flex-col md:flex-row justify-center items-center mx-auto md:px-0">
+            {/* Left Bubble */}
+            <div
+              className="relative flex-1 flex items-center justify-start text-white p-6 md:p-8 z-20 w-full md:w-1/2 min-h-[300px] md:min-h-[350px]"
+              style={{
+                background:
+                  "linear-gradient(90deg, #1E3A8A 0%, #1D4ED8 70%, #2563EB 100%)",
+                borderTopRightRadius: "9999px",
+                borderBottomRightRadius: "9999px",
+                marginRight: "-20px",
+                boxShadow: "0 10px 20px rgba(30, 64, 175, 0.4)",
+              }}
+            >
+              <div className="absolute inset-0 rounded-r-full bg-black/10"></div>
 
-          {/* Left Bubble */}
-          <div
-            className="relative flex-1 flex items-center justify-start text-white p-6 md:p-8 z-20 w-full md:w-1/2 min-h-[300px] md:min-h-[350px]"
-            style={{
-              background: "linear-gradient(90deg, #1E3A8A 0%, #1D4ED8 70%, #2563EB 100%)",
-              borderTopRightRadius: "9999px",
-              borderBottomRightRadius: "9999px",
-              marginRight: "-20px",
-              boxShadow: "0 10px 20px rgba(30, 64, 175, 0.4)",
-            }}
-          >
-            <div className="absolute inset-0 rounded-r-full bg-black/10"></div>
+              {/* Content Area */}
+              <div className="relative z-30 flex flex-col items-end justify-center w-full h-full pr-10">
+                <img
+                  src="/images/female.png"
+                  alt="Female avatar"
+                  className="w-40 md:w-80 h-auto drop-shadow-2xl absolute bottom-0 left-0 z-10"
+                  style={{ transform: "translateX(-20%) translateY(35%)" }}
+                />
 
-            {/* Content Area */}
-            <div className="relative z-30 flex flex-col items-end justify-center w-full h-full pr-10">
-              
-              <img
-                src="/images/female.png"
-                alt="Female avatar"
-                className="w-40 md:w-80 h-auto drop-shadow-2xl absolute bottom-0 left-0 z-10" 
-                style={{ transform: 'translateX(-20%) translateY(35%)' }} 
-              />
+                <p
+                  className="text-xl md:text-xl text-right leading-snug tracking-wide max-w-[80%] z-10"
+                  style={{
+                    textShadow: "2px 2px 4px rgba(0, 0, 0, 0.4)",
+                  }}
+                >
+                  พัฒนาทักษะจาก <span className="font-bold">การทำงานจริง</span>
+                  <br />
+                  กับ{" "}
+                  <span className="font-bold">ผู้ว่าจ้างที่น่าเชื่อถือ</span>
+                  <br />
+                  สร้าง <span className="font-bold">ประสบการณ์</span> และ
+                  <br />
+                  <span className="font-bold">รายได้ระหว่างเรียน</span>
+                </p>
+              </div>
+            </div>
 
-              <p className="text-xl md:text-xl text-right leading-snug tracking-wide max-w-[80%] z-10" 
-                  style={{ 
-                  textShadow: '2px 2px 4px rgba(0, 0, 0, 0.4)'
-              }}>
-                พัฒนาทักษะจาก <span className="font-bold">การทำงานจริง</span><br />
-                กับ <span className="font-bold">ผู้ว่าจ้างที่น่าเชื่อถือ</span><br />
-                สร้าง <span className="font-bold">ประสบการณ์</span> และ<br />
-                <span className="font-bold">รายได้ระหว่างเรียน</span>
-              </p>
+            {/* Right Bubble */}
+            <div
+              className="relative flex-1 flex items-center justify-end text-gray-800 p-6 md:p-8 z-10 w-full md:w-1/2 mt-4 md:mt-0 min-h-[300px] md:min-h-[350px]"
+              style={{
+                background:
+                  "linear-gradient(90deg, #2563EB 20%, #BEE3FF 100%, #FFFFFF 100%)",
+                borderTopLeftRadius: "9999px",
+                borderBottomLeftRadius: "9999px",
+                marginLeft: "-20px",
+                boxShadow: "0 10px 20px rgba(96,165,250,0.25)",
+              }}
+            >
+              {/* Content Area */}
+              <div className="relative z-30 flex flex-col items-start justify-center w-full h-full pl-10">
+                <img
+                  src="/images/male.png"
+                  alt="Male avatar"
+                  className="w-40 md:w-80 h-auto drop-shadow-2xl absolute bottom-0 right-0 z-10"
+                  style={{ transform: "translateX(10%) translateY(40%)" }}
+                />
+
+                <p
+                  className="text-xl md:text-xl text-left leading-snug tracking-wide max-w-[80%] text-white z-10"
+                  style={{
+                    textShadow: "2px 2px 4px rgba(0, 0, 0, 0.4)",
+                  }}
+                >
+                  ส่งเสริม{" "}
+                  <span className="font-bold">การเรียนรู้เชิงปฏิบัติ</span>
+                  <br />
+                  สร้างโอกาสและเสริมศักยภาพ
+                  <br />
+                  ให้นิสิตในโลกการทำงานจริง
+                </p>
+              </div>
             </div>
           </div>
-
-          {/* Right Bubble */}
-          <div
-            className="relative flex-1 flex items-center justify-end text-gray-800 p-6 md:p-8 z-10 w-full md:w-1/2 mt-4 md:mt-0 min-h-[300px] md:min-h-[350px]"
-            style={{
-              background: "linear-gradient(90deg, #2563EB 20%, #BEE3FF 100%, #FFFFFF 100%)",
-              borderTopLeftRadius: "9999px",
-              borderBottomLeftRadius: "9999px",
-              marginLeft: "-20px", 
-              boxShadow: "0 10px 20px rgba(96,165,250,0.25)",
-            }}
-          >
-            {/* Content Area */}
-            <div className="relative z-30 flex flex-col items-start justify-center w-full h-full pl-10"> 
-              
-              <img
-                src="/images/male.png"
-                alt="Male avatar"
-                className="w-40 md:w-80 h-auto drop-shadow-2xl absolute bottom-0 right-0 z-10" 
-                style={{ transform: 'translateX(10%) translateY(40%)' }}
-              />
-              
-              <p className="text-xl md:text-xl text-left leading-snug tracking-wide max-w-[80%] text-white z-10" 
-                  style={{ 
-                  textShadow: '2px 2px 4px rgba(0, 0, 0, 0.4)'
-              }}> 
-                ส่งเสริม <span className="font-bold">การเรียนรู้เชิงปฏิบัติ</span><br />
-                สร้างโอกาสและเสริมศักยภาพ<br />
-                ให้นิสิตในโลกการทำงานจริง
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
       </motion.div>
     </>
   );

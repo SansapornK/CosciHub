@@ -4,14 +4,14 @@ import { getServerSession } from "next-auth/next";
 import dbConnect from "@/libs/mongodb";
 import Job from "@/models/Job";
 import User from "@/models/User";
-import { FilterQuery } from "mongoose"; 
+import { FilterQuery } from "mongoose";
 
 interface IJobFilter {
   title?: { $regex: string; $options: string };
   category?: { $in: string[] };
   budgetMin?: { $gte?: number; $lte?: number };
-  owner?:    string;                                 
-  status?:   "draft" | "published" | "closed";   
+  ownerId?: string;
+  status?: "draft" | "published" | "closed";
 }
 
 /* ===================== GET — ดึงรายการงาน ===================== */
@@ -24,24 +24,23 @@ export async function GET(req: Request) {
   const limit = parseInt(searchParams.get("limit") || "12");
   const skip = (page - 1) * limit;
 
-  const q         = searchParams.get("q");
-  const jobTypes  = searchParams.get("jobTypes");
-  const minPrice  = searchParams.get("minPrice");
-  const maxPrice  = searchParams.get("maxPrice");
-  const sort      = searchParams.get("sort");
-  const owner     = searchParams.get("owner");
+  const q = searchParams.get("q");
+  const jobTypes = searchParams.get("jobTypes");
+  const minPrice = searchParams.get("minPrice");
+  const maxPrice = searchParams.get("maxPrice");
+  const sort = searchParams.get("sort");
+  const ownerId = searchParams.get("ownerId");
   const includeDraft = searchParams.get("includeDraft") === "true";
 
   const filter: IJobFilter = {};
 
-  if (q)        filter.title    = { $regex: q, $options: "i" };
+  if (q) filter.title = { $regex: q, $options: "i" };
   if (jobTypes) filter.category = { $in: jobTypes.split(",") };
-    // ถ้าไม่ได้ขอ draft ให้แสดงเฉพาะ published เท่านั้น
+  // ถ้าไม่ได้ขอ draft ให้แสดงเฉพาะ published เท่านั้น
   if (!includeDraft) {
     filter.status = "published";
   }
-  if (owner) filter.owner = owner;
-
+  if (ownerId) filter.ownerId = ownerId;
 
   if (minPrice || maxPrice) {
     filter.budgetMin = {};
@@ -51,13 +50,15 @@ export async function GET(req: Request) {
 
   const total = await Job.countDocuments(filter as FilterQuery<typeof Job>);
 
-const jobs = await (Job as any)
+  const jobs = await (Job as any)
     .find(filter)
     .lean()
     .sort(
-      sort === "price-asc"  ? { budgetMin: 1 } :
-      sort === "price-desc" ? { budgetMin: -1 } :
-                              { postedDate: -1 }
+      sort === "price-asc"
+        ? { budgetMin: 1 }
+        : sort === "price-desc"
+          ? { budgetMin: -1 }
+          : { postedDate: -1 },
     )
     .skip(skip)
     .limit(limit)
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "กรุณาเข้าสู่ระบบก่อนลงประกาศงาน" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -88,14 +89,14 @@ export async function POST(req: Request) {
     if (user.role === "student") {
       return NextResponse.json(
         { error: "นักศึกษาไม่มีสิทธิ์ลงประกาศงาน" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    if (user.role === 'alumni' && user.verificationStatus !== 'approved') {
+    if (user.role === "alumni" && user.verificationStatus !== "approved") {
       return NextResponse.json(
-        { error: 'บัญชีของคุณยังรอการยืนยันตัวตนจากอาจารย์' },
-        { status: 403 }
+        { error: "บัญชีของคุณยังรอการยืนยันตัวตนจากอาจารย์" },
+        { status: 403 },
       );
     }
 
@@ -104,15 +105,22 @@ export async function POST(req: Request) {
 
     if (data.status !== "draft") {
       const requiredFields = [
-        "title", "category", "shortDescription", "description",
-        "qualifications", "jobType",
-        "budgetMin", "budgetMax", "capacity", "applicationDeadline",
+        "title",
+        "category",
+        "shortDescription",
+        "description",
+        "qualifications",
+        "jobType",
+        "budgetMin",
+        "budgetMax",
+        "capacity",
+        "applicationDeadline",
       ];
       const missing = requiredFields.filter((f) => !data[f]);
       if (missing.length > 0) {
         return NextResponse.json(
           { error: `กรุณากรอกข้อมูลให้ครบ: ${missing.join(", ")}` },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -120,49 +128,53 @@ export async function POST(req: Request) {
     if (Number(data.budgetMin) < 100) {
       return NextResponse.json(
         { error: "ค่าตอบแทนขั้นต่ำต้องไม่น้อยกว่า 100 บาท" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (Number(data.budgetMin) > Number(data.budgetMax)) {
       return NextResponse.json(
         { error: "ค่าตอบแทนเริ่มต้นต้องไม่มากกว่าค่าตอบแทนสูงสุด" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const allowedStatus = ["published", "draft"];
-    const jobStatus = allowedStatus.includes(data.status) ? data.status : "published";
+    const jobStatus = allowedStatus.includes(data.status)
+      ? data.status
+      : "published";
 
     // 4. สร้าง Job document
     const newJob = new Job({
-      title:               data.title,
-      category:            data.category,
-      shortDescription:    data.shortDescription,
-      description:         data.description,
-      qualifications:      data.qualifications,
-      attachments:         data.attachments || null,
-      jobType:             data.jobType,
-      location:            data.location || null,
-      deliveryDate:        data.deliveryDate ? new Date(data.deliveryDate) : null,
-      budgetMin:           Number(data.budgetMin),
-      budgetMax:           Number(data.budgetMax),
-      capacity:            Number(data.capacity),
+      title: data.title,
+      category: data.category,
+      shortDescription: data.shortDescription,
+      description: data.description,
+      qualifications: data.qualifications,
+      attachments: data.attachments || null,
+      jobType: data.jobType,
+      location: data.location || null,
+      deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
+      budgetMin: Number(data.budgetMin),
+      budgetMax: Number(data.budgetMax),
+      capacity: Number(data.capacity),
       applicationDeadline: new Date(data.applicationDeadline),
-      owner:               user.name,
-      status:              jobStatus,
-      postedDate:          new Date(),
+      ownerId: user._id,
+      owner: user.name,
+      contactInfo: data.contactInfo || user.email,
+      status: jobStatus,
+      postedDate: new Date(),
     });
     await newJob.save();
 
     return NextResponse.json(
       { message: "ลงประกาศงานสำเร็จ", job: newJob },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: any) {
-    console.error("[POST /api/jobs] Error:", error);
+    console.error("Mongoose Error Detail:", error.errors);
     return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" },
-      { status: 500 }
+      { error: error.message || "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" },
+      { status: 500 },
     );
   }
 }

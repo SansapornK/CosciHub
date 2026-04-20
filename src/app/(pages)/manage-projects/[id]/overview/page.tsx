@@ -76,16 +76,17 @@ export default function JobOverviewPage() {
   const fetchJobOverview = async () => {
     setLoading(true);
     try {
+      const userId = (session?.user as any)?.id || (session?.user as any)?._id;
+
       const [activeRes, completedRes] = await Promise.all([
         axios.get("/api/applications", {
-          params: { role: "owner", phase: "inProgress" },
+          params: { role: "owner", phase: "inProgress", ownerId: userId }, 
         }),
         axios.get("/api/applications", {
-          params: { role: "owner", phase: "completed" },
+          params: { role: "owner", phase: "completed", ownerId: userId }, 
         }),
       ]);
 
-      // รวมงานจากทั้ง 2 phase
       const allJobs: JobOverview[] = [
         ...(activeRes.data.jobs || []),
         ...(completedRes.data.jobs || []),
@@ -96,8 +97,6 @@ export default function JobOverviewPage() {
       if (!found) {
         setError("ไม่พบข้อมูลงานนี้");
       } else {
-        // 💡 จุดสำคัญ: ตรวจสอบข้อมูล workers อีกครั้ง
-        // ตรวจสอบใน Console ดูว่า API ส่ง ownerReview มาใน Object worker หรือยัง
         console.log("Found Job Workers:", found.workers);
         setJob(found);
       }
@@ -133,7 +132,7 @@ export default function JobOverviewPage() {
         `บันทึกรีวิวให้คุณ ${selectedWorker.applicantName} เรียบร้อยแล้ว!`,
       );
       setIsReviewModalOpen(false);
-      fetchJobOverview(); 
+      fetchJobOverview();
     } catch (err: any) {
       toast.error(err.response?.data?.error || "เกิดข้อผิดพลาดในการส่งรีวิว");
     } finally {
@@ -252,6 +251,9 @@ export default function JobOverviewPage() {
             const wStatus =
               statusLabel[worker.status] ?? statusLabel.in_progress;
             const isDone = worker.status === "completed";
+
+            const hasOwnerReviewed = !!worker.ownerReview?.rating;
+
             return (
               <div
                 key={worker._id}
@@ -293,19 +295,17 @@ export default function JobOverviewPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {isDone ? (
-                    worker.ownerReview ? (
-                      <div className="flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-600 rounded-xl border border-green-100 text-xs font-bold">
-                        <CheckCircle size={14} /> รีวิวเรียบร้อย
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => openReviewModal(worker)}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 text-white rounded-xl font-bold text-xs hover:bg-yellow-500 shadow-lg shadow-yellow-100 transition-all active:scale-95"
-                      >
-                        <Star size={14} fill="currentColor" /> ให้คะแนนนิสิต
-                      </button>
-                    )
+                  {isDone && !hasOwnerReviewed ? (
+                    <button
+                      onClick={() => openReviewModal(worker)}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 text-white rounded-xl font-bold text-xs hover:bg-yellow-500 shadow-lg shadow-yellow-100 transition-all active:scale-95"
+                    >
+                      <Star size={14} fill="currentColor" /> ให้คะแนนนิสิต
+                    </button>
+                  ) : hasOwnerReviewed ? (
+                    <div className="flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-600 rounded-xl border border-green-100 text-xs font-bold">
+                      <CheckCircle size={14} /> รีวิวเรียบร้อย
+                    </div>
                   ) : null}
 
                   <Link
