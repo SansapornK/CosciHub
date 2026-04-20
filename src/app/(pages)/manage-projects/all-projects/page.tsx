@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
 import Loading from "../../../components/common/Loading";
-import { Toaster } from 'react-hot-toast';
 import { toast } from "react-hot-toast";
 import { usePusher } from "../../../../providers/PusherProvider";
 
@@ -248,9 +247,6 @@ export default function AllProjectsPage() {
 
   return (
     <div className="w-full mx-auto pt-6">
-      {/* Toaster component for showing notifications */}
-      <Toaster position="bottom-left" />
-
       <div className="flex justify-between items-center mb-6">
         <Link href="/manage-projects" className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

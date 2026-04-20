@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import Loading from '../../../components/common/Loading';
 import ApplyButton from '../../../components/buttons/ApplyButton';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { usePusher } from '../../../../providers/PusherProvider';
 import ProjectManageButtons from '@/app/components/buttons/ProjectManageButtons';
 import SendMessageButton from '@/app/components/buttons/SendMessageButton';
@@ -203,9 +203,6 @@ export default function ProjectPage() {
 
   return (
     <div className="w-full mx-auto mt-6">
-      {/* Toaster for notifications */}
-      <Toaster position="bottom-left" />
-      
       {/* Back button and Apply/Action button */}
       <div className="flex justify-between items-center mb-6">
         <Link href="/project-board" className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 transition-colors">

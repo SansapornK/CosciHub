@@ -23,7 +23,7 @@ import {
   X,
   Pencil,
 } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 import Loading from "../../../../../components/common/Loading";
 
@@ -286,8 +286,6 @@ export default function WorkManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/30 pb-20 selection:bg-blue-100 selection:text-blue-600">
-      <Toaster position="top-right" />
-
       {/* ── Header Area ── */}
       <motion.section
         initial={{ opacity: 0, y: -20 }}

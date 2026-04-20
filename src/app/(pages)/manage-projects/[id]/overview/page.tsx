@@ -14,7 +14,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Loading from "../../../../components/common/Loading";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Worker {
@@ -171,8 +171,6 @@ export default function JobOverviewPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
-      <Toaster position="bottom-left" />
-
       <div className="mt-6 mb-1">
         <Link
           href="/manage-projects"

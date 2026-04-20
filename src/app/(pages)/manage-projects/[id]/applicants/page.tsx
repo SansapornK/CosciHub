@@ -8,7 +8,7 @@ import axios from "axios";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Loading from "../../../../components/common/Loading";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import EmployerWithdrawModal from "../../../../components/modals/EmployerWithdrawModal";
 import StudentContactModal from "../../../../components/modals/StudentContactModal";
 import ConfirmationModal from "../../../../components/modals/ConfirmationModal";
@@ -322,8 +322,6 @@ export default function ApplicantsPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
-      <Toaster position="bottom-left" />
-
         <div className="mt-6 mb-1">
             <Link href="/manage-projects" className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 w-fit">
                 <ArrowLeft size={18} /> กลับหน้าติดตามงาน

@@ -20,7 +20,7 @@ import {
   getCategoryIcon,
   calculateTimeAgo,
 } from "@/app/components/utils/jobHelpers";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
 
 type JobStatus = "draft" | "published" | "in_progress" | "awaiting" | "completed" | "closed";
@@ -202,7 +202,6 @@ export default function MyJobsPage() {
 
   return (
     <div className="bg-gray-50/50 min-h-screen">
-      <Toaster position="top-center" />
 
       {/* Confirmation Modal */}
       <ConfirmationModal

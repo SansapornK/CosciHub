@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
@@ -302,7 +302,6 @@ export default function CreateJobPage() {
   /* ===================== JSX ===================== */
   return (
     <div className="bg-gray-50/50 min-h-screen">
-      <Toaster position="top-center" reverseOrder={false} />
 
       {/* Confirmation Modal */}
       <ConfirmationModal
@@ -668,14 +667,14 @@ export default function CreateJobPage() {
                   htmlFor="applicationDeadline"
                   className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"
                 >
-                  วันสิ้นสุดรับสมัคร
+                  วันสิ้นสุดการรับสมัคร
                   <span className="text-red-400">*</span>
                   <span className="relative group">
                     <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
                     <span className="absolute  -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-xs text-center rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
                       - คุณสามารถปิดรับสมัครก่อนกำหนดได้
                       <br />
-                      - หากเลยวันสิ้นสุดรับสมัคร งานจะปิดรับสมัครและไม่แสดงบนหน้าค้นหางาน 
+                      - หากเลยวันสิ้นสุดการรับสมัคร งานของคุณจะถูกปิดรับสมัครโดยอัตโนมัติ
                     </span>
                   </span>
                 </label>

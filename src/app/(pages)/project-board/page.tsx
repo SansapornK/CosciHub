@@ -6,7 +6,6 @@ import ProjectFilter from "../../components/filters/ProjectFilter";
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
-import { Toaster } from 'react-hot-toast';
 import { usePusher } from "../../../providers/PusherProvider";
 
 // รายชื่อทักษะตามหมวดหมู่
@@ -118,9 +117,6 @@ function ProjectBoardContent() {
 
     return (
         <div className="flex flex-col gap-3">
-            {/* Toaster component for showing notifications */}
-            <Toaster position="bottom-left" />
-            
             {/* page title */}
             <section className="mt-6 mb-4 flex gap-6 flex-col md:flex-row justify-between place-items-end">
                 <div className="flex flex-col gap-2">

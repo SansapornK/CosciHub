@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import Loading from "../../components/common/Loading";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { usePusher } from "../../../providers/PusherProvider";
 import Link from "next/link";
 import {
@@ -461,8 +461,6 @@ export default function ManageProjectsPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto w-full">
-      <Toaster position="bottom-left" />
-
       {isFreelancer ? (
         <div className="flex justify-between items-center mt-8">
           <h2 className="text-3xl font-black text-[#0C5BEA] flex items-center gap-3">

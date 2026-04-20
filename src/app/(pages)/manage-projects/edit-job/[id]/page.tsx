@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter, useParams } from 'next/navigation';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
@@ -233,7 +233,6 @@ export default function EditJobPage() {
   /* ══ JSX ══ */
   return (
     <div className="bg-gray-50/50 min-h-screen">
-      <Toaster position="top-center" />
 
       {/* Confirmation Modal */}
       <ConfirmationModal
