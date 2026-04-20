@@ -14,7 +14,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Loading from "../../../../components/common/Loading";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Worker {
@@ -168,18 +168,8 @@ export default function JobOverviewPage() {
     completed: { text: "เสร็จสมบูรณ์", cls: "bg-green-100 text-green-700" },
   };
 
-  //   const breakdownItems = [
-  //     { count: job.statusCounts.submitted,      label: "รอตรวจ",  cls: "bg-red-50 text-red-700"       },
-  //     { count: job.statusCounts.revision,       label: "แก้ไข",   cls: "bg-orange-50 text-orange-700" },
-  //     { count: job.statusCounts.inProgress,     label: "กำลังทำ", cls: "bg-yellow-50 text-yellow-700" },
-  //     { count: job.statusCounts.waitingToStart, label: "รอเริ่ม", cls: "bg-blue-50 text-blue-700"     },
-  //     { count: job.statusCounts.completed,      label: "เสร็จ",   cls: "bg-green-50 text-green-700"   },
-  //   ].filter((item) => item.count > 0);
-
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
-      <Toaster position="bottom-left" />
-
       <div className="mt-6 mb-1">
         <Link
           href="/manage-projects"

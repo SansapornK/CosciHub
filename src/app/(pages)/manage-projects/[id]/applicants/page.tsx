@@ -8,7 +8,10 @@ import axios from "axios";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Loading from "../../../../components/common/Loading";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
+import EmployerWithdrawModal from "../../../../components/modals/EmployerWithdrawModal";
+import StudentContactModal from "../../../../components/modals/StudentContactModal";
+import ConfirmationModal from "../../../../components/modals/ConfirmationModal";
 
 // ─── Interfaces ───────────────────────────────────
 interface Applicant {
@@ -22,6 +25,7 @@ interface Applicant {
   bio: string;
   profileImageUrl: string | null;
   major: string;
+  contactInfo?: string[];
 //   basePrice: number;
 }
 
@@ -44,7 +48,7 @@ function getMatchScore(skills: string[], required: string[]): number {
 // ─── SkillBadge ───────────────────────────────────
 function SkillBadge({ skill }: { skill: string }) {
   return (
-    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 text-gray-500">
+    <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 text-gray-500 whitespace-nowrap flex-shrink-0">
       {skill}
     </span>
   );
@@ -55,11 +59,15 @@ function ApplicantCard({
   applicant,
   onAccept,
   onReject,
+  onWithdraw,
+  onContact,
   isLoading,
 }: {
   applicant: Applicant;
-  onAccept: (appId: string) => void;
-  onReject: (appId: string) => void;
+  onAccept: () => void;
+  onReject: () => void;
+  onWithdraw: (applicant: Applicant) => void;
+  onContact: (applicant: Applicant) => void;
   isLoading: boolean;
 }) {
     const statusConfig: Record<string, { label: string; className: string }> = {
@@ -94,39 +102,44 @@ function ApplicantCard({
             </p>
           </div>
         </div>
-        <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${s.className}`}>
-          {s.label}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${s.className}`}>
+            {s.label}
+          </span>
+          {applicant.status === "accepted" && (
+            <button
+              onClick={() => onContact(applicant)}
+              className="text-xs text-primary-blue-600 hover:underline transition-colors"
+            >
+              ติดต่อผู้สมัคร
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Bio */}
       {applicant.bio && (
-        <p className="text-sm text-gray-500 line-clamp-2">{applicant.bio}</p>
+        <p className="text-sm text-gray-500 line-clamp-1">{applicant.bio}</p>
       )}
-
-      {/* Base Price
-      {applicant.basePrice > 0 && (
-        <p className="text-sm font-medium text-gray-700">
-          ราคาเริ่มต้น:{' '}
-          <span className="text-primary-blue-600">
-            {applicant.basePrice.toLocaleString()} บาท
-          </span>
-        </p>
-      )} */}
 
       {/* Skills */}
       {applicant.skills.length > 0 && (
         <div>
           <p className="text-xs text-gray-400 mb-1.5 font-medium">ทักษะ</p>
-          <div className="flex flex-wrap gap-1.5">
-            {applicant.skills.map(skill => (
+          <div className="flex flex-nowrap gap-1.5">
+            {applicant.skills.slice(0, 2).map(skill => (
               <SkillBadge key={skill} skill={skill} />
             ))}
+            {applicant.skills.length > 2 && (
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 text-gray-500 whitespace-nowrap flex-shrink-0">
+                +{applicant.skills.length - 2}
+              </span>
+            )}
           </div>
         </div>
       )}
 
-      {/* Action Buttons — แสดงเฉพาะ pending */}
+      {/* Action Buttons */}
       {applicant.status === "pending" ? (
         <div className="flex gap-2 pt-1">
           {applicant.userId && (
@@ -139,18 +152,37 @@ function ApplicantCard({
             </Link>
           )}
           <button
-            className="flex-1 btn-danger text-sm py-2 rounded-lg disabled:opacity-50"
-            onClick={() => onReject(applicant._id)}
+            className="flex-1 text-sm border border-red-400 text-red-500 rounded-lg py-2 hover:bg-red-50 transition-colors disabled:opacity-50"
+            onClick={onReject}
             disabled={isLoading}
           >
             ปฏิเสธ
           </button>
           <button
-            className="flex-1 btn-primary text-sm py-2 rounded-full disabled:opacity-50"
-            onClick={() => onAccept(applicant._id)}
+            className="flex-1 btn-primary text-sm py-2 disabled:opacity-50"
+            onClick={onAccept}
             disabled={isLoading}
           >
             รับเข้าทำงาน
+          </button>
+        </div>
+      ) : applicant.status === "accepted" ? (
+        <div className="flex gap-2 pt-1">
+          {applicant.userId && (
+            <Link
+              href={`/user/freelancer/${applicant.userId}`}
+              target="_blank"
+              className="flex-1 text-center text-sm border border-gray-300 text-gray-600 rounded-lg py-2 hover:bg-gray-50 transition-colors"
+            >
+              ดูโปรไฟล์
+            </Link>
+          )}
+          <button
+            className="flex-1 text-sm border border-red-400 text-red-500 rounded-lg py-2 hover:bg-red-50 transition-colors disabled:opacity-50"
+            onClick={() => onWithdraw(applicant)}
+            disabled={isLoading}
+          >
+            ยกเลิกการจ้าง
           </button>
         </div>
       ) : (
@@ -182,6 +214,10 @@ export default function ApplicantsPage() {
   const [error, setError]           = useState<string | null>(null);
   const [pendingCount, setPendingCount]   = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
+  const [withdrawApplicant, setWithdrawApplicant] = useState<Applicant | null>(null);
+  const [contactApplicant, setContactApplicant] = useState<Applicant | null>(null);
+  const [confirmAccept, setConfirmAccept] = useState<Applicant | null>(null);
+  const [confirmReject, setConfirmReject] = useState<Applicant | null>(null);
 
   // ─── Redirect ─────────────────────────────────
   useEffect(() => {
@@ -224,11 +260,7 @@ export default function ApplicantsPage() {
 
       if (res.data.success) {
         toast.success(res.data.message);
-        if (res.data.isFull) {
-          setTimeout(() => router.push('/manage-projects'), 1200);
-        } else {
-          await fetchData();
-        }
+        await fetchData();
       } else {
         toast.error(res.data.error || 'เกิดข้อผิดพลาด');
       }
@@ -263,6 +295,11 @@ export default function ApplicantsPage() {
     }
   };
 
+  // ─── Withdraw (Employer) ───────────────────────────────────
+  const handleWithdrawSuccess = async () => {
+    await fetchData();
+  };
+
   // ─── Render ───────────────────────────────────
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-screen">
@@ -285,11 +322,9 @@ export default function ApplicantsPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
-      <Toaster position="bottom-left" />
-
         <div className="mt-6 mb-1">
             <Link href="/manage-projects" className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 w-fit">
-                <ArrowLeft size={18} /> กลับหน้าจัดการโปรเจกต์
+                <ArrowLeft size={18} /> กลับหน้าติดตามงาน
             </Link>
         </div>
 
@@ -355,9 +390,6 @@ export default function ApplicantsPage() {
       {applicants.length === 0 ? (
         <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-10 text-center">
           <p className="text-gray-500">ยังไม่มีผู้สมัครในขณะนี้</p>
-          <Link href="/manage-projects" className="mt-4 inline-block btn-secondary text-sm">
-            กลับหน้าจัดการโปรเจกต์
-          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -371,13 +403,66 @@ export default function ApplicantsPage() {
               <ApplicantCard
                 key={applicant._id}
                 applicant={applicant}
-                onAccept={handleAccept}
-                onReject={handleReject}
+                onAccept={() => setConfirmAccept(applicant)}
+                onReject={() => setConfirmReject(applicant)}
+                onWithdraw={setWithdrawApplicant}
+                onContact={setContactApplicant}
                 isLoading={actionLoading}
               />
             ))}
         </div>
       )}
+
+      <EmployerWithdrawModal
+        isOpen={!!withdrawApplicant}
+        applicant={withdrawApplicant}
+        onClose={() => setWithdrawApplicant(null)}
+        onSuccess={handleWithdrawSuccess}
+      />
+
+      <StudentContactModal
+        isOpen={!!contactApplicant}
+        student={contactApplicant ? {
+          applicantName: contactApplicant.applicantName,
+          contactInfo: contactApplicant.contactInfo
+        } : null}
+        onClose={() => setContactApplicant(null)}
+      />
+
+      {/* Confirmation Modals */}
+      <ConfirmationModal
+        isOpen={!!confirmAccept}
+        title="ยืนยันการรับเข้าทำงาน"
+        message={`รับ ${confirmAccept?.applicantName} เข้าทำงาน`}
+        confirmText="รับเข้าทำงาน"
+        cancelText="ยกเลิก"
+        variant="primary"
+        isLoading={actionLoading}
+        onConfirm={() => {
+          if (confirmAccept) {
+            handleAccept(confirmAccept._id);
+            setConfirmAccept(null);
+          }
+        }}
+        onClose={() => setConfirmAccept(null)}
+      />
+
+      <ConfirmationModal
+        isOpen={!!confirmReject}
+        title="ยืนยันการปฏิเสธผู้สมัคร"
+        message={`ปฏิเสธ ${confirmReject?.applicantName}`}
+        confirmText="ปฏิเสธ"
+        cancelText="ยกเลิก"
+        variant="danger"
+        isLoading={actionLoading}
+        onConfirm={() => {
+          if (confirmReject) {
+            handleReject(confirmReject._id);
+            setConfirmReject(null);
+          }
+        }}
+        onClose={() => setConfirmReject(null)}
+      />
     </div>
   );
 }

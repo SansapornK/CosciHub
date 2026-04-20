@@ -10,8 +10,9 @@ interface IJobFilter {
   title?: { $regex: string; $options: string };
   category?: { $in: string[] };
   budgetMin?: { $gte?: number; $lte?: number };
-  ownerId?: string;
-  status?: "draft" | "published" | "closed";
+  owner?: string;
+  status?: "draft" | "published" | "closed" | { $nin: string[] };
+  applicationDeadline?: { $gte: Date };
 }
 
 /* ===================== GET — ดึงรายการงาน ===================== */
@@ -36,9 +37,12 @@ export async function GET(req: Request) {
 
   if (q) filter.title = { $regex: q, $options: "i" };
   if (jobTypes) filter.category = { $in: jobTypes.split(",") };
-  // ถ้าไม่ได้ขอ draft ให้แสดงเฉพาะ published เท่านั้น
+
+  // ถ้าไม่ได้ขอ includeDraft (สำหรับหน้า find-jobs)
+  // → แสดงเฉพาะ published + ยังไม่หมดอายุ + ไม่ใช่ closed
   if (!includeDraft) {
     filter.status = "published";
+    // filter.applicationDeadline = { $gte: new Date() };
   }
   if (ownerId) filter.ownerId = ownerId;
 

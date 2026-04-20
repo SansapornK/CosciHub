@@ -17,7 +17,10 @@ import {
   notifyProgressUpdated,
   notifyStudentReviewReceived,
   notifyOwnerReviewReceived,
-} from "@/utils/notificationUtils";
+  notifyApplicationWithdrawnByStudent,
+  notifyApplicationWithdrawnByEmployer,
+} from '@/utils/notificationUtils';
+
 
 export async function GET(
   req: Request,
@@ -229,28 +232,26 @@ export async function PATCH(
         { new: true },
       );
 
-      // ส่ง Notification หลัง save สำเร็จ
-      try {
-        if (role === "student" && isStudent) {
-          // นิสิตรีวิว → แจ้งผู้ว่าจ้าง
-          await notifyOwnerReviewReceived(
-            application.jobId.toString(),
-            application.applicantId.toString(),
-            id,
-            Number(rating),
-          );
-        } else if (role === "owner" && isOwner) {
-          // ผู้ว่าจ้างรีวิว → แจ้งนิสิต
-          await notifyStudentReviewReceived(
-            application.jobId.toString(),
-            application.applicantId.toString(),
-            id,
-            Number(rating),
-          );
+        // ส่ง Notification หลัง save สำเร็จ
+        try {
+            if (role === 'student' && isStudent) {
+            // นิสิตรีวิว → แจ้งผู้ว่าจ้าง
+            await notifyOwnerReviewReceived(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id,
+            );
+            } else if (role === 'owner' && isOwner) {
+            // ผู้ว่าจ้างรีวิว → แจ้งนิสิต
+            await notifyStudentReviewReceived(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id,
+            );
+            }
+        } catch (e) {
+            console.error('Review notification error:', e);
         }
-      } catch (e) {
-        console.error("Review notification error:", e);
-      }
 
       // ถ้าเป็นเจ้าของงานรีวิว ต้อง Sync สถานะ Job ใหญ่ด้วย
       if (role === "owner") {
@@ -519,21 +520,89 @@ export async function PATCH(
 
     // ─── withdraw (ยกเลิกใบสมัคร ก่อนเริ่มงาน) ──────
     if (action === "withdraw" && isStudent) {
-      // ยกเลิกได้เฉพาะ pending หรือ accepted เท่านั้น
-      if (!["pending", "accepted"].includes(application.status)) {
-        return NextResponse.json(
-          { error: "ไม่สามารถยกเลิกได้ เนื่องจากเริ่มทำงานไปแล้ว" },
-          { status: 400 },
-        );
-      }
+        // ยกเลิกได้เฉพาะ pending หรือ accepted เท่านั้น
+        if (!["pending", "accepted"].includes(application.status)) {
+            return NextResponse.json(
+            { error: "ไม่สามารถยกเลิกได้ เนื่องจากเริ่มทำงานไปแล้ว" },
+            { status: 400 }
+            );
+        }
 
-      await Application.findByIdAndDelete(id);
-      await syncJobParticipants(application.jobId.toString());
+        // แจ้งเจ้าของงานว่านิสิตยกเลิกใบสมัคร
+        console.log('[withdraw] Calling notifyApplicationWithdrawnByStudent...');
+        try {
+            const notiResult = await notifyApplicationWithdrawnByStudent(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id
+            );
+            console.log('[withdraw] Notification result:', notiResult);
+        } catch (e) { console.error('[withdraw] Notification error:', e); }
 
-      return NextResponse.json({
-        success: true,
-        message: "ยกเลิกการสมัครแล้ว",
-      });
+        await Application.findByIdAndDelete(id);
+        await syncJobParticipants(application.jobId.toString());
+
+        //  ตรวจสอบและคืน job status ถ้า capacity ยังไม่เต็ม
+        const capacity = job.capacity || 1;
+        const acceptedCount = await Application.countDocuments({
+            jobId: application.jobId,
+            status: { $in: ["accepted", "in_progress", "submitted", "revision", "completed"] },
+        });
+
+        if (acceptedCount < capacity && job.status === "in_progress") {
+            await (Job as any).findByIdAndUpdate(application.jobId, {
+                $set: { status: "published" }, // ✅ เปิดรับสมัครใหม่
+            });
+        }
+
+        return NextResponse.json({ success: true, message: "ยกเลิกการสมัครแล้ว" });
+    }
+
+    // ─── employerWithdraw (ผู้ว่าจ้างยกเลิกการจ้างนิสิต) ──────
+    if (action === "employerWithdraw" && isOwner) {
+        // ยกเลิกได้เฉพาะ accepted เท่านั้น (ยังไม่เริ่มงาน)
+        if (application.status !== "accepted") {
+            return NextResponse.json(
+            { error: "ไม่สามารถยกเลิกได้ เนื่องจากนิสิตเริ่มทำงานไปแล้ว หรือสถานะไม่ถูกต้อง" },
+            { status: 400 }
+            );
+        }
+
+        // แจ้งนิสิตว่าผู้ว่าจ้างยกเลิกใบสมัคร
+        console.log('[employerWithdraw] Calling notifyApplicationWithdrawnByEmployer...');
+        try {
+            const notiResult = await notifyApplicationWithdrawnByEmployer(
+                application.jobId.toString(),
+                application.applicantId.toString(),
+                id
+            );
+            console.log('[employerWithdraw] Notification result:', notiResult);
+        } catch (e) { console.error('[employerWithdraw] Notification error:', e); }
+
+        // ลบ application
+        await Application.findByIdAndDelete(id);
+        await syncJobParticipants(application.jobId.toString());
+
+        // ตรวจสอบจำนวนคนที่รับหลังจากยกเลิก
+        const capacity = job.capacity || 1;
+        const acceptedCount = await Application.countDocuments({
+            jobId: application.jobId,
+            status: { $in: ["accepted", "in_progress", "submitted", "revision", "completed"] },
+        });
+
+        // ถ้าจำนวนคนที่รับไม่ครบ capacity แล้วให้เปลี่ยน job status กลับเป็น published
+        if (acceptedCount < capacity && job.status === "in_progress") {
+            await (Job as any).findByIdAndUpdate(application.jobId, {
+            $set: { status: "published" },
+            });
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: "ยกเลิกการจ้างนิสิตแล้ว",
+            acceptedCount,
+            capacity
+        });
     }
 
     return NextResponse.json({ error: "action ไม่ถูกต้อง" }, { status: 400 });

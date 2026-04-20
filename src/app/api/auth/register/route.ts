@@ -23,7 +23,21 @@ export async function POST(req: NextRequest) {
     const role = formData.get('role') as 'student' | 'alumni' | 'teacher';
     const major = formData.get('major') as string;
     const bio = formData.get('bio') as string || '';
-    
+
+    // รับค่า contactInfo (array)
+    const contactInfoString = formData.get('contactInfo') as string;
+    let contactInfo: string[] = [];
+    if (contactInfoString) {
+      try {
+        contactInfo = JSON.parse(contactInfoString);
+        if (!Array.isArray(contactInfo)) {
+          contactInfo = [];
+        }
+      } catch (e) {
+        contactInfo = [];
+      }
+    }
+
     if (!email || !password || !firstName || !lastName || !role || !major) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -51,6 +65,7 @@ export async function POST(req: NextRequest) {
       role,
       major,
       bio,
+      contactInfo, // เพิ่มช่องทางการติดต่อ
       emailVerified: true, // Set to true since we verify via OTP
       password: hashedPassword,
     };
