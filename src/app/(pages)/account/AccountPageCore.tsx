@@ -83,7 +83,6 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // ✅ isOwnProfile: ถ้าไม่มี profileId = ดูของตัวเอง, ถ้ามี = เช็คกับ session
   const isOwnProfile = !profileId || profileId === session?.user?.id;
 
   const [userData, setUserData] = useState<any>(null);
@@ -105,6 +104,16 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   const [page3, setPage3] = useState(0);
 
   const experienceScrollRef = useRef<HTMLDivElement>(null);
+
+  const skillsRef = useRef<HTMLElement>(null);
+  const expRef = useRef<HTMLElement>(null);
+  const resumeRef = useRef<HTMLElement>(null);
+  const bioRef = useRef<HTMLDivElement>(null);
+
+  // scroll helper
+  const scrollTo = (ref: React.RefObject<HTMLElement | HTMLDivElement>) => {
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   useEffect(() => {
     if (experienceScrollRef.current) {
@@ -415,7 +424,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
           </div>
 
           {/* Bio */}
-          <div className="mt-12 px-12 md:px-24 lg:px-32">
+          <div ref={bioRef} className="mt-12 px-12 md:px-24 lg:px-32">
             <div className="max-w-full relative">
               {isOwnProfile && isEditingHeader ? (
                 <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -442,11 +451,107 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
         </div>
       </div>
 
+
+      {isOwnProfile &&
+        userData?.role === "student" &&
+        (() => {
+          const missing = [
+            !userData?.bio && {
+              key: "bio",
+              label: "แนะนำตัว (Bio)",
+              desc: "เพิ่มคำแนะนำตัวสั้นๆ ให้ผู้ว่าจ้างรู้จักคุณ",
+              status: "ยังไม่กรอก",
+              color: "danger",
+              onClick: () => {
+                setTempBio("");
+                setIsEditingHeader(true);
+                scrollTo(bioRef);
+              },
+            },
+            (!userData?.skills || userData.skills.length < 5) && {
+              key: "skills",
+              label: "ความถนัด",
+              desc: `มี ${userData?.skills?.length || 0} ทักษะ — แนะนำอย่างน้อย 5`,
+              status:
+                userData?.skills?.length > 0
+                  ? `มี ${userData.skills.length} รายการ`
+                  : "ยังไม่กรอก",
+              color: userData?.skills?.length > 0 ? "warning" : "danger",
+              onClick: () => {
+                setSelectedSkills(userData?.skills || []);
+                setIsSkillsModalOpen(true);
+              },
+            },
+            (!userData?.experiences || userData.experiences.length === 0) && {
+              key: "exp",
+              label: "ประสบการณ์",
+              desc: "เพิ่มผลงานและประสบการณ์ที่เคยทำ",
+              status: "ยังไม่กรอก",
+              color: "danger",
+              onClick: () => {
+                setIsEditingExps(true);
+                scrollTo(expRef);
+              },
+            },
+            !userData?.resumeUrl && {
+              key: "resume",
+              label: "Resume",
+              desc: "อัปโหลด Resume เพื่อช่วยให้ผู้ว่าจ้างตัดสินใจเลือกคุณ",
+              status: "ยังไม่อัปโหลด",
+              color: "danger",
+              onClick: () => scrollTo(resumeRef),
+            },
+          ].filter(Boolean) as any[];
+
+          if (missing.length === 0) return null;
+
+          const colorMap: Record<string, string> = {
+            danger: "text-red-500 bg-red-50",
+            warning: "text-amber-600 bg-amber-50",
+            info: "text-blue-600 bg-blue-50",
+          };
+
+          return (
+            <div className="max-w-7xl mx-auto px-6 md:px-12 mt-8">
+              <p className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2">
+                <AlertCircle size={13} /> โปรไฟล์ยังไม่สมบูรณ์
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {missing.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={item.onClick}
+                    className="text-left bg-white border border-gray-100 rounded-[1.5rem] p-4 hover:border-[#0C5BEA]/40 hover:shadow-md transition-all active:scale-[0.98] group"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className={`text-[10px] font-black px-2.5 py-1 rounded-full ${colorMap[item.color]}`}
+                      >
+                        {item.status}
+                      </span>
+                      <ArrowRight
+                        size={13}
+                        className="text-[#0C5BEA] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+                      />
+                    </div>
+                    <p className="text-[13px] font-black text-gray-800 mb-1">
+                      {item.label}
+                    </p>
+                    <p className="text-[11px] text-gray-400 leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
       <div className="max-w-7xl mx-auto px-6 md:px-12 mt-16 space-y-12">
         {userData?.role === "student" && (
           <>
             {/* Skills */}
-            <section className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50">
+            <section ref={skillsRef} className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xl font-black text-gray-800">ความถนัด</h3>
                 {/* ✅ เฉพาะเจ้าของ */}
@@ -508,7 +613,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             </section>
 
             {/* Experiences & Portfolio */}
-            <section className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50">
+            <section ref={expRef} className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-xl font-black text-gray-800 tracking-tight">
                   ประสบการณ์และผลงาน
@@ -942,7 +1047,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             </section>
 
             {/* Resume */}
-            <section className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50 mt-12">
+            <section ref={resumeRef} className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50 mt-12">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-black text-gray-800 tracking-tight">
                   Resume
