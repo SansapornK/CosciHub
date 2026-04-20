@@ -169,7 +169,7 @@ function ApplicantCard({
         <div className="flex gap-2 pt-1">
           {applicant.userId && (
             <Link
-              href={`/user/freelancer/${applicant.userId}`}
+              href={`/account/${applicant.userId}`}
               target="_blank"
               className="flex-1 text-center text-sm border border-gray-300 text-gray-600 rounded-lg py-2 hover:bg-gray-50 transition-colors"
             >
@@ -195,7 +195,7 @@ function ApplicantCard({
         <div className="flex gap-2 pt-1">
           {applicant.userId && (
             <Link
-              href={`/user/freelancer/${applicant.userId}`}
+              href={`/account/${applicant.userId}`}
               target="_blank"
               className="flex-1 text-center text-sm border border-gray-300 text-gray-600 rounded-lg py-2 hover:bg-gray-50 transition-colors"
             >
@@ -213,7 +213,7 @@ function ApplicantCard({
       ) : (
         applicant.userId && (
           <Link
-            href={`/user/freelancer/${applicant.userId}`}
+            href={`/account/${applicant.userId}`}
             target="_blank"
             className="text-center text-sm border border-gray-300 text-gray-600 rounded-lg py-2 hover:bg-gray-50 transition-colors"
           >

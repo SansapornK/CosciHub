@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -221,7 +222,7 @@ export default function WorkManagementPage() {
         action === "submit" ? "ส่งงานเรียบร้อยแล้ว!" : "บันทึกข้อมูลสำเร็จ",
       );
       setIsEditingSubmission(false);
-      setSelectedFiles([]); 
+      setSelectedFiles([]);
       setUploadProgress({});
       fetchWorkDetail();
     } catch (err: any) {
@@ -363,11 +364,15 @@ export default function WorkManagementPage() {
                     ? "ผู้ว่าจ้าง / เจ้าของงาน"
                     : "นิสิตผู้ปฏิบัติงาน"}
                 </p>
-                <p className="text-xs md:text-sm font-black text-gray-800 truncate max-w-[150px] md:max-w-none">
+                <Link
+                  href={`/account/${isFreelancer ? workData.jobId?.ownerId : workData.applicantId?._id}`}
+                  target="_blank"
+                  className="text-xs md:text-sm font-black text-gray-800 truncate max-w-[150px] md:max-w-none hover:text-[#0C5BEA] transition-colors"
+                >
                   {isFreelancer
                     ? workData.jobId?.owner
                     : workData.applicantId?.name}
-                </p>
+                </Link>
               </div>
             </motion.div>
           </div>
@@ -473,12 +478,12 @@ export default function WorkManagementPage() {
                       value={newProgress}
                       onChange={(e) => {
                         const newValue = parseInt(e.target.value);
-                        
+
                         if (newValue >= (workData?.progress || 0)) {
                           setNewProgress(newValue);
                         } else {
                           toast.error("ไม่สามารถลดความคืบหน้างานลงได้", {
-                            id: "progress-error", 
+                            id: "progress-error",
                           });
                         }
                       }}
@@ -855,7 +860,7 @@ export default function WorkManagementPage() {
                           href={file.fileUrl.replace(
                             "/upload/",
                             "/upload/fl_attachment/",
-                          )} // ✅ เทคนิค Cloudinary: บังคับ Download
+                          )}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs font-bold text-purple-600 hover:underline"
