@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   Pencil, ChevronLeft, DollarSign, CalendarDays,
-  Users, MapPin, Clock, SquarePlus, HelpCircle,
+  Users, MapPin, HelpCircle,
 } from 'lucide-react';
 import Loading from "@/app/components/common/Loading";
 import { skillCategories } from "../../create-jobs/page";
@@ -257,9 +257,8 @@ export default function EditJobPage() {
               <ChevronLeft className="w-5 h-5" />
             </Link>
             <div className="flex items-center gap-3">
-              <Pencil className="w-8 h-8 text-gray-800" strokeWidth={1.5} />
               <div>
-                <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">แก้ไขประกาศงาน</h1>
+                <h1 className="text-2xl font-extrabold text-[#0C5BEA] tracking-tight">แก้ไขประกาศงาน</h1>
                 <p className="text-sm text-gray-400 mt-0.5">แก้ไขแล้วเผยแพร่หรือบันทึกร่าง</p>
               </div>
             </div>
@@ -449,14 +448,14 @@ export default function EditJobPage() {
                   htmlFor="applicationDeadline"
                   className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"
                 >
-                  วันสิ้นสุดรับสมัคร
+                  วันสิ้นสุดการรับสมัคร
                   <span className="text-red-400">*</span>
                   <span className="relative group">
                     <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
                     <span className="absolute  -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-xs text-center rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
                       - คุณสามารถปิดรับสมัครก่อนกำหนดได้
                       <br />
-                      - หากเลยวันสิ้นสุดรับสมัคร งานจะปิดรับสมัครและไม่แสดงบนหน้าค้นหางาน 
+                      - หากเลยวันสิ้นสุดการรับสมัคร งานของคุณจะถูกปิดรับสมัครโดยอัตโนมัติ
                     </span>
                   </span>
                 </label>

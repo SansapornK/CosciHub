@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
       studentId: user.studentId,
       bio: user.bio,
       experiences: user.experiences || [],
+      contactInfo: user.contactInfo || [],
       profileImageUrl: user.profileImageUrl,
       resumeUrl: user.resumeUrl,
       verificationStatus: user.verificationStatus,
@@ -78,6 +79,7 @@ export async function PATCH(req: NextRequest) {
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
     const bio = formData.get("bio") as string;
+    const contactInfoString = formData.get("contactInfo") as string;
 
     // Update skills if provided
     const skillsString = formData.get("skills") as string;
@@ -100,6 +102,19 @@ export async function PATCH(req: NextRequest) {
 
     if (bio !== null) {
       updateData.bio = bio as string;
+    }
+
+    // Update contactInfo if provided
+    if (contactInfoString !== null) {
+      try {
+        const parsedContactInfo = JSON.parse(contactInfoString as string);
+        if (Array.isArray(parsedContactInfo)) {
+          updateData.contactInfo = parsedContactInfo.filter((info: string) => info.trim() !== '');
+        }
+      } catch (e) {
+        // Fallback if not JSON
+        updateData.contactInfo = [contactInfoString as string].filter((s) => s.trim());
+      }
     }
 
     if (skillsString !== null) {
@@ -296,6 +311,7 @@ export async function PATCH(req: NextRequest) {
       studentId: updatedUser.studentId,
       bio: updatedUser.bio,
       experiences: updatedUser.experiences || [],
+      contactInfo: updatedUser.contactInfo || [],
       profileImageUrl: updatedUser.profileImageUrl,
       resumeUrl: updatedUser.resumeUrl,
       galleryImages: updatedUser.galleryImages || [],

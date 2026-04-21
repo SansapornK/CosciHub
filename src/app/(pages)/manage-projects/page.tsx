@@ -939,14 +939,12 @@ export default function ManageProjectsPage() {
                             />
                           </div>
                         </div>
-                        {app.jobDeadline && (
-                          <p className="text-xs text-gray-400">
-                            กำหนดส่ง:{" "}
-                            {new Date(app.jobDeadline).toLocaleDateString(
-                              "th-TH",
-                            )}
-                          </p>
-                        )}
+                        <p className="text-xs text-gray-400">
+                          กำหนดส่ง:{" "}
+                          {app.jobDeadline
+                            ? new Date(app.jobDeadline).toLocaleDateString("th-TH")
+                            : "-"}
+                        </p>
                         <Link
                           href={`/manage-projects/${app.jobId}/work/${app._id}`}
                           className="btn-primary block text-sm text-center py-2 rounded-full w-full mt-auto"
@@ -1081,14 +1079,12 @@ export default function ManageProjectsPage() {
                               {job.workers.length} คน
                             </span>
                           </div>
-                          {job.deliveryDate && (
-                            <span className="text-xs text-gray-400">
-                              กำหนดส่ง{" "}
-                              {new Date(job.deliveryDate).toLocaleDateString(
-                                "th-TH",
-                              )}
-                            </span>
-                          )}
+                          <span className="text-xs text-gray-400">
+                            กำหนดส่ง{" "}
+                            {job.deliveryDate
+                              ? new Date(job.deliveryDate).toLocaleDateString("th-TH")
+                              : "-"}
+                          </span>
                         </div>
                         {breakdownItems.length > 0 && (
                           <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-100">

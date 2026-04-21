@@ -235,12 +235,8 @@ export default function MyJobsPage() {
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3">
-              <BriefcaseBusiness
-                className="w-8 h-8 text-gray-800"
-                strokeWidth={1.5}
-              />
               <div>
-                <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                <h1 className="text-2xl font-extrabold text-[#0C5BEA] tracking-tight">
                   งานของฉัน
                 </h1>
                 <p className="text-sm text-gray-400 mt-0.5">
@@ -277,13 +273,6 @@ export default function MyJobsPage() {
                 เริ่มลงประกาศงานแรกของคุณได้เลย
               </p>
             </div>
-            <Link
-              href="/manage-projects/create-jobs"
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition-all"
-            >
-              <SquarePlus className="w-5 h-5" />
-              ลงประกาศงาน
-            </Link>
           </div>
         )}
 

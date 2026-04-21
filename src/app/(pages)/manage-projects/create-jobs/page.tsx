@@ -13,7 +13,6 @@ import {
   ChevronLeft,
   DollarSign,
   CalendarDays,
-  LayoutDashboard,
   Users,
   MapPin,
   BriefcaseBusiness,
@@ -319,16 +318,9 @@ export default function CreateJobPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-10 pb-4 border-b border-gray-100">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="p-2.5 hover:bg-white rounded-full transition-all text-gray-400 hover:text-gray-600 shadow-sm"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
             <div className="flex items-center gap-3">
-              <SquarePlus className="w-9 h-9 text-gray-800" strokeWidth={1.5} />
               <div>
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                <h1 className="text-3xl font-extrabold text-[#0C5BEA] tracking-tight">
                   {duplicateId ? "ทำสำเนาประกาศงาน" : "ลงประกาศงาน"}
                 </h1>
                 {isLoadingDuplicate && (
