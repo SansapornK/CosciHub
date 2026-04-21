@@ -1,39 +1,16 @@
 "use client";
 
-import Head from "next/head";
 import Link from "next/link";
 import React, { useState, useEffect, JSX } from "react";
-import JobList from "./components/lists/JobList";
 import axios from "axios";
-import Loading from "./components/common/Loading";
 import { useSession } from "next-auth/react";
 import JobCard from "./components/cards/JobCard";
 import {
   calculateTimeAgo,
   getCategoryIcon,
 } from "@/app/components/utils/jobHelpers";
-import {
-  Bookmark,
-  DollarSign,
-  User,
-  Tag,
-  Briefcase,
-  ArrowRight,
-  Sparkles,
-  ChevronDown, 
-  ChevronUp, 
-  LayoutGrid,
-} from "lucide-react";
+import { Briefcase, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-// --- Configuration ---
-const CI_COLORS = {
-  primary: "#0C5BEA",
-  secondary: "#6D91D3",
-  highlight: "#F4FE57",
-  gray: "#A6A6A6",
-  white: "#FFFFFF",
-};
 
 // --- Animation Variants ---
 const fadeInUp = {
@@ -61,14 +38,6 @@ const staggerContainer = {
   },
 };
 
-const hoverScale = {
-  hover: {
-    scale: 1.03,
-    boxShadow: "0px 10px 30px rgba(12, 91, 234, 0.1)",
-    transition: { duration: 0.3, ease: "easeInOut" },
-  },
-};
-
 const varFadeInUp = {
   hidden: { opacity: 0, y: 40, filter: "blur(4px)" },
   visible: {
@@ -79,7 +48,6 @@ const varFadeInUp = {
   },
 };
 
-// แอนิเมชันสำหรับรูปภาพ (ขยายตัวเล็กน้อย)
 const varImageReveal = {
   hidden: { opacity: 0, scale: 1.1 },
   visible: {
@@ -89,7 +57,6 @@ const varImageReveal = {
   },
 };
 
-// คอนเทนเนอร์สำหรับคุมจังหวะลูกๆ (Stagger)
 const varStaggerContainer = {
   hidden: { opacity: 0 },
   visible: {
@@ -97,6 +64,152 @@ const varStaggerContainer = {
     transition: { staggerChildren: 0.2 },
   },
 };
+
+const KEYWORDS = [
+  {
+    text: "งานน่าเชื่อถือ",
+    style: "border-2 border-dashed border-gray-400 text-gray-600 bg-white",
+    x: "75%",
+    y: "5%",
+    rotate: 15,
+    size: "text-base md:text-lg font-medium",
+  },
+  {
+    text: "การพัฒนา",
+    style: "bg-blue-100 text-gray-700 border border-blue-200",
+    x: "58%",
+    y: "25%",
+    rotate: 0,
+    size: "text-lg md:text-xl font-medium",
+  },
+  {
+    text: "ประสบการณ์",
+    style: "bg-[#F4FE57] text-gray-800 font-black",
+    x: "15%",
+    y: "35%",
+    rotate: -3,
+    size: "text-lg md:text-xl font-medium",
+  },
+  {
+    text: "Experience",
+    style: "bg-gray-100 text-gray-500 border border-gray-200",
+    x: "45%",
+    y: "52%",
+    rotate: 10,
+    size: "text-lg md:text-xl font-medium",
+  },
+  {
+    text: "Project",
+    style:
+      "bg-[#F4FE57] text-gray-800 font-black border-2 border-dashed border-gray-500",
+    x: "72%",
+    y: "48%",
+    rotate: -8,
+    size: "text-lg md:text-xl font-medium",
+  },
+  {
+    text: "โอกาส",
+    style: "border-1 border-gray-400 text-gray-600 bg-white",
+    x: "5%",
+    y: "60%",
+    rotate: 10,
+    size: "text-lg md:text-xl font-medium",
+  },
+  {
+    text: "Skill",
+    style: "bg-[#0C5BEA]/10 text-[#0C5BEA] border border-[#0C5BEA]/30",
+    x: "38%",
+    y: "78%",
+    rotate: -5,
+    size: "text-lg md:text-xl font-medium",
+  },
+  {
+    text: "COSCI Hub",
+    style: "bg-white text-gray-700 border border-gray-200 shadow-sm",
+    x: "78%",
+    y: "78%",
+    rotate: 0,
+    size: "text-lg md:text-xl font-medium",
+  },
+];
+
+const ICON_BUBBLES = [
+  {
+    emoji: "🎓",
+    x: "48%",
+    y: "28%",
+    size: "w-10 h-10 md:w-12 md:h-12",
+    border: "bg-white shadow-sm border border-gray-100",
+    rotate: -10,
+  },
+  {
+    emoji: "💼",
+    x: "28%",
+    y: "60%",
+    size: "w-10 h-10 md:w-12 md:h-12",
+    border: "border-1 border-dashed border-black-200 bg-white",
+    rotate: 15,
+  },
+  {
+    emoji: "⭐",
+    x: "62%",
+    y: "82%",
+    size: "w-10 h-10 md:w-12 md:h-12",
+    border: "bg-yellow-50 border border-yellow-200",
+    rotate: 5,
+  },
+  {
+    emoji: "❤️",
+    x: "92%",
+    y: "28%",
+    size: "w-12 h-12 md:w-14 md:h-14",
+    border: "border border-pink-200 bg-white shadow-sm",
+    rotate: -10,
+  },
+];
+
+const FloatingKeywords = () => (
+  <div className="relative w-full min-h-[420px]">
+    {KEYWORDS.map((kw, i) => (
+      <motion.span
+        key={i}
+        initial={{ opacity: 0, scale: 0.7, rotate: kw.rotate - 5 }}
+        whileInView={{ opacity: 1, scale: 1, rotate: kw.rotate }}
+        viewport={{ once: true }}
+        transition={{
+          delay: i * 0.07,
+          duration: 0.5,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+        whileHover={{ scale: 1.12, rotate: 0 }}
+        className={`absolute px-10 py-2 rounded-full cursor-default select-none ${kw.size} ${kw.style}`}
+        style={{ left: kw.x, top: kw.y, rotate: `${kw.rotate}deg` }}
+      >
+        {kw.text}
+      </motion.span>
+    ))}
+
+    {ICON_BUBBLES.map((b, i) => (
+      <motion.div
+        key={i}
+        initial={{ opacity: 0, scale: 0.5 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{
+          delay: 0.4 + i * 0.1,
+          duration: 0.5,
+          type: "spring",
+          stiffness: 200,
+        }}
+        whileHover={{ scale: 1.15, rotate: 0 }}
+        className={`absolute ${b.size} rounded-full flex items-center justify-center text-xl ${b.border}`}
+        style={{ left: b.x, top: b.y, rotate: `${b.rotate}deg` }}
+      >
+        {b.emoji}
+      </motion.div>
+    ))}
+  </div>
+);
 
 // --- Hero Slides ---
 const HERO_SLIDES = [
@@ -239,7 +352,7 @@ const MAJOR = [
       "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
   },
   {
-    id: "cyber",
+    id: "การจัดการธุรกิจไซเบอร์",
     title: "การจัดการธุรกิจไซเบอร์",
     icon: (
       <svg
@@ -489,22 +602,8 @@ const ABOUT_FEATURES = [
     title: "เข้าถึงงานพิเศษได้ง่าย",
     description: "เลือกงานพิเศษที่ตรงกับสาขาวิชาและความถนัดได้",
     icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-10 w-10 text-primary-blue-500"
-      >
-        <path d="M12 12h.01" />
-        <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-        <path d="M22 13a18.15 18.15 0 0 1-20 0" />
-        <rect width="20" height="14" x="2" y="6" rx="2" />
+      <svg viewBox="0 0 24 24" className="h-16 w-16 text-white fill-current">
+        <path d="M20,6h-3V4c0-1.1-0.9-2-2-2H9C7.9,2,7,2.9,7,4v2H4C2.9,6,2,6.9,2,8v11c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V8 C22,6.9,21.1,6,20,6z M12,15c-1.1,0-2-0.9-2-2s0.9-2,2-2s2,0.9,2,2S13.1,15,12,15z M9,4h6v2H9V4z" />
       </svg>
     ),
   },
@@ -512,19 +611,8 @@ const ABOUT_FEATURES = [
     title: "ติดตามความคืบหน้า",
     description: "ตรวจสอบสถานะการทำงานแบบเรียลไทม์",
     icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-10 w-10 text-primary-blue-500"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-        />
+      <svg viewBox="0 0 24 24" className="h-20 w-20 text-white fill-current">
+        <path d="M19,3h-4.18C14.4,1.84,13.3,1,12,1S9.6,1.84,9.18,3H5C3.9,3,3,3.9,3,5v14c0,1.1,0.9,2,2,2h14c1.1,0,2-0.9,2-2V5 C21,3.9,20.1,3,19,3z M12,3c0.55,0,1,0.45,1,1s-0.45,1-1,1s-1-0.45-1-1S11.45,3,12,3z M17,17H7v-2h10V17z M17,13H7v-2h10V13z M15,9H7V7 h8V9z" />
       </svg>
     ),
   },
@@ -537,14 +625,14 @@ const ABOUT_FEATURES = [
         width="24"
         height="24"
         viewBox="0 0 24 24"
-        fill="none"
+        fill="currentColor"
         stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-10 w-10 text-primary-blue-500"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        className="lucide lucide-star-icon lucide-star text-white"
       >
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
       </svg>
     ),
   },
@@ -553,278 +641,20 @@ const ABOUT_FEATURES = [
     description: "พัฒนทักษะและต่อยอดสู่การทำงานจริงในอนาคต",
     icon: (
       <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
         viewBox="0 0 24 24"
-        fill="none"
+        className="h-20 w-20 text-white fill-current"
         stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-10 w-10 text-primary-blue-500"
+        stroke-width="1"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       >
-        <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
-        <path d="M22 10v6" />
-        <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+        <path d="M12 3L1 9l11 6l9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
       </svg>
     ),
   },
 ];
 
-const AboutFeatureCard = ({ title, description, icon }) => (
-  <motion.div
-    variants={fadeInUp}
-    whileHover={{
-      scale: 1.03,
-      boxShadow: "0px 10px 30px rgba(12, 91, 234, 0.1)",
-      transition: { duration: 0.3, ease: "easeInOut" },
-    }}
-    className="bg-white rounded-2xl w-full flex flex-col items-center max-w-xs text-center p-8 border border-gray-100 gap-4"
-  >
-    <div className="flex items-center justify-center p-6 bg-[#6D91D3]/10 rounded-full mb-2 text-[#0C5BEA]">
-      {icon}
-    </div>
-    <h4 className="text-lg font-semibold text-gray-800">{title}</h4>
-    <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
-  </motion.div>
-);
-
 // ---------------------------------------------
-
-interface JobCardData {
-  id: string;
-  icon: JSX.Element;
-  title: string;
-  type: string;
-  postedBy: string;
-  minCompensation: string;
-  maxCompensation: string | null;
-  details: string;
-  currency: string;
-  timeAgo: string;
-  isVisible: boolean;
-}
-
-const CONNECT_SECTION_DATA = {
-  header: "พื้นที่เชื่อมต่อระหว่างการเรียนรู้กับการทำงานจริงอย่างมีคุณภาพ",
-  description:
-    "ช่วยให้นิสิตสามารถหางานที่ตรงกับความสามารถ ขณะที่อาจารย์ ศิษย์เก่า และบุคลากรในมหาวิทยาลัยฯ สามารถตรวจสอบผลงานและให้คำแนะนำแก่นิสิต เพื่อเปิดโอกาสให้นิสิตได้ฝึกทักษะจากงานจริง",
-  left: {
-    text: "พัฒนาทักษะจาก การทำงานจริง กับผู้ว่าจ้างที่น่าเชื่อถือ สร้างประสบการณ์ และรายได้ระหว่างเรียน",
-    image: "/images/female.png",
-  },
-  right: {
-    text: "ส่งเสริม การเรียนรู้เชิงปฏิบัติ สร้างโอกาสและเสริมศักยภาพ ให้นิสิตในโลกการทำงานจริง",
-    image: "/images/male.png",
-  },
-};
-
-const FeatureSection = ({
-  title,
-  description,
-  icon,
-  image,
-  isReversed,
-  bgColor,
-  textColor,
-  highlightColor,
-}) => {
-  const isBlueBg =
-    bgColor.includes("bg-[#0C5BEA]") || bgColor.includes("bg-[#6D91D3]");
-
-  return (
-    <motion.section
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.4 }} // เล่นแอนิเมชันเมื่อเห็น Section 40%
-      variants={varStaggerContainer}
-      className={`w-full py-24 md:py-32 ${bgColor} ${textColor} overflow-hidden`}
-    >
-      <div
-        className={`max-w-7xl mx-auto px-6 md:px-12 flex flex-col ${isReversed ? "md:flex-row-reverse" : "md:flex-row"} items-center gap-12 md:gap-20`}
-      >
-        {/* ──ฝั่งข้อความ── */}
-        <motion.div
-          variants={varFadeInUp}
-          className="flex-1 flex flex-col items-start text-start"
-        >
-          {/* Icon Box */}
-          <div
-            className={`p-4 rounded-2xl mb-6 ${isBlueBg ? "bg-white/10 text-[#F4FE57]" : "bg-[#6D91D3]/10 text-[#0C5BEA]"}`}
-          >
-            {icon}
-          </div>
-
-          {/* Title with Highlight Yellow */}
-          <h3
-            className={`text-3xl md:text-4xl lg:text-5xl font-black leading-tight tracking-tight mb-6 drop-shadow-sm`}
-          >
-            {title.split(" ").map((word, i) => (
-              <span
-                key={i}
-                className={
-                  word.includes("งานพิเศษ") ||
-                  word.includes("ความคืบหน้า") ||
-                  word.includes("พูดคุย") ||
-                  word.includes("ประสบการณ์")
-                    ? highlightColor
-                    : ""
-                }
-              >
-                {word}{" "}
-              </span>
-            ))}
-          </h3>
-
-          {/* Description */}
-          <p
-            className={`text-base md:text-lg ${isBlueBg ? "text-white/80" : "text-gray-600"} leading-relaxed max-w-xl font-light mb-10`}
-          >
-            {description}
-          </p>
-
-          {/* Decorative Line */}
-          <div
-            className={`h-1.5 w-20 ${isBlueBg ? "bg-[#F4FE57]" : "bg-[#0C5BEA]"} rounded-full`}
-          />
-        </motion.div>
-
-        {/* ──ฝั่งรูปภาพ (Modern Mockup)── */}
-        <motion.div
-          variants={varImageReveal}
-          className="flex-1 w-full relative group"
-        >
-          {/* Background Decorative Circle */}
-          <div
-            className={`absolute -inset-10 rounded-full opacity-20 blur-3xl ${isBlueBg ? "bg-[#F4FE57]" : "bg-[#6D91D3]"}`}
-          />
-
-          {/* Image with Shadow & Border */}
-          <div className="relative z-10 rounded-3xl overflow-hidden shadow-2xl shadow-black/10 border-4 border-white/50 transform group-hover:scale-105 transition-transform duration-500">
-            <img
-              src={image}
-              alt={title}
-              className="w-full h-auto object-cover aspect-[4/3]"
-            />
-          </div>
-        </motion.div>
-      </div>
-    </motion.section>
-  );
-};
-
-// ─── 3. อัปเดตข้อมูล FEATURES (เพิ่มรูปภาพและปรับคำ) ───
-
-const MODERN_FEATURES = [
-  {
-    title: "เข้าถึง งานพิเศษ ได้ง่าย",
-    description: "เลือกงานที่ตรงกับสาขาวิชาและความถนัด สะดวก รวดเร็ว ทันใจ",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-10 w-10"
-      >
-        <path d="M12 12h.01" />
-        <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-        <path d="M22 13a18.15 18.15 0 0 1-20 0" />
-        <rect width="20" height="14" x="2" y="6" rx="2" />
-      </svg>
-    ), // SVG เดิม
-    image: "/images/feat-easy-access.jpg", // ✅ ใส่พาธรูปภาพจริง
-    isReversed: false,
-    bgColor: "bg-white",
-    textColor: "text-gray-900",
-    highlightColor: "text-[#0C5BEA]",
-  },
-  {
-    title: "ติดตาม ความคืบหน้า เรียลไทม์",
-    description: "ตรวจสอบสถานะการทำงาน ตารางเวลา และเดดไลน์ ได้ทุกที่ทุกเวลา",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-10 w-10 text-primary-blue-500"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-        />
-      </svg>
-    ), // SVG เดิม
-    image: "/images/feat-track-progress.jpg", // ✅ ใส่พาธรูปภาพจริง
-    isReversed: true, // ✅ สลับฝั่ง
-    bgColor: "bg-[#6D91D3]/10",
-    textColor: "text-gray-900",
-    highlightColor: "text-[#0C5BEA]",
-  },
-  {
-    title: "พูดคุย สะดวกผ่านระบบแชท",
-    description:
-      "สื่อสารตรงกับผู้ว่าจ้าง บรีฟงาน ส่งไฟล์ จบครบในแพลตฟอร์มเดียว",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-10 w-10 text-primary-blue-500"
-      >
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    ), // SVG เดิม
-    image: "/images/feat-chat.jpg", // ✅ ใส่พาธรูปภาพจริง
-    isReversed: false,
-    bgColor: "bg-[#0C5BEA]", // ✅ พื้นหลังน้ำเงินเข้ม
-    textColor: "text-white",
-    highlightColor: "text-[#F4FE57]", // ✅ ไฮไลท์สีเหลือง
-  },
-  {
-    title: "สะสม ประสบการณ์ จริง",
-    description:
-      "พัฒนทักษะนอกห้องเรียน สร้างพอร์ตโฟลิโอให้โดดเด่น พร้อมก้าวสู่การทำงาน",
-    icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-10 w-10 text-primary-blue-500"
-      >
-        <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
-        <path d="M22 10v6" />
-        <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
-      </svg>
-    ), // SVG เดิม
-    image: "/images/feat-experience.jpg", // ✅ ใส่พาธรูปภาพจริง
-    isReversed: true, // ✅ สลับฝั่ง
-    bgColor: "bg-white",
-    textColor: "text-gray-900",
-    highlightColor: "text-[#0C5BEA]",
-  },
-];
 
 // --- 4. Main Component ---
 export default function Home() {
@@ -838,39 +668,20 @@ export default function Home() {
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
 
-  const primaryBtnClass =
-    "bg-[#0C5BEA] text-white font-semibold py-3.5 px-8 rounded-full shadow-lg shadow-[#0C5BEA]/20 transition-all hover:bg-[#0C5BEA]/90 hover:shadow-[#0C5BEA]/30 active:scale-95 flex items-center gap-2";
-
-  // recommended jobs
   useEffect(() => {
-    const fetchRecommendedJobs = async () => {
-      try {
-        const res = await axios.get("/api/jobs", {
-          params: { limit: 3, sort: "latest" },
-        });
-        setRecommendedJobs(res.data.jobs);
-      } catch (error) {
-        console.error("Failed to fetch jobs:", error);
-      } finally {
-        setLoadingJobs(false);
-      }
-    };
-    fetchRecommendedJobs();
+    axios
+      .get("/api/jobs", { params: { limit: 3, sort: "latest" } })
+      .then((res) => setRecommendedJobs(res.data.jobs))
+      .catch(console.error)
+      .finally(() => setLoadingJobs(false));
   }, []);
 
-  // bookmarks
   useEffect(() => {
-    const fetchSavedIds = async () => {
-      if (isLoggedIn) {
-        try {
-          const res = await axios.get("/api/bookmarks/ids");
-          setSavedJobIds(res.data.ids || []);
-        } catch (err) {
-          console.error("Error fetching bookmark IDs", err);
-        }
-      }
-    };
-    fetchSavedIds();
+    if (!isLoggedIn) return;
+    axios
+      .get("/api/bookmarks/ids")
+      .then((res) => setSavedJobIds(res.data.ids || []))
+      .catch(console.error);
   }, [isLoggedIn]);
 
   const handleToggleBookmark = async (jobId: string) => {
@@ -880,17 +691,16 @@ export default function Home() {
     }
     try {
       const res = await axios.post("/api/bookmarks", { jobId });
-      if (res.data.isBookmarked) {
-        setSavedJobIds((prev) => [...prev, jobId]);
-      } else {
-        setSavedJobIds((prev) => prev.filter((id) => id !== jobId));
-      }
-    } catch (err) {
+      setSavedJobIds((prev) =>
+        res.data.isBookmarked
+          ? [...prev, jobId]
+          : prev.filter((id) => id !== jobId),
+      );
+    } catch {
       alert("ไม่สามารถดำเนินการได้");
     }
   };
 
-  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <>
@@ -1037,7 +847,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* ปุ่มดูงานทั้งหมด */}
           <Link href="/find-job" className="mt-6">
             <button className="bg-primary-blue-500 text-white font-medium text-base py-3 px-6 rounded-full shadow-md hover:bg-primary-blue-600 transition-colors hover:shadow-lg">
               ดูงานทั้งหมด <Briefcase className="w-5 h-5 ml-2 inline" />
@@ -1045,7 +854,7 @@ export default function Home() {
           </Link>
         </section>
 
-        {/* --- About Section ปรับปรุงใหม่ --- */}
+        {/* --- About Section (New Design) --- */}
         <motion.section
           variants={fadeInUp}
           viewport={{ once: true, amount: 0.3 }}
@@ -1053,7 +862,8 @@ export default function Home() {
           whileInView="visible"
           className="w-full flex flex-col gap-1 my-20 justify-center text-center px-6 md:px-12 max-w-7xl mx-auto"
         >
-          <div className="flex flex-col items-center justify-center mb-12">
+          {/* Header */}
+          <div className="flex flex-col items-center justify-center mb-6">
             <motion.div
               variants={fadeInUp}
               initial="hidden"
@@ -1077,130 +887,102 @@ export default function Home() {
               whileInView="visible"
               viewport={{ once: false, amount: 0.3 }}
               transition={{ delay: 0.1 }}
-              className="text-xl font-black text-gray-900 tracking-tight leading-tight mt-2 max-w-2xl text-center"
+              className="text-base md:text-lg font-medium text-gray-500 mt-2 max-w-xl text-center"
             >
-              แพลตฟอร์มที่รวบรวมงานพิเศษสำหรับ
-              <span className="text-[#0C5BEA] font-semibold">นิสิต COSCI </span>{" "}
-              <br />{" "}
-              <span className="text-[#0C5BEA] text-l">
-                เพื่อประสบการณ์ที่มากกว่าการเรียนรู้
-              </span>
+              แพลตฟอร์มเรียนรู้การทำงานผ่านประสบการณ์จริง
             </motion.p>
+
+            {/* Yellow pill */}
+            <motion.div
+              variants={fadeInUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{ delay: 0.2 }}
+              className="mt-6 bg-[#F4FE57] text-gray-800 font-bold text-sm px-6 py-2.5 rounded-full shadow-sm"
+            >
+              รวมทุกขั้นตอนของการทำงานอยู่ที่เดียว
+            </motion.div>
           </div>
 
-          <motion.div
-            variants={staggerContainer}
-            viewport={{ once: true }}
-            initial="hidden"
-            whileInView="visible"
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-6 justify-items-center"
-          >
-            {ABOUT_FEATURES.map((feature, index) => (
-              <AboutFeatureCard key={index} {...feature} />
-            ))}
-          </motion.div>
+          {/* Staggered Feature Cards */}
+          <div className="relative mt-5 overflow-visible">
+            {/* decorative circles */}
+            <div className="absolute -top-10 -left-10 w-36 h-36 bg-[#F4FE57] rounded-full opacity-70 z-0 pointer-events-none" />
+            <div className="absolute top-[70%] left-[20%] w-20 h-20 bg-transparent border-3 border-[#F4FE57] rounded-full z-0 pointer-events-none" />
+            <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-[#F4FE57] rounded-full opacity-60 z-0 pointer-events-none" />
+            <div className="absolute top-[10%] right-[20%] w-20 h-20 bg-transparent border-3 border-[#F4FE57] rounded-full z-0 pointer-events-none" />
+            <div className="absolute -bottom-10 -right-6 w-28 h-28 bg-[#F4FE57] rounded-full opacity-60 z-0 pointer-events-none" />
+
+            <motion.div
+              variants={staggerContainer}
+              viewport={{ once: true }}
+              initial="hidden"
+              whileInView="visible"
+              className="relative z-10 grid grid-cols-1 gap-5 md:grid-cols-4 md:items-start"
+            >
+              {ABOUT_FEATURES.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  variants={fadeInUp}
+                  className="w-full"
+                  style={{
+                    marginTop: index % 2 === 1 ? "4rem" : "0",
+                  }}
+                >
+                  <div
+                    className="bg-gradient-to-b from-[#0C5BEA] to-[#3B76DE]/90  rounded-[3rem] p-8 flex flex-col items-center text-center gap-6 h-full min-h-[320px] shadow-2xl shadow-blue-200/60 hover:scale-105 transition-transform duration-300" // ปรับ min-h ให้สูงขึ้น, p และ rounded ใหัใหญ่ขึ้น
+                  >
+                    <h4 className="text-[16px] font-black text-white leading-snug">
+                      {" "}
+                      {feature.title}
+                    </h4>
+                    <div className="flex-1 flex items-center justify-center w-full py-2">
+                      <div className="[&>svg]:w-30 [&>svg]:h-30 text-white/90 filter drop-shadow-lg">
+                        {" "}
+                        {feature.icon}
+                      </div>
+                    </div>
+                    <p className="text-[15px] text-white/80 leading-relaxed max-w-[90%]">
+                      {" "}
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </motion.section>
 
-        {/* --- 🚀 New Feature Sections (แยกเป็น Section) --- */}
-        <div className="w-full flex flex-col border-t border-gray-100 mt-20">
-          {/* Loop แสดงผล 4 ฟีเจอร์แยกเป็น Section */}
-          {MODERN_FEATURES.map((feature, index) => (
-            <FeatureSection key={index} {...feature} />
-          ))}
-        </div>
-
-        {/* --- Connect Section --- */}
-        <section className="w-full py-12 md:py-16">
-          <div className="lg:px-10 text-start mb-8 px-6">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
-              {CONNECT_SECTION_DATA.header}
-            </h2>
-            <p className="text-sm text-gray-600 max-w-3xl leading-relaxed">
-              {CONNECT_SECTION_DATA.description}
-            </p>
-          </div>
-
-          {/* Overlapping Bubbles Container */}
-          <div className="relative flex flex-col md:flex-row justify-center items-center mx-auto md:px-0">
-            {/* Left Bubble */}
-            <div
-              className="relative flex-1 flex items-center justify-start text-white p-6 md:p-8 z-20 w-full md:w-1/2 min-h-[300px] md:min-h-[350px]"
-              style={{
-                background:
-                  "linear-gradient(90deg, #1E3A8A 0%, #1D4ED8 70%, #2563EB 100%)",
-                borderTopRightRadius: "9999px",
-                borderBottomRightRadius: "9999px",
-                marginRight: "-20px",
-                boxShadow: "0 10px 20px rgba(30, 64, 175, 0.4)",
-              }}
-            >
-              <div className="absolute inset-0 rounded-r-full bg-black/10"></div>
-
-              {/* Content Area */}
-              <div className="relative z-30 flex flex-col items-end justify-center w-full h-full pr-10">
-                <img
-                  src="/images/female.png"
-                  alt="Female avatar"
-                  className="w-40 md:w-80 h-auto drop-shadow-2xl absolute bottom-0 left-0 z-10"
-                  style={{ transform: "translateX(-20%) translateY(35%)" }}
-                />
-
-                <p
-                  className="text-xl md:text-xl text-right leading-snug tracking-wide max-w-[80%] z-10"
-                  style={{
-                    textShadow: "2px 2px 4px rgba(0, 0, 0, 0.4)",
-                  }}
-                >
-                  พัฒนาทักษะจาก <span className="font-bold">การทำงานจริง</span>
-                  <br />
-                  กับ{" "}
-                  <span className="font-bold">ผู้ว่าจ้างที่น่าเชื่อถือ</span>
-                  <br />
-                  สร้าง <span className="font-bold">ประสบการณ์</span> และ
-                  <br />
-                  <span className="font-bold">รายได้ระหว่างเรียน</span>
-                </p>
-              </div>
+        {/* --- New Connect Section (Floating Keywords) --- */}
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={fadeInUp}
+          className="w-full py-5 px-6 md:px-16 max-w-7xl mx-auto"
+        >
+          <div className="relative min-h-[480px]">
+            <div className="relative z-10 max-w-2xl">
+              <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-4">
+                เชื่อมการเรียนรู้สู่{" "}
+                <span className="text-[#0C5BEA] bg-[#F4FE57] px-2 rounded">
+                  การทำงานจริง
+                </span>{" "}
+                อย่างมีคุณภาพ
+              </h2>
+              <p className="text-s text-gray-500 leading-relaxed">
+                แพลตฟอร์มที่เชื่อมต่อการเรียนรู้กับการทำงานจริง
+                เปิดโอกาสให้เกิดการพัฒนาทักษะ และสร้างประสบการณ์ร่วมกัน
+              </p>
             </div>
 
-            {/* Right Bubble */}
-            <div
-              className="relative flex-1 flex items-center justify-end text-gray-800 p-6 md:p-8 z-10 w-full md:w-1/2 mt-4 md:mt-0 min-h-[300px] md:min-h-[350px]"
-              style={{
-                background:
-                  "linear-gradient(90deg, #2563EB 20%, #BEE3FF 100%, #FFFFFF 100%)",
-                borderTopLeftRadius: "9999px",
-                borderBottomLeftRadius: "9999px",
-                marginLeft: "-20px",
-                boxShadow: "0 10px 20px rgba(96,165,250,0.25)",
-              }}
-            >
-              {/* Content Area */}
-              <div className="relative z-30 flex flex-col items-start justify-center w-full h-full pl-10">
-                <img
-                  src="/images/male.png"
-                  alt="Male avatar"
-                  className="w-40 md:w-80 h-auto drop-shadow-2xl absolute bottom-0 right-0 z-10"
-                  style={{ transform: "translateX(10%) translateY(40%)" }}
-                />
-
-                <p
-                  className="text-xl md:text-xl text-left leading-snug tracking-wide max-w-[80%] text-white z-10"
-                  style={{
-                    textShadow: "2px 2px 4px rgba(0, 0, 0, 0.4)",
-                  }}
-                >
-                  ส่งเสริม{" "}
-                  <span className="font-bold">การเรียนรู้เชิงปฏิบัติ</span>
-                  <br />
-                  สร้างโอกาสและเสริมศักยภาพ
-                  <br />
-                  ให้นิสิตในโลกการทำงานจริง
-                </p>
-              </div>
+            {/* Floating Keywords */}
+            <div className="absolute inset-0 w-full h-full">
+              <FloatingKeywords />
             </div>
           </div>
-        </section>
+        </motion.section>
       </motion.div>
     </>
   );

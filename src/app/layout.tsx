@@ -30,7 +30,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
               <ScrollToTop />
               <Toaster position="top-center" />
               <Navbar />
-              <div className="py-20 px-0 md:px-0 lg:px-0 xl:px-0 min-h-screen">
+              <div className="py-0 px-0 md:px-0 lg:px-0 xl:px-0 min-h-screen">
                 {children}
               </div>
               <Footer/>
