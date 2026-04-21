@@ -214,7 +214,7 @@ const FloatingKeywords = () => (
 // --- Hero Slides ---
 const HERO_SLIDES = [
   {
-    image: "/images/heroImage1.jpg",
+    image: "/images/heroImages/heroImage1.jpg",
     title: "COSCI Hub แพลตฟอร์มหางานพิเศษ",
     subtitle: "สำหรับนิสิต อาจารย์ และศิษย์เก่าชาวนวัต",
     highlight: "ชาวนวัต",
@@ -224,7 +224,7 @@ const HERO_SLIDES = [
     secondaryButton: null,
   },
   {
-    image: "/images/heroImage2.jpg",
+    image: "/images/heroImages/heroImage2.jpg",
     title: "ค้นหางานพิเศษที่ตรงใจ",
     subtitle: "เติมเต็มทักษะ สร้างรายได้เสริม",
     highlight: "ตรงใจ",
@@ -234,7 +234,7 @@ const HERO_SLIDES = [
     secondaryButton: null,
   },
   {
-    image: "/images/heroImage3.jpg",
+    image: "/images/heroImages/heroImage3.jpg",
     title: "โครงการพิเศษจากคณาจารย์",
     subtitle: "แหล่งรวมโปรเจกต์งานวิจัยและพัฒนา",
     highlight: "คณาจารย์",
@@ -796,13 +796,13 @@ export default function Home() {
             <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
               งานแนะนำ<span className="text-[#0C5BEA]">สำหรับนิสิต</span>
             </h2>
-            <Link
+            {/* <Link
               href="/find-job"
               className="text-sm font-semibold text-[#0C5BEA] hover:text-[#6D91D3] flex items-center gap-1.5 transition-colors group"
             >
               ดูทั้งหมด{" "}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </Link> */}
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4 px-4 sm:px-0">

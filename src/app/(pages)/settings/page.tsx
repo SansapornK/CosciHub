@@ -5,7 +5,7 @@ import React from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Shield, UserPen, KeyRound, ChevronRight } from "lucide-react";
+import { Shield, UserPen, KeyRound, ChevronRight, Info, } from "lucide-react";
 import Loading from "@/app/components/common/Loading";
 import LogOutButton from "../../components/buttons/LogOutButton";
 
@@ -35,6 +35,12 @@ const settingsMenuItems: SettingsMenuItem[] = [
     description: "อัปเดตรหัสผ่านเพื่อความปลอดภัยของบัญชี",
     path: "/settings/change-password",
     icon: KeyRound,
+  },
+  {
+    name: "เกี่ยวกับเรา",
+    description: "ทำความรู้จัก COSCI Hub และคณะผู้จัดทำ",
+    path: "/settings/about-us",
+    icon: Info,
   },
 ];
 
