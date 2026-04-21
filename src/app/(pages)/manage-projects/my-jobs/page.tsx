@@ -23,7 +23,13 @@ import {
 import { toast } from "react-hot-toast";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
 
-type JobStatus = "draft" | "published" | "in_progress" | "awaiting" | "completed" | "closed";
+type JobStatus =
+  | "draft"
+  | "published"
+  | "in_progress"
+  | "awaiting"
+  | "completed"
+  | "closed";
 type ModalAction = "delete" | "close" | null;
 
 interface JobItem {
@@ -52,7 +58,8 @@ const canDeleteJob = (job: JobItem) => {
   if (job.status === "completed") return true;
 
   // published ที่หมดอายุแล้ว หรือ closed → ให้ลองลบได้ (server จะเช็คอีกที)
-  if (job.status === "published" && isJobExpired(job.applicationDeadline)) return true;
+  if (job.status === "published" && isJobExpired(job.applicationDeadline))
+    return true;
   if (job.status === "closed") return true;
 
   // in_progress หรือ awaiting → มีงานกำลังดำเนินการ ไม่ให้ลบ
@@ -91,11 +98,11 @@ export default function MyJobsPage() {
       setLoading(true);
       try {
         const res = await axios.get("/api/jobs", {
-            params: { 
-                ownerId: (session.user as any).id || (session.user as any)._id, 
-                limit: 50,
-                includeDraft: true, 
-            },
+          params: {
+            ownerId: (session.user as any).id || (session.user as any)._id,
+            limit: 50,
+            includeDraft: true,
+          },
         });
         setJobs(res.data.jobs);
       } catch {
@@ -111,7 +118,9 @@ export default function MyJobsPage() {
   // เปิด modal สำหรับลบงาน
   const openDeleteModal = (job: JobItem, canDelete: boolean) => {
     if (!canDelete) {
-      toast.error("ไม่สามารถลบงานนี้ได้ เนื่องจากมีนิสิตกำลังดำเนินการอยู่งานนี้");
+      toast.error(
+        "ไม่สามารถลบงานนี้ได้ เนื่องจากมีนิสิตกำลังดำเนินการอยู่งานนี้",
+      );
       return;
     }
     setSelectedJob(job);
@@ -144,9 +153,16 @@ export default function MyJobsPage() {
         setJobs((prev) => prev.filter((j) => j._id !== selectedJob._id));
         toast.success("ลบประกาศงานสำเร็จ");
       } else if (modalAction === "close") {
-        await axios.patch(`/api/jobs/${selectedJob._id}`, { ...selectedJob, status: "closed" });
+        await axios.patch(`/api/jobs/${selectedJob._id}`, {
+          ...selectedJob,
+          status: "closed",
+        });
         setJobs((prev) =>
-          prev.map((j) => (j._id === selectedJob._id ? { ...j, status: "closed" as JobStatus } : j))
+          prev.map((j) =>
+            j._id === selectedJob._id
+              ? { ...j, status: "closed" as JobStatus }
+              : j,
+          ),
         );
         toast.success("ปิดรับสมัครสำเร็จ");
       }
@@ -164,14 +180,32 @@ export default function MyJobsPage() {
   };
 
   /* ---------- Status Badge ---------- */
-  const StatusBadge = ({ status, isExpired }: { status: JobStatus; isExpired?: boolean }) => {
+  const StatusBadge = ({
+    status,
+    isExpired,
+  }: {
+    status: JobStatus;
+    isExpired?: boolean;
+  }) => {
     const map: Record<string, { label: string; className: string }> = {
-      draft:       { label: "ฉบับร่าง",      className: "bg-gray-100 text-gray-600" },
-      published:   { label: "เปิดรับสมัคร",  className: "bg-green-100 text-green-700" },
-      in_progress: { label: "กำลังดำเนินการ", className: "bg-blue-100 text-blue-600" },
-      awaiting:    { label: "กำลังดำเนินการ", className: "bg-blue-100 text-blue-600" },
-      completed:   { label: "งานเสร็จสิ้น",     className: "bg-emerald-100 text-emerald-700" },
-      closed:      { label: "ปิดรับสมัคร",   className: "bg-red-100 text-red-600" },
+      draft: { label: "ฉบับร่าง", className: "bg-gray-100 text-gray-600" },
+      published: {
+        label: "เปิดรับสมัคร",
+        className: "bg-green-100 text-green-700",
+      },
+      in_progress: {
+        label: "กำลังดำเนินการ",
+        className: "bg-blue-100 text-blue-600",
+      },
+      awaiting: {
+        label: "กำลังดำเนินการ",
+        className: "bg-blue-100 text-blue-600",
+      },
+      completed: {
+        label: "งานเสร็จสิ้น",
+        className: "bg-emerald-100 text-emerald-700",
+      },
+      closed: { label: "ปิดรับสมัคร", className: "bg-red-100 text-red-600" },
     };
 
     // กรณี published แต่หมดอายุ
@@ -183,9 +217,14 @@ export default function MyJobsPage() {
       );
     }
 
-    const s = map[status] ?? { label: status, className: "bg-gray-100 text-gray-600" };
+    const s = map[status] ?? {
+      label: status,
+      className: "bg-gray-100 text-gray-600",
+    };
     return (
-      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${s.className}`}>
+      <span
+        className={`text-xs font-semibold px-3 py-1 rounded-full ${s.className}`}
+      >
         {s.label}
       </span>
     );
@@ -202,7 +241,6 @@ export default function MyJobsPage() {
 
   return (
     <div className="bg-gray-50/50 min-h-screen">
-
       {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={modalOpen}
@@ -291,7 +329,9 @@ export default function MyJobsPage() {
                 const canDelete = canDeleteJob(job);
 
                 // กำหนด CTA รองตามสถานะ
-                const showEdit = job.status === "draft" || (job.status === "published" && !expired);
+                const showEdit =
+                  job.status === "draft" ||
+                  (job.status === "published" && !expired);
                 const showCloseJob = job.status === "published" && !expired;
                 const showDuplicate =
                   (job.status === "published" && expired) ||
@@ -317,6 +357,7 @@ export default function MyJobsPage() {
                     </button>
 
                     <JobCard
+                      // fromPageName="งานของฉัน"
                       isLoggedIn={true}
                       data={{
                         id: job._id,
@@ -336,7 +377,10 @@ export default function MyJobsPage() {
                       actionButton={
                         <div className="flex gap-2 w-full">
                           {/* CTA หลัก: ดูรายละเอียดงาน */}
-                          <Link href={`/find-job/${job._id}`} className="flex-grow">
+                          <Link
+                            href={`/find-job/${job._id}?fromName=${encodeURIComponent("งานของฉัน")}`}
+                            className="flex-grow"
+                          >
                             <button className="bg-primary-blue-500 text-white text-base py-3 px-4 rounded-lg w-full hover:bg-primary-blue-600 transition-colors">
                               ดูรายละเอียดงาน
                             </button>

@@ -25,6 +25,7 @@ interface JobCardProps {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   actionButton?: React.ReactNode;
+  fromPageName?: string;
 }
 
 const JobCard: React.FC<JobCardProps> = ({
@@ -33,6 +34,7 @@ const JobCard: React.FC<JobCardProps> = ({
   isBookmarked = false,
   onToggleBookmark,
   actionButton,
+  fromPageName = "ย้อนกลับ"
 }) => {
   const compensation = data.maxCompensation
     ? `${data.minCompensation} - ${data.maxCompensation}`
@@ -101,7 +103,7 @@ const JobCard: React.FC<JobCardProps> = ({
 
       <div className="flex justify-between items-center gap-3">
         {actionButton ?? (
-          <Link href={`/find-job/${data.id}`} className="flex-grow">
+          <Link href={`/find-job/${data.id}?fromName=${encodeURIComponent(fromPageName)}`} className="flex-grow">
             <button className="bg-primary-blue-500 text-white text-base py-3 px-4 rounded-lg w-full hover:bg-primary-blue-600 transition-colors">
               ดูรายละเอียดงาน
             </button>

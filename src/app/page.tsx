@@ -701,7 +701,6 @@ export default function Home() {
     }
   };
 
-
   return (
     <>
       <motion.div initial="hidden" animate="visible" className="bg-[#FFFFFF]">
@@ -819,6 +818,7 @@ export default function Home() {
             ) : recommendedJobs.length > 0 ? (
               recommendedJobs.map((job: any) => (
                 <JobCard
+                  fromPageName="หน้าแรก"
                   key={job._id}
                   isLoggedIn={isLoggedIn}
                   isBookmarked={savedJobIds.includes(job._id)}
