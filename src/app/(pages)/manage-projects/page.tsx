@@ -1178,23 +1178,22 @@ export default function ManageProjectsPage() {
                               : "-"}
                           </span>
 
-                          <Link
-                            href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                            className={`text-xs font-bold transition-all hover:underline flex items-center gap-1 ${
-                              hasStudentReviewed
-                                ? "text-primary-blue-500"
-                                : "text-orange-500 animate-pulse"
-                            }`}
-                          >
-                            {hasStudentReviewed ? (
-                              "ดูรายละเอียด →"
-                            ) : (
-                              <span className="flex items-center gap-1">
-                                <Star size={12} fill="currentColor" />{" "}
-                                รีวิวผู้ว่าจ้างเลย! →
-                              </span>
-                            )}
-                          </Link>
+                          {hasStudentReviewed ? (
+                            <Link
+                              href={`/manage-projects/${app.jobId}/work/${app._id}`}
+                              className="text-xs font-bold text-primary-blue-500 hover:underline"
+                            >
+                              ดูรายละเอียด →
+                            </Link>
+                          ) : (
+                            <button
+                              onClick={() => openReviewModal(app)}
+                              className="text-xs font-bold text-orange-500 animate-pulse hover:underline flex items-center gap-1"
+                            >
+                              <Star size={12} fill="currentColor" />{" "}
+                              รีวิวผู้ว่าจ้างเลย! →
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
