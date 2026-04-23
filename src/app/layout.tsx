@@ -4,7 +4,6 @@ import Navbar from "./components/nav/Navbar";
 import "./css/globals.css";
 import { ReactNode } from "react";
 import Footer from "./components/footer/Footer";
-import InboxButton from "./components/float/InboxButton";
 import AuthProvider from "../providers/AuthProvider";
 import PusherProvider from "../providers/PusherProvider";
 import UserProvider from "../providers/UserProvider";
@@ -34,7 +33,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 {children}
               </div>
               <Footer/>
-              <InboxButton/>
             </PusherProvider>
           </UserProvider>
         </AuthProvider>

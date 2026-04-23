@@ -45,7 +45,6 @@ const menuByRole = {
     { name: 'โปรไฟล์', path: '/account', icon: User },
     { name: 'งานของฉัน', path: '/manage-projects', icon: LayoutDashboard },
     { name: 'งานที่บันทึกไว้', path: '/saved-jobs', icon: Bookmark },
-    // { name: 'งานของฉัน', path: '/my-jobs', icon: LayoutDashboard },
     { name: 'ตั้งค่า', path: '/settings', icon: Settings },
   ],
 };

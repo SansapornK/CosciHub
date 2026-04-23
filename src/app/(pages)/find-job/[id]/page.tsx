@@ -6,7 +6,6 @@ import axios from "axios";
 import {
   User,
   MapPin,
-  Clock,
   Wallet,
   Users,
   Bookmark,
@@ -61,6 +60,7 @@ const JobDetailPage = () => {
   };
 
   const isLoggedIn = status === "authenticated";
+  const isStudent = isLoggedIn && session?.user?.role === "student";
 
   useEffect(() => {
     const fetchJobData = async () => {
@@ -73,7 +73,7 @@ const JobDetailPage = () => {
 
         if (status === "authenticated") {
           const checkRes = await axios.get(
-            `/api/applications/check?jobId=${params.id}`,
+            `/api/applications/check?jobId=${params.id}`
           );
           setHasApplied(checkRes.data.hasApplied);
         }
@@ -132,7 +132,7 @@ const JobDetailPage = () => {
       if (status === "authenticated" && params.id) {
         try {
           const res = await axios.get(
-            `/api/bookmarks/check?jobId=${params.id}`,
+            `/api/bookmarks/check?jobId=${params.id}`
           );
           setIsBookmarked(res.data.isBookmarked);
         } catch (err) {
@@ -233,12 +233,16 @@ const JobDetailPage = () => {
                   <SidebarItem icon={<User />} label={job.owner} />
                   <SidebarItem
                     icon={<MapPin />}
-                    label={`${jobTypeLabel[job.jobType] ?? job.jobType} / ${job.location || "ทำงานออนไลน์"}`}
+                    label={`${jobTypeLabel[job.jobType] ?? job.jobType} / ${
+                      job.location || "ทำงานออนไลน์"
+                    }`}
                     iconColor="text-red-400"
                   />
                   <SidebarItem
                     icon={<Wallet />}
-                    label={`${job.budgetMin.toLocaleString()} ${job.budgetMax ? `- ${job.budgetMax.toLocaleString()}` : ""} บาท`}
+                    label={`${job.budgetMin.toLocaleString()} ${
+                      job.budgetMax ? `- ${job.budgetMax.toLocaleString()}` : ""
+                    } บาท`}
                     iconColor="text-emerald-500"
                   />
                   <SidebarItem
@@ -248,25 +252,25 @@ const JobDetailPage = () => {
                   />
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleApplyClick}
-                    disabled={hasApplied || applying}
-                    className={`flex-grow py-4 px-6 rounded-2xl text-lg font-bold transition-all active:scale-95 shadow-lg
-                                            ${
-                                              hasApplied
-                                                ? "bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
-                                                : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
-                                            }`}
-                  >
-                    {hasApplied
-                      ? "คุณสมัครงานนี้แล้ว"
-                      : applying
+                {isStudent && (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleApplyClick}
+                      disabled={hasApplied || applying}
+                      className={`flex-grow py-4 px-6 rounded-2xl text-lg font-bold transition-all active:scale-95 shadow-lg
+                                                ${
+                                                  hasApplied
+                                                    ? "bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
+                                                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
+                                                }`}
+                    >
+                      {hasApplied
+                        ? "คุณสมัครงานนี้แล้ว"
+                        : applying
                         ? "กำลังสมัคร..."
                         : "สมัครงานนี้"}
-                  </button>
+                    </button>
 
-                  {isLoggedIn && (
                     <button
                       onClick={toggleBookmark}
                       className={`p-4 rounded-2xl border-2 transition-all ${
@@ -276,11 +280,13 @@ const JobDetailPage = () => {
                       }`}
                     >
                       <Bookmark
-                        className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`}
+                        className={`w-6 h-6 ${
+                          isBookmarked ? "fill-current" : ""
+                        }`}
                       />
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

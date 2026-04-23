@@ -3,8 +3,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import BasicInfoEditor from './BasicInfoEditor';
-import WorkStatusToggle from './WorkStatusToggle';
-import BasePriceEditor from './BasePriceEditor';
 import SkillsEditor from './SkillsEditor';
 import PortfolioFileEditor from './PortfolioFileEditor';
 import GalleryImagesEditor from './GalleryImagesEditor';
