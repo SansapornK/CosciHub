@@ -67,8 +67,9 @@ function JobList({
   currentSort = "latest",
   onResetFilters,
 }: JobListProps) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
+  const isStudent = session?.user?.role === "student";
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -217,7 +218,8 @@ function JobList({
             fromPageName="ค้นหางานพิเศษ"
             key={job._id}
             isLoggedIn={isLoggedIn}
-            isBookmarked={savedJobIds.includes(job._id)} 
+            isStudent={isStudent}
+            isBookmarked={savedJobIds.includes(job._id)}
             onToggleBookmark={() => handleToggleBookmark(job._id)}
             data={{
               id: job._id,

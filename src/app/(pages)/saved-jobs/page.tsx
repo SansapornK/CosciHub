@@ -112,6 +112,7 @@ export default function BookmarksPage() {
                   <JobCard
                     fromPageName="งานที่คุณบันทึกไว้"
                     isLoggedIn={true}
+                    isStudent={true}
                     isBookmarked={savedJobIds.includes(job._id)}
                     onToggleBookmark={() => handleToggleBookmark(job._id)}
                     data={{

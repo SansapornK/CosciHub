@@ -4,6 +4,22 @@ import React from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Phone, MessageCircle } from "lucide-react";
+
+// Helper function to get icon based on contact type
+const getContactIcon = (contact: string) => {
+  const lowerContact = contact.toLowerCase();
+  if (lowerContact.includes("อีเมล") || lowerContact.includes("email")) {
+    return <Mail className="w-4 h-4 text-primary-blue-500 flex-shrink-0" />;
+  }
+  if (lowerContact.includes("line") || lowerContact.includes("ไลน์")) {
+    return <MessageCircle className="w-4 h-4 text-green-500 flex-shrink-0" />;
+  }
+  if (lowerContact.includes("โทร") || lowerContact.includes("phone") || lowerContact.includes("เบอร์")) {
+    return <Phone className="w-4 h-4 text-orange-500 flex-shrink-0" />;
+  }
+  return <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />;
+};
 
 interface JobApplication {
   _id: string;
@@ -72,11 +88,14 @@ export default function ConfirmStartJobModal({
                 ช่องทางการติดต่อผู้ว่าจ้าง
               </p>
               {app.contactInfo && app.contactInfo.length > 0 ? (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                   {app.contactInfo.map((contact, index) => (
-                    <p key={index} className="text-sm font-medium text-gray-700 break-words">
-                      • {contact}
-                    </p>
+                    <div key={index} className="flex items-center gap-2">
+                      {getContactIcon(contact)}
+                      <p className="text-sm font-medium text-gray-700 break-words">
+                        {contact}
+                      </p>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -87,8 +106,8 @@ export default function ConfirmStartJobModal({
             </div>
 
             <p className="text-[12px] text-gray-600 leading-relaxed mb-3 ">
-              กรุณาตรวจสอบให้แน่ใจว่าได้คุยรายละเอียดกับผู้ว่าจ้างผ่านช่องทางข้างต้นเรียบร้อยแล้ว
-              หากไม่ลงตัวสามารถยกเลิกได้
+              กรุณาตรวจสอบว่าคุณได้คุยรายละเอียดกับผู้ว่าจ้างผ่านช่องทางข้างต้นเรียบร้อยแล้ว
+              หากไม่ตรงตามความต้องการ สามารถยกเลิกได้
             </p>
 
             {/* Warning Message */}

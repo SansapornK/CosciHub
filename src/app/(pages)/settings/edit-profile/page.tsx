@@ -5,26 +5,60 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, X, Save } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, Mail, Phone, MessageCircle } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "@/app/components/common/Loading";
 
+// Contact type options
+const contactTypes = [
+  { value: "email", label: "อีเมล", icon: Mail, placeholder: "example@email.com" },
+  { value: "line", label: "Line ID", icon: MessageCircle, placeholder: "@lineid หรือ 0812345678" },
+  { value: "phone", label: "เบอร์โทรศัพท์", icon: Phone, placeholder: "081-234-5678" },
+];
+
+interface ContactItem {
+  type: string;
+  value: string;
+}
+
 interface ProfileData {
   firstName: string;
   lastName: string;
-  contactInfo: string[];
+  contactInfo: ContactItem[];
 }
 
+// Convert ContactItem to string for saving
+const contactItemToString = (item: ContactItem): string => {
+  const typeLabel = contactTypes.find(t => t.value === item.type)?.label || item.type;
+  return `${typeLabel}: ${item.value}`;
+};
+
+// Parse contact string from DB to ContactItem
+// Expected formats: "อีเมล: value", "Line ID: value", "เบอร์โทรศัพท์: value"
+const parseContactString = (contact: string): ContactItem => {
+  if (contact.startsWith("อีเมล:")) {
+    return { type: "email", value: contact.substring("อีเมล:".length).trim() };
+  }
+  if (contact.startsWith("Line ID:")) {
+    return { type: "line", value: contact.substring("Line ID:".length).trim() };
+  }
+  if (contact.startsWith("เบอร์โทรศัพท์:")) {
+    return { type: "phone", value: contact.substring("เบอร์โทรศัพท์:".length).trim() };
+  }
+  // Default: return as email type
+  return { type: "email", value: contact };
+};
+
 export default function EditProfilePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: "",
     lastName: "",
-    contactInfo: [""],
+    contactInfo: [{ type: "email", value: "" }],
   });
   const [validation, setValidation] = useState({
     firstName: { error: "" },
@@ -39,13 +73,17 @@ export default function EditProfilePage() {
       try {
         const response = await axios.get("/api/user/profile");
         const data = response.data;
+
+        // Parse existing contact info from DB
+        const parsedContactInfo: ContactItem[] =
+          data.contactInfo && data.contactInfo.length > 0
+            ? data.contactInfo.map((contact: string) => parseContactString(contact))
+            : [{ type: "email", value: "" }];
+
         setProfileData({
           firstName: data.firstName || "",
           lastName: data.lastName || "",
-          contactInfo:
-            data.contactInfo && data.contactInfo.length > 0
-              ? data.contactInfo
-              : [""],
+          contactInfo: parsedContactInfo,
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -97,10 +135,17 @@ export default function EditProfilePage() {
     }
   };
 
-  // Handle contact info change
-  const handleContactInfoChange = (index: number, value: string) => {
+  // Handle contact info type change
+  const handleContactTypeChange = (index: number, type: string) => {
     const newContactInfo = [...profileData.contactInfo];
-    newContactInfo[index] = value;
+    newContactInfo[index] = { ...newContactInfo[index], type };
+    setProfileData((prev) => ({ ...prev, contactInfo: newContactInfo }));
+  };
+
+  // Handle contact info value change
+  const handleContactValueChange = (index: number, value: string) => {
+    const newContactInfo = [...profileData.contactInfo];
+    newContactInfo[index] = { ...newContactInfo[index], value };
     setProfileData((prev) => ({ ...prev, contactInfo: newContactInfo }));
   };
 
@@ -108,7 +153,7 @@ export default function EditProfilePage() {
   const addContactInfo = () => {
     setProfileData((prev) => ({
       ...prev,
-      contactInfo: [...prev.contactInfo, ""],
+      contactInfo: [...prev.contactInfo, { type: "email", value: "" }],
     }));
   };
 
@@ -119,7 +164,7 @@ export default function EditProfilePage() {
     );
     setProfileData((prev) => ({
       ...prev,
-      contactInfo: newContactInfo.length > 0 ? newContactInfo : [""],
+      contactInfo: newContactInfo.length > 0 ? newContactInfo : [{ type: "email", value: "" }],
     }));
   };
 
@@ -129,9 +174,9 @@ export default function EditProfilePage() {
       return false;
     if (validation.firstName.error || validation.lastName.error) return false;
 
-    // At least one contact info required
+    // At least one contact info with value required
     const validContactInfo = profileData.contactInfo.filter(
-      (info) => info.trim() !== ""
+      (info) => info.value.trim() !== ""
     );
     if (validContactInfo.length === 0) return false;
 
@@ -151,12 +196,13 @@ export default function EditProfilePage() {
       const formData = new FormData();
       formData.append("firstName", profileData.firstName);
       formData.append("lastName", profileData.lastName);
-      formData.append(
-        "contactInfo",
-        JSON.stringify(
-          profileData.contactInfo.filter((info) => info.trim() !== "")
-        )
-      );
+
+      // Convert ContactItem array to string array for saving
+      const contactInfoStrings = profileData.contactInfo
+        .filter((info) => info.value.trim() !== "")
+        .map((info) => contactItemToString(info));
+
+      formData.append("contactInfo", JSON.stringify(contactInfoStrings));
 
       await axios.patch("/api/user/profile", formData, {
         headers: {
@@ -261,33 +307,57 @@ export default function EditProfilePage() {
               ช่องทางการติดต่อ
             </h3>
             <p className="text-gray-500 text-sm mb-4">
-              ช่องทางที่ผู้ว่าจ้างสามารถติดต่อคุณได้ เช่น Line, E-mail, เบอร์โทร
+              ช่องทางที่ผู้ว่าจ้างสามารถติดต่อคุณได้
             </p>
 
             <div className="flex flex-col gap-3">
-              {profileData.contactInfo.map((contact, index) => (
-                <div key={index} className="flex gap-2">
-                  <input
-                    type="text"
-                    className="input flex-1"
-                    placeholder="เช่น Line ID: xxx, E-mail: xxx@gmail.com"
-                    value={contact}
-                    onChange={(e) =>
-                      handleContactInfoChange(index, e.target.value)
-                    }
-                  />
-                  {profileData.contactInfo.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeContactInfo(index)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      title="ลบช่องทางนี้"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              ))}
+              {profileData.contactInfo.map((contact, index) => {
+                const selectedType = contactTypes.find(t => t.value === contact.type) || contactTypes[0];
+                const IconComponent = selectedType.icon;
+
+                return (
+                  <div key={index} className="flex gap-2">
+                    {/* Contact Type Dropdown */}
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <IconComponent className="w-4 h-4" />
+                      </div>
+                      <select
+                        value={contact.type}
+                        onChange={(e) => handleContactTypeChange(index, e.target.value)}
+                        className="appearance-none  bg-gray-50 border border-gray-200 rounded-lg px-10 py-2.5 pr-5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[140px]"
+                      >
+                        {contactTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Contact Value Input */}
+                    <input
+                      type={contact.type === "email" ? "email" : "text"}
+                      className="input flex-1"
+                      placeholder={selectedType.placeholder}
+                      value={contact.value}
+                      onChange={(e) => handleContactValueChange(index, e.target.value)}
+                    />
+
+                    {/* Remove Button */}
+                    {profileData.contactInfo.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeContactInfo(index)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="ลบช่องทางนี้"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
 
               <button
                 type="button"

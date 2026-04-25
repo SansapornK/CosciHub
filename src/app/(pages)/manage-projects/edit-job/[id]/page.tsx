@@ -24,6 +24,7 @@ const jobCategories = [
   "งานบริการ/ธุรการ",
   "งานสอนพิเศษ",
   "งานกองถ่าย/Extra",
+  "อื่น ๆ"
 ];
 const jobForms = [
   { value: "online", label: "ออนไลน์" },

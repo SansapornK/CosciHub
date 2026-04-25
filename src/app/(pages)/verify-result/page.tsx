@@ -34,6 +34,13 @@ function VerifyResultContent() {
       bgColor: "bg-amber-50",
       borderColor: "border-amber-200"
     },
+    outdated: {
+      icon: <AlertTriangle className="w-16 h-16 text-orange-500" />,
+      title: "ลิงก์นี้ไม่สามารถใช้งานได้แล้ว",
+      description: "ผู้ใช้ได้ส่งคำขอยืนยันใหม่แล้ว กรุณาใช้ลิงก์จากอีเมลฉบับล่าสุดที่ท่านได้รับแทน",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200"
+    },
     already_used: {
       icon: <AlertTriangle className="w-16 h-16 text-blue-500" />,
       title: "ทำรายการไปแล้ว",

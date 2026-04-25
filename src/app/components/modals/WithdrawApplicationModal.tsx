@@ -65,7 +65,7 @@ export default function WithdrawApplicationModal({
 
             <div className="px-5 py-3 bg-amber-50 rounded-2xl mb-3 border border-amber-100 text-center">
               <p className="text-sm text-amber-600 leading-relaxed">
-                คุณสามารถกลับมาสมัครใหม่ได้ภายหลัง <br /> หากจำนวนรับยังไม่ครบ
+                คุณสามารถกลับมาสมัครใหม่ได้ภายหลัง <br /> หากผู้สมัครยังไม่ครบตามจำนวนที่กำหนด
               </p>
             </div>
 

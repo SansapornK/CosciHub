@@ -11,6 +11,7 @@ interface IJobFilter {
   category?: { $in: string[] };
   budgetMin?: { $gte?: number; $lte?: number };
   owner?: string;
+  ownerId?: string;
   status?: "draft" | "published" | "closed" | { $nin: string[] };
   applicationDeadline?: { $gte: Date };
 }
@@ -40,9 +41,12 @@ export async function GET(req: Request) {
 
   // ถ้าไม่ได้ขอ includeDraft (สำหรับหน้า find-jobs)
   // → แสดงเฉพาะ published + ยังไม่หมดอายุ + ไม่ใช่ closed
+  // หมดอายุหลังเที่ยงคืนของวันปิดรับสมัคร (ไม่ใช่ทันทีที่เข้าสู่วันนั้น)
   if (!includeDraft) {
     filter.status = "published";
-    // filter.applicationDeadline = { $gte: new Date() };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    filter.applicationDeadline = { $gte: today };
   }
   if (ownerId) filter.ownerId = ownerId;
 

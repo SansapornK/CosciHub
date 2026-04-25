@@ -10,6 +10,7 @@ export interface IAlumniVerification extends Document {
   action?:      'approved' | 'rejected'; // ผลการตัดสินใจ
   expiresAt:    Date;                    // หมดอายุใน 7 วัน
   usedAt?:      Date;                    // วันที่อาจารย์กดปุ่ม
+  invalidated?: boolean;                 // ถูกยกเลิกเพราะมีการส่งอีเมลใหม่
   createdAt:    Date;
 }
 
@@ -48,6 +49,10 @@ const AlumniVerificationSchema: Schema = new Schema({
   usedAt: {
     type:    Date,
     default: null,
+  },
+  invalidated: {
+    type:    Boolean,
+    default: false,
   },
   createdAt: {
     type:    Date,

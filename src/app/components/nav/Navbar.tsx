@@ -21,23 +21,33 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-// 1. กำหนดเมนูหลักที่แสดงบน Navbar เสมอ
-const mainNavItems: NavItem[] = [
-  { name: 'หน้าแรก', path: '/', icon: Home },
-  { name: 'ค้นหางานพิเศษ', path: '/find-job', icon: BriefcaseBusiness },
-];
+// 1. กำหนดเมนูหลักที่แสดงบน Navbar ตาม Role
+const getMainNavItems = (role: string | undefined): NavItem[] => {
+  const baseItems: NavItem[] = [
+    { name: 'หน้าแรก', path: '/', icon: Home },
+  ];
+
+  if (role === 'student') {
+    return [...baseItems, { name: 'ค้นหางานพิเศษ', path: '/find-job', icon: BriefcaseBusiness }];
+  } else if (role === 'alumni' || role === 'teacher') {
+    return [...baseItems, { name: 'ลงประกาศงาน', path: '/manage-projects/create-jobs', icon: PlusSquare }];
+  }
+
+  // Default: ไม่มี role หรือยังไม่ได้ login ให้แสดงค้นหางานพิเศษ
+  return [...baseItems, { name: 'ค้นหางานพิเศษ', path: '/find-job', icon: BriefcaseBusiness }];
+};
 
 // 2. กำหนดเมนูแยกตาม Role สำหรับอยู่ใน Dropdown/Burger Menu
 const menuByRole = {
   teacher: [
     { name: 'โปรไฟล์', path: '/account', icon: User },
-    { name: 'ลงประกาศงาน', path: '/manage-projects/create-jobs', icon: PlusSquare },
+    { name: 'งานของฉัน', path: '/manage-projects/my-jobs', icon: BriefcaseBusiness },
     { name: 'ติดตามงาน', path: '/manage-projects', icon: LayoutDashboard },
     { name: 'ตั้งค่า', path: '/settings', icon: Settings },
   ],
   alumni: [
     { name: 'โปรไฟล์', path: '/account', icon: User },
-    { name: 'ลงประกาศงาน', path: '/manage-projects/create-jobs', icon: PlusSquare },
+    { name: 'งานของฉัน', path: '/manage-projects/my-jobs', icon: BriefcaseBusiness },
     { name: 'ติดตามงาน', path: '/manage-projects', icon: LayoutDashboard },
     { name: 'ตั้งค่า', path: '/settings', icon: Settings },
   ],
@@ -133,6 +143,7 @@ function Navbar() {
   const userProfileUrl = userData?.profileImageUrl || session?.user?.profileImageUrl;
   const userName = userData?.name || session?.user?.name;
   const currentRoleMenus = userRole ? menuByRole[userRole as keyof typeof menuByRole] : [];
+  const mainNavItems = getMainNavItems(userRole);
 
   return (
     <>
