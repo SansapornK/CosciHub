@@ -245,7 +245,7 @@ function StepMajorAndSkills({
         <div className="mt-2 w-full">
           <div className="flex items-center justify-between mb-1">
             <label className="block text-gray-700 text-sm mb-1">
-              ทักษะความถนัด
+              ทักษะและความเชี่ยวชาญ
               <span className="text-[11px] ml-1.5">
                 {data.skills.length > 0 ? (
                   <span className="text-gray-400">
@@ -297,7 +297,7 @@ function StepMajorAndSkills({
               <div className="w-full flex flex-col items-center justify-center py-4 opacity-40">
                 <Sparkles size={20} className="text-gray-300 mb-1" />
                 <p className="text-[11px] font-medium text-gray-400">
-                  ยังไม่ได้เลือกความถนัด
+                  ยังไม่ได้เลือกทักษะของคุณ
                 </p>
               </div>
             )}
@@ -360,7 +360,7 @@ function StepMajorAndSkills({
                 <div className="w-full flex flex-col items-center justify-center py-4 opacity-40">
                   <Sparkles size={20} className="text-gray-300 mb-1" />
                   <p className="text-[11px] font-medium text-gray-400">
-                    ยังไม่ได้เลือกประเภทงานที่สนใจ
+                    ยังไม่ได้เลือกประเภทงานที่คุณสนใจ
                   </p>
                 </div>
               )}

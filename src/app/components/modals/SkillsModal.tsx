@@ -87,9 +87,9 @@ export default function SkillsModal({
             <Sparkles size={24} />
           </div>
           <div>
-            <h3 className="text-xl font-black text-gray-900">เลือกความถนัด</h3>
+            <h3 className="text-xl font-black text-gray-900">เลือกทักษะของคุณ</h3>
             <p className="text-[12px] text-gray-400 mt-0.5">
-              เลือกทักษะที่คุณถนัด (แนะนำอย่างน้อย 5 ทักษะ)
+              เลือกทักษะและความเชี่ยวชาญของคุณ (แนะนำอย่างน้อย 5 ทักษะ)
             </p>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function SkillsModal({
                     >
                       <Plus size={14} className="shrink-0" />
                       <span className="text-[12px] font-medium">
-                        เพิ่มความถนัดของคุณ
+                        เพิ่มทักษะของคุณ
                       </span>
                     </button>
                   )}
@@ -167,7 +167,7 @@ export default function SkillsModal({
                               setCustomSkillInput("");
                             }
                           }}
-                          placeholder="เพิ่มความถนัดของคุณเอง เช่น ดนตรี พูดภาษาจีน"
+                          placeholder="เพิ่มทักษะของคุณเอง เช่น ดนตรี พูดภาษาจีน"
                           className="w-full px-4 py-2 pr-12 rounded-xl border border-gray-100 bg-gray-50 text-gray-500 text-sm outline-none transition-all"
                         />
                         <span

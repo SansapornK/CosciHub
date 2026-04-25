@@ -78,6 +78,10 @@ interface AccountPageCoreProps {
   profileId?: string; // ไม่ส่ง = โปรไฟล์ตัวเอง
 }
 
+// AccountPageCore.tsx
+const getPreviewUrl = (file: { url: string; name: string }) =>
+  `/api/user/profile/preview?url=${encodeURIComponent(file.url)}&name=${encodeURIComponent(file.name)}`;
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 function AccountPageCore({ profileId }: AccountPageCoreProps) {
   const { data: session, status } = useSession();
@@ -100,6 +104,8 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
   const [isEditingResume, setIsEditingResume] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [page3, setPage3] = useState(0);
 
@@ -246,56 +252,64 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   }
 
   // ─── handleUpdateField (เฉพาะเจ้าของ) ────────────────────────────────────
-  // ─── handleUpdateField (เฉพาะเจ้าของ) ────────────────────────────────────
   const handleUpdateField = async (field: string, value: any) => {
     if (!isOwnProfile) return;
+
     try {
       setIsLoading(true);
-      let formData = new FormData();
+      let formDataToSend = new FormData();
 
+      // กรณีที่ 1: รับค่ามาเป็น FormData (เช่น การอัปโหลดไฟล์/Resume)
       if (value instanceof FormData) {
-        // 1. สร้าง FormData ใหม่เพื่อเตรียมข้อมูลที่แปลงแล้ว
-        const newFormData = new FormData();
-
-        // 2. วนลูปตรวจสอบข้อมูลใน FormData เดิม
         for (const [key, val] of value.entries()) {
-          // ตรวจสอบว่าเป็นไฟล์ภาพหรือไม่ (เช่น profileImage, galleryImage0, galleryImage1, ...)
           if (val instanceof File && val.type.startsWith("image/")) {
             try {
-              // ✨ แปลงเป็น WebP ก่อนใส่เข้าไปใน FormData ใหม่
               const webpFile = await convertToWebP(val);
-              newFormData.append(key, webpFile);
+              formDataToSend.append(key, webpFile);
             } catch (error) {
-              console.error(
-                "Conversion to WebP failed, using original file:",
+              console.warn(
+                "WebP conversion failed, fallback to original",
                 error,
               );
-              newFormData.append(key, val); // ถ้าแปลงพลาดให้ใช้ไฟล์เดิม
+              formDataToSend.append(key, val);
             }
           } else {
-            // ถ้าไม่ใช่ภาพ (เช่น resume ที่เป็น PDF หรือข้อความอื่น) ให้ใส่กลับไปตามเดิม
-            newFormData.append(key, val);
+            formDataToSend.append(key, val);
           }
         }
-        formData = newFormData;
-      } else if (field === "name") {
+      }
+      // กรณีที่ 2: แก้ไขชื่อ-นามสกุล (Special Case)
+      else if (field === "name" && typeof value === "string") {
         const nameParts = value.trim().split(/\s+/);
-        formData.append("firstName", nameParts[0] || "");
-        formData.append("lastName", nameParts.slice(1).join(" ") || "");
-      } else if (Array.isArray(value)) {
-        formData.append(field, JSON.stringify(value));
-      } else {
-        formData.append(field, value);
+        formDataToSend.append("firstName", nameParts[0] || "");
+        formDataToSend.append("lastName", nameParts.slice(1).join(" ") || "");
+      }
+      // กรณีที่ 3: ข้อมูลที่เป็น Array (เช่น skills, contactInfo)
+      else if (Array.isArray(value)) {
+        formDataToSend.append(field, JSON.stringify(value));
+      }
+      // กรณีที่ 4: ข้อมูลพื้นฐานอื่น ๆ (String, Number, etc.)
+      else if (value !== null && value !== undefined) {
+        formDataToSend.append(field, value);
       }
 
-      const response = await axios.patch("/api/user/profile", formData);
-      setUserData((prevData: any) => ({ ...prevData, ...response.data }));
-    } catch (error: any) {
-      console.error("Update error:", error.response?.data || error.message);
-      alert(
-        "บันทึกไม่สำเร็จ: " +
-          (error.response?.data?.error || "เซิร์ฟเวอร์ขัดข้อง"),
-      );
+      // ยิง API PATCH เพื่ออัปเดตโปรไฟล์
+      const response = await axios.patch("/api/user/profile", formDataToSend);
+
+      // อัปเดต State หลักของหน้า Account
+      // if (response.data) {
+      //   setUserData((prevData) => ({
+      //     ...prevData,
+      //     ...response.data
+      //   }));
+      // }
+      if (response.data) {
+        setUserData(response.data);
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || error.message;
+      console.error("Update error:", errorMsg);
+      alert(`บันทึกไม่สำเร็จ: ${errorMsg}`);
     } finally {
       setIsLoading(false);
     }
@@ -391,14 +405,14 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                   {userData?.name || "ไม่ระบุชื่อ"}
                 </h1>
                 <div className="flex flex-wrap gap-2 mt-0.5">
-                  <span className="px-3.5 py-1 bg-gray-50/50 text-gray-400 rounded-full text-[11px] font-bold border border-gray-100">
+                  <span className="px-4 py-1.5 bg-[#EDEDED] text-black rounded-full text-[12px]">
                     {userData?.major || "ไม่ระบุสาขาวิชา"}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 mt-6 md:mt-0 pt-1.5 md:pt-2">
-                <span className="flex items-center gap-2 px-6 py-2 bg-[#0C5BEA] text-white rounded-full font-black text-[13px] shadow-lg hover:scale-105 transition-transform cursor-default whitespace-nowrap">
+                <span className="flex items-center gap-2 px-6 py-2 bg-[#0C5BEA] text-white rounded-full font-medium text-[13px] shadow-lg hover:scale-105 transition-transform cursor-default whitespace-nowrap">
                   <User size={15} fill="currentColor" />
                   {userData?.role === "student"
                     ? "นิสิต"
@@ -406,7 +420,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                       ? "ศิษย์เก่า"
                       : "อาจารย์/บุคลากร"}
                 </span>
-                <div className="flex items-center gap-2 px-5 py-2 bg-[#FFD341] text-white rounded-full font-black text-[13px] shadow-lg hover:scale-105 transition-transform cursor-default whitespace-nowrap group relative">
+                <div className="flex items-center gap-2 px-5 py-2 bg-[#FFD341] text-white rounded-full font-medium text-[13px] shadow-lg hover:scale-105 transition-transform cursor-default whitespace-nowrap group relative">
                   <Star size={15} className="fill-current" />
                   <span className="tabular-nums">
                     {userData?.avgRating || "ยังไม่มีรีวิว"}
@@ -471,7 +485,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                         setIsEditingHeader(false);
                       }}
                       disabled={isLoading}
-                      className="flex items-center justify-center gap-2 px-8 py-3 bg-[#10B981] text-white rounded-full font-black text-sm shadow-sm hover:bg-[#059669] active:scale-95 transition-all disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 px-8 py-3 bg-[#10B981] text-white rounded-full font-bold text-sm shadow-sm hover:bg-[#059669] active:scale-95 transition-all disabled:opacity-50"
                     >
                       {isLoading ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -487,11 +501,9 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
               ) : (
                 /* ส่วนแสดงผล Bio ปกติ (คงเดิม) */
                 <div className="flex flex-col items-start gap-3">
-                  <p className="text-gray-700 leading-relaxed text-[15px] md:text-base font-medium break-words whitespace-pre-wrap w-full">
-                    "
+                  <p className="text-black leading-relaxed text-[15px] md:text-base break-words whitespace-pre-wrap w-full">
                     {userData?.bio ||
                       "แนะนำตัวเองสั้น ๆ เพื่อให้ผู้ว่าจ้างรู้จักคุณมากขึ้น..."}
-                    "
                   </p>
                 </div>
               )}
@@ -506,9 +518,9 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
           const missing = [
             !userData?.bio && {
               key: "bio",
-              label: "แนะนำตัว (Bio)",
-              desc: "เพิ่มคำแนะนำตัวสั้นๆ ให้ผู้ว่าจ้างรู้จักคุณ",
-              status: "ยังไม่กรอก",
+              label: "คำอธิบายตนเอง",
+              desc: "เพิ่มคำอธิบายตนเองสั้น ๆ ให้ผู้ว่าจ้างรู้จักคุณมากขึ้น",
+              status: "ยังไม่ได้ระบุข้อมูล",
               color: "danger",
               onClick: () => {
                 setTempBio("");
@@ -518,12 +530,12 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             },
             (!userData?.skills || userData.skills.length < 5) && {
               key: "skills",
-              label: "ความถนัด",
-              desc: `มี ${userData?.skills?.length || 0} ทักษะ — แนะนำอย่างน้อย 5`,
+              label: "ทักษะของคุณ",
+              desc: `ระบุทักษะอย่างน้อย 5 รายการ`,
               status:
                 userData?.skills?.length > 0
-                  ? `มี ${userData.skills.length} รายการ`
-                  : "ยังไม่กรอก",
+                  ? `เพิ่มแล้ว ${userData.skills.length} รายการ`
+                  : "ยังไม่ได้ระบุข้อมูล",
               color: userData?.skills?.length > 0 ? "warning" : "danger",
               onClick: () => {
                 setSelectedSkills(userData?.skills || []);
@@ -532,19 +544,19 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             },
             (!userData?.experiences || userData.experiences.length === 0) && {
               key: "exp",
-              label: "ประสบการณ์",
-              desc: "เพิ่มผลงานและประสบการณ์ที่เคยทำ",
-              status: "ยังไม่กรอก",
+              label: "ประสบการณ์และผลงานของคุณ",
+              desc: "เพิ่มประสบการณ์และผลงานที่เคยทำ",
+              status: "ยังไม่ได้ระบุข้อมูล",
               color: "danger",
               onClick: () => {
                 setIsEditingExps(true);
                 scrollTo(expRef);
               },
             },
-            !userData?.resumeUrl && {
+            !userData?.resumeFiles && {
               key: "resume",
-              label: "Resume",
-              desc: "อัปโหลด Resume เพื่อช่วยให้ผู้ว่าจ้างตัดสินใจเลือกคุณ",
+              label: "ไฟล์ Resume/CV",
+              desc: "อัปโหลด Resume เพื่อเพิ่มโอกาสในการได้งานให้เร็วขึ้น",
               status: "ยังไม่อัปโหลด",
               color: "danger",
               onClick: () => scrollTo(resumeRef),
@@ -561,7 +573,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
 
           return (
             <div className="max-w-7xl mx-auto px-6 md:px-12 mt-8">
-              <p className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-2">
+              <p className="text-xs font-medium text-gray-400 uppercase mb-3 flex items-center gap-2">
                 <AlertCircle size={13} /> โปรไฟล์ยังไม่สมบูรณ์
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -595,24 +607,26 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
           );
         })()}
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 mt-16 space-y-12">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 mt-10 space-y-12">
         {userData?.role === "student" && (
           <>
             {/* Skills */}
             <section
               ref={skillsRef}
-              className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50"
+              className="bg-white rounded-[1.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/70 mt-6"
             >
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-black text-gray-800">ความถนัด</h3>
-                {/* ✅ เฉพาะเจ้าของ */}
+                <h3 className="text-xl font-black text-gray-800">
+                  ทักษะและความเชี่ยวชาญ
+                </h3>
+                {/* เฉพาะเจ้าของ */}
                 {isOwnProfile && (
                   <button
                     onClick={() => {
                       setSelectedSkills(userData?.skills || []);
                       setIsSkillsModalOpen(true);
                     }}
-                    className="flex items-center gap-2 text-xs font-black text-gray-500 bg-gray-100/80 px-5 py-2.5 rounded-full hover:bg-gray-800 hover:text-white transition-all active:scale-95"
+                    className="flex items-center gap-2 text-xs font-black text-gray-500 bg-gray-100/80 px-5 py-2.5 rounded-full hover:bg-[#0C5BEA] hover:text-white transition-all active:scale-95"
                   >
                     <Pencil size={12} />
                     <span>แก้ไข</span>
@@ -628,7 +642,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     ).map((skill: string) => (
                       <span
                         key={skill}
-                        className="px-5 py-2 bg-white rounded-full text-[13px] font-bold text-[#0C5BEA] border border-blue-100 shadow-sm hover:shadow-md hover:border-[#0C5BEA] transition-all cursor-default"
+                        className="px-5 py-2 bg-white rounded-full text-[13px] font-bold text-[#0C5BEA] border border-[#0C5BEA] shadow-sm hover:shadow-md hover:bg-[#0C5BEA] hover:text-white hover:border-transparent transition-all cursor-default"
                       >
                         {skill}
                       </span>
@@ -644,7 +658,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     {isSkillsExpanded && userData.skills.length > 6 && (
                       <button
                         onClick={() => setIsSkillsExpanded(false)}
-                        className="px-5 py-2 text-[13px] font-bold text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1 group"
+                        className="px-5 py-2 text-[13px] font-medium text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1 group"
                       >
                         <span>แสดงน้อยลง</span>
                         <ArrowRight
@@ -657,7 +671,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 ) : (
                   <div className="flex items-center gap-2 text-gray-300 italic text-sm py-2">
                     <Sparkles size={14} className="opacity-50" />
-                    <span>ยังไม่ได้ระบุความถนัด</span>
+                    <span>ยังไม่ได้ระบุทักษะและความเชี่ยวชาญ</span>
                   </div>
                 )}
               </div>
@@ -666,13 +680,13 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             {/* Experiences & Portfolio */}
             <section
               ref={expRef}
-              className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50"
+              className="bg-white rounded-[1.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/70 mt-6"
             >
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-xl font-black text-gray-800 tracking-tight">
                   ประสบการณ์และผลงาน
                 </h3>
-                {/* ✅ เฉพาะเจ้าของ */}
+                {/* เฉพาะเจ้าของ */}
                 {isOwnProfile && (
                   <button
                     onClick={() => {
@@ -682,7 +696,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     className={`flex items-center gap-2 text-xs font-black transition-all active:scale-95 ${
                       isEditingExps
                         ? "bg-[#10B981] text-white px-5 py-2.5 rounded-full shadow-md"
-                        : "bg-gray-100/80 text-gray-500 px-5 py-2.5 rounded-full hover:bg-gray-800 hover:text-white"
+                        : "bg-gray-100/80 text-gray-500 px-5 py-2.5 rounded-full hover:bg-[#0C5BEA] hover:text-white"
                     }`}
                   >
                     {isEditingExps ? (
@@ -709,7 +723,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                             className="flex items-center justify-between group/item p-4 bg-transparent rounded-[1.5rem] transition-all hover:bg-gray-50/50"
                           >
                             <div className="flex items-center gap-4 flex-1 min-w-0">
-                              <div className="shrink-0 text-[#0C5BEA] opacity-30">
+                              <div className="shrink-0 text-[#0C5BEA]">
                                 <Briefcase size={18} />
                               </div>
                               {isEditingExps && editingIdx === idx ? (
@@ -932,7 +946,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                             <div className="flex items-center gap-2">
                               <span className="w-1.5 h-1.5 bg-[#0C5BEA] rounded-full animate-pulse" />
                               <span className="text-[10px] text-gray-400 font-medium uppercase">
-                                Enter to Save
+                                กด Enter เพื่อบันทึก
                               </span>
                             </div>
                             <div className="flex gap-3">
@@ -980,7 +994,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 {/* Gallery */}
                 <div className="lg:col-span-7 flex flex-col">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-                    {/* ✅ ปุ่มอัปโหลด — เฉพาะเจ้าของ */}
+                    {/* ปุ่มอัปโหลด — เฉพาะเจ้าของ */}
                     {isOwnProfile &&
                       isEditingExps &&
                       (userData?.galleryImages?.length || 0) < 6 && (
@@ -1018,7 +1032,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                           className="w-full h-full object-cover"
                           alt={`Portfolio ${i}`}
                         />
-                        {/* ✅ ปุ่มลบรูป — เฉพาะเจ้าของ */}
+                        {/* ปุ่มลบรูป — เฉพาะเจ้าของ */}
                         {isOwnProfile && isEditingExps && (
                           <button
                             onClick={async () => {
@@ -1103,162 +1117,227 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             {/* Resume */}
             <section
               ref={resumeRef}
-              className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50 mt-12"
+              className="bg-white rounded-[1.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/70 mt-6"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-5">
                 <h3 className="text-xl font-black text-gray-800 tracking-tight">
-                  Resume
+                  Resume/CV
                 </h3>
-                {/* ✅ ปุ่มแก้ไข Resume — เฉพาะเจ้าของ */}
-                {isOwnProfile && userData?.resumeUrl && (
-                  <button
-                    onClick={() => setIsEditingResume(!isEditingResume)}
-                    className={`flex items-center gap-2 text-xs font-black transition-all active:scale-95 ${
-                      isEditingResume
-                        ? "bg-[#10B981] text-white px-8 py-3 rounded-full shadow-md"
-                        : "bg-gray-100/80 text-gray-500 px-5 py-2.5 rounded-full hover:bg-gray-800 hover:text-white"
-                    }`}
-                  >
-                    {isEditingResume ? (
-                      <CheckCircle size={16} />
-                    ) : (
-                      <Pencil size={12} />
-                    )}
-                    <span>{isEditingResume ? "เสร็จสิ้น" : "แก้ไข"}</span>
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {isOwnProfile && (userData?.resumeFiles?.length ?? 0) > 0 && (
+                    <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full">
+                      <FileText size={12} className="text-gray-400" />
+                      <span className="text-xs font-semibold text-gray-500">
+                        {userData?.resumeFiles?.length ?? 0}
+                        <span className="font-normal text-gray-400">
+                          /3 ไฟล์
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                  {isOwnProfile && (userData?.resumeFiles?.length ?? 0) > 0 && (
+                    <button
+                      onClick={() => setIsEditingResume(!isEditingResume)}
+                      className={`flex items-center gap-2 text-xs font-black transition-all active:scale-95 ${
+                        isEditingResume
+                          ? "bg-[#10B981] text-white px-5 py-2.5 rounded-full shadow-md"
+                          : "bg-gray-100/80 text-gray-500 px-5 py-2.5 rounded-full hover:bg-[#0C5BEA] hover:text-white"
+                      }`}
+                    >
+                      {isEditingResume ? (
+                        <CheckCircle size={16} />
+                      ) : (
+                        <Pencil size={12} />
+                      )}
+                      <span>{isEditingResume ? "เสร็จสิ้น" : "แก้ไข"}</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="bg-gray-50/50 p-6 rounded-[2.5rem] border-2 border-dashed border-gray-100">
-                {userData?.resumeUrl ? (
-                  <div className="relative group animate-in slide-in-from-bottom-2">
-                    <a
-                      href={userData.resumeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-4 p-4 bg-white rounded-3xl shadow-sm border border-gray-50 hover:border-[#0C5BEA]/30 hover:shadow-md transition-all group/resume cursor-pointer"
-                    >
-                      <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 shrink-0 group-hover/resume:scale-105 transition-transform">
-                        <FileText size={24} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-bold text-gray-700 truncate group-hover/resume:text-[#0C5BEA] transition-colors">
-                          {userData.resumeUrl.split("/").pop()}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] text-gray-400 font-medium">
-                            คลิกเพื่อเปิดไฟล์พรีวิว
-                          </span>
-                          <ArrowRight
-                            size={10}
-                            className="text-[#0C5BEA] opacity-0 group-hover/resume:translate-x-1 group-hover/resume:opacity-100 transition-all"
-                          />
+              {/* File cards */}
+              {(userData?.resumeFiles?.length ?? 0) > 0 && (
+                <div className="flex flex-col gap-2.5 mb-3.5">
+                  {userData.resumeFiles.map((file, i) => (
+                    <div key={i} className="relative group">
+                      <a
+                        href={getPreviewUrl(file)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3.5 p-3.5 bg-gray-50 border border-gray-200 rounded-[1rem] hover:border-blue-300 hover:shadow-[0_0_0_3px_rgba(12,91,234,0.06)] transition-all no-underline"
+                      >
+                        <div className="w-10 h-10 rounded-[0.75rem] bg-red-50 flex items-center justify-center shrink-0">
+                          <FileText size={18} className="text-red-400" />
                         </div>
-                      </div>
-                    </a>
-
-                    {isOwnProfile && isEditingResume && (
-                      <>
-                        <div className="absolute -top-2 -right-2 animate-in zoom-in-95">
-                          <button
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              if (
-                                confirm(
-                                  "คุณต้องการลบไฟล์ Resume นี้ใช่หรือไม่?",
-                                )
-                              ) {
-                                const formData = new FormData();
-                                formData.append("deleteResume", "true");
-                                await handleUpdateField("resume", formData);
-                                setIsEditingResume(false);
-                              }
-                            }}
-                            className="w-9 h-9 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-all active:scale-90"
-                          >
-                            <Trash size={16} />
-                          </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[0.875rem] font-medium text-gray-800 truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-[0.6875rem] text-gray-400 mt-0.5">
+                            {file.size} · คลิกเพื่อเปิดไฟล์
+                          </p>
                         </div>
-                        <div className="flex justify-center mt-6">
-                          <label className="cursor-pointer">
+                      </a>
+                      {isOwnProfile && isEditingResume && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1.5">
+                          {/* Replace */}
+                          <label className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors">
                             <input
                               type="file"
                               className="hidden"
                               accept=".pdf"
                               onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
+                                const f = e.target.files?.[0];
+                                if (f) {
                                   const formData = new FormData();
-                                  formData.append("resume", file);
+                                  formData.append("resume", f);
+                                  formData.append("replaceIndex", String(i));
                                   await handleUpdateField("resume", formData);
-                                  setIsEditingResume(false);
                                 }
                               }}
                             />
-                            <div className="flex items-center gap-2 px-6 py-2 bg-white border-2 border-[#0C5BEA] text-[#0C5BEA] rounded-xl font-bold text-xs hover:bg-[#0C5BEA] hover:text-white transition-all">
-                              <Upload size={14} strokeWidth={3} />
-                              <span>เปลี่ยนไฟล์ใหม่</span>
-                            </div>
+                            <Upload
+                              size={13}
+                              className="text-blue-500"
+                              strokeWidth={2.5}
+                            />
                           </label>
+                          {/* Delete */}
+                          <button
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              if (confirm("ต้องการลบไฟล์นี้?")) {
+                                const formData = new FormData();
+                                formData.append("deleteResumeIndex", String(i));
+                                await handleUpdateField("resume", formData);
+                              }
+                            }}
+                            className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center hover:bg-red-100 transition-colors active:scale-90"
+                          >
+                            <Trash
+                              size={13}
+                              className="text-red-400"
+                              strokeWidth={2.5}
+                            />
+                          </button>
                         </div>
-                      </>
-                    )}
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Upload zone — shown when <3 files or no files yet */}
+              {isOwnProfile && (userData?.resumeFiles?.length ?? 0) < 3 && (
+                <div
+                  className={`flex flex-col items-center gap-1.5 border-[1.5px] border-dashed rounded-[1rem] py-5 cursor-pointer transition-all group ${
+                    isDragging
+                      ? "border-[#0C5BEA] bg-[#EEF3FF]"
+                      : "border-gray-200 hover:border-[#0C5BEA] hover:bg-[#FAFBFF]"
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                  }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    const picked = Array.from(e.dataTransfer.files).filter(
+                      (f) => f.type === "application/pdf",
+                    );
+                    const remaining = 3 - (userData?.resumeFiles?.length ?? 0);
+                    const toAdd = picked.slice(0, remaining);
+                    for (const file of toAdd) {
+                      if (file.size > 10 * 1024 * 1024) {
+                        alert(`${file.name} มีขนาดเกิน 10MB`);
+                        continue;
+                      }
+                      const formData = new FormData();
+                      formData.append("resume", file);
+                      await handleUpdateField("resume", formData);
+                    }
+                    if (picked.length > remaining)
+                      alert(`เพิ่มได้อีกสูงสุด ${remaining} ไฟล์`);
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept=".pdf"
+                    multiple
+                    onChange={async (e) => {
+                      const picked = Array.from(e.target.files ?? []);
+                      const remaining =
+                        3 - (userData?.resumeFiles?.length ?? 0);
+                      const toAdd = picked.slice(0, remaining);
+                      for (const file of toAdd) {
+                        if (file.size > 10 * 1024 * 1024) {
+                          alert(`${file.name} มีขนาดเกิน 10MB`);
+                          continue;
+                        }
+                        const formData = new FormData();
+                        formData.append("resume", file);
+                        await handleUpdateField("resume", formData);
+                      }
+                      if (picked.length > remaining)
+                        alert(`เพิ่มได้อีกสูงสุด ${remaining} ไฟล์`);
+                    }}
+                  />
+                  <div
+                    className={`w-10 h-10 bg-white border border-gray-200 rounded-[0.75rem] flex items-center justify-center transition-all ${
+                      isDragging
+                        ? "shadow-[0_0_0_4px_rgba(12,91,234,0.15)] -translate-y-0.5"
+                        : "group-hover:shadow-[0_0_0_4px_rgba(12,91,234,0.1)] group-hover:-translate-y-0.5"
+                    }`}
+                  >
+                    <Upload
+                      size={18}
+                      className="text-[#0C5BEA]"
+                      strokeWidth={1.75}
+                    />
                   </div>
-                ) : // ✅ Upload area — เฉพาะเจ้าของ, คนอื่นเห็น placeholder
-                isOwnProfile ? (
-                  <div className="flex flex-col items-center justify-center py-10 group">
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept=".pdf"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            if (file.size > 10 * 1024 * 1024) {
-                              alert("ไฟล์ขนาดใหญ่เกิน 10MB");
-                              return;
-                            }
-                            const formData = new FormData();
-                            formData.append("resume", file);
-                            formData.append(
-                              "fileName",
-                              `resume_${(userData.name || "user").replace(/\s+/g, "_")}`,
-                            );
-                            await handleUpdateField("resume", formData);
-                          }
-                        }}
-                      />
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-white rounded-[2rem] flex items-center justify-center text-[#0C5BEA]/30 group-hover:text-[#0C5BEA] group-hover:shadow-lg transition-all duration-500">
-                          <Upload size={32} strokeWidth={1.5} />
-                        </div>
-                        <div className="text-center">
-                          <h4 className="text-[15px] font-medium text-gray-400 group-hover:text-gray-600">
-                            เริ่มต้นอัปโหลด Resume ของคุณ
-                          </h4>
-                          <p className="text-[10px] font-medium text-gray-300 uppercase mt-1">
-                            PDF Only • Max 10MB
-                          </p>
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-10 opacity-40">
-                    <FileText size={32} className="text-gray-300 mb-3" />
-                    <p className="text-[13px] font-bold text-gray-500">
-                      ยังไม่ได้อัปโหลด Resume
-                    </p>
-                  </div>
-                )}
-              </div>
+                  <span className="text-[15px] font-medium text-gray-600">
+                    {isDragging
+                      ? "วางไฟล์ได้เลย!"
+                      : "ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์"}
+                  </span>
+                  <span className="text-[10px] text-gray-400">
+                    PDF เท่านั้น · สูงสุด 3 ไฟล์ · ไม่เกิน 10MB ต่อไฟล์
+                  </span>
+                </div>
+              )}
+
+              {/* Empty state — visitor view */}
+              {!isOwnProfile && (userData?.resumeFiles?.length ?? 0) === 0 && (
+                <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                  <FileText size={28} className="text-gray-300 mb-2" />
+                  <p className="text-[0.8125rem] font-medium text-gray-500">
+                    ยังไม่ได้อัปโหลด Resume
+                  </p>
+                </div>
+              )}
+
+              {/* Done button
+              {isEditingResume && (
+                <button
+                  onClick={() => setIsEditingResume(false)}
+                  className="w-full mt-3 py-3 bg-[#0C5BEA] text-white text-[0.875rem] font-semibold rounded-xl hover:bg-[#0a4fd6] transition-colors active:scale-[.98]"
+                >
+                  เสร็จสิ้น
+                </button>
+              )} */}
             </section>
           </>
         )}
 
         {/* Reviews */}
-        <section className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50 mt-12">
+        <section className="bg-white rounded-[1.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/70 mt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <h3 className="text-xl font-black text-gray-800">

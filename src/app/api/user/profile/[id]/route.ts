@@ -19,7 +19,7 @@ export async function GET(
     }
 
     const user = await User.findById(params.id).select(
-      "firstName lastName name profileImageUrl bio skills experiences galleryImages resumeUrl major role avgRating totalReviews",
+      "firstName lastName name profileImageUrl bio skills experiences galleryImages resumeFiles major role avgRating totalReviews",
     );
 
     if (!user) {
@@ -36,7 +36,7 @@ export async function GET(
       skills: user.skills,
       experiences: user.experiences,
       galleryImages: user.galleryImages,
-      resumeUrl: user.resumeUrl,
+      resumeFiles: user.resumeFiles || [],
       major: user.major,
       role: user.role,
     });

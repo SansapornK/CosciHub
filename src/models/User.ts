@@ -1,6 +1,13 @@
 // src/models/User.ts
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface IResumeFile {
+  name: string;
+  url: string;
+  size: string;
+  uploadedAt: Date;
+}
+
 export interface IUser extends Document {
   name: string;
   firstName: string;
@@ -12,9 +19,9 @@ export interface IUser extends Document {
   major: string;
   skills?: string[]; // ทำให้เป็น optional
   profileImageUrl?: string;
-  resumeUrl?: string;
+  resumeFiles: IResumeFile[];
   bio?: string;
-  contactInfo?: string[];  // ช่องทางการติดต่อ (array)
+  contactInfo?: string[]; // ช่องทางการติดต่อ (array)
   experiences?: string[];
   emailVerified: boolean;
   verificationStatus?: "pending" | "approved" | "rejected" | "not_required";
@@ -53,14 +60,19 @@ const UserSchema: Schema = new Schema(
       default: undefined,
     },
     profileImageUrl: { type: String },
-    resumeUrl: {
-      type: String,
-      default: function () {
-        return this.role === "student" ? null : undefined;
-      },
+    resumeFiles: {
+      type: [
+        {
+          name: { type: String, required: true },
+          url: { type: String, required: true },
+          size: { type: String },
+          uploadedAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
     },
     bio: { type: String },
-    contactInfo: { type: [String], default: [] },  // ช่องทางการติดต่อ (array)
+    contactInfo: { type: [String], default: [] }, // ช่องทางการติดต่อ (array)
     experiences: {
       type: [String],
       default: [],

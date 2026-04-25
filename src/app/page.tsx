@@ -686,7 +686,7 @@ const CategoryCard = ({ title, icon, bgColor, path }) => (
 const ABOUT_FEATURES = [
   {
     title: "เข้าถึงงานพิเศษได้ง่าย",
-    description: "เลือกงานพิเศษที่ตรงกับสาขาวิชาและความถนัดได้",
+    description: "เลือกงานพิเศษที่ตรงกับสาขาวิชาและทักษะของคุณได้",
     icon: (
       <svg viewBox="0 0 24 24" className="h-16 w-16 text-white fill-current">
         <path d="M20,6h-3V4c0-1.1-0.9-2-2-2H9C7.9,2,7,2.9,7,4v2H4C2.9,6,2,6.9,2,8v11c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V8 C22,6.9,21.1,6,20,6z M12,15c-1.1,0-2-0.9-2-2s0.9-2,2-2s2,0.9,2,2S13.1,15,12,15z M9,4h6v2H9V4z" />
