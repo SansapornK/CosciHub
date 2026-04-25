@@ -506,7 +506,7 @@ export async function PATCH(
       await Application.findByIdAndUpdate(id, {
         $set: {
           status: "submitted",
-          progress: 100,
+          // progress: 100,
           workLink: workLink,
           attachments: attachments || [],
           updatedAt: new Date(),
