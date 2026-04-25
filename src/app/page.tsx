@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useEffect, JSX } from "react";
+import React, { useState, useEffect, JSX, useRef, useCallback } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import JobCard from "./components/cards/JobCard";
@@ -11,6 +11,12 @@ import {
 } from "@/app/components/utils/jobHelpers";
 import { Briefcase, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface Feature {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
 
 // --- Animation Variants ---
 const fadeInUp = {
@@ -65,7 +71,7 @@ const varStaggerContainer = {
   },
 };
 
-const KEYWORDS = [
+const KEYWORDS_DESKTOP = [
   {
     text: "งานน่าเชื่อถือ",
     style: "border-2 border-dashed border-gray-400 text-gray-600 bg-white",
@@ -133,7 +139,75 @@ const KEYWORDS = [
   },
 ];
 
-const ICON_BUBBLES = [
+const KEYWORDS_MOBILE = [
+  {
+    text: "งานน่าเชื่อถือ",
+    style: "border-2 border-dashed border-gray-400 text-gray-600 bg-white",
+    x: "65%",
+    y: "5%",
+    rotate: 10,
+    size: "text-sm font-medium",
+  },
+  {
+    text: "การพัฒนา",
+    style: "bg-blue-100 text-gray-700 border border-blue-200",
+    x: "40%",
+    y: "18%",
+    rotate: 0,
+    size: "text-sm font-medium",
+  },
+  {
+    text: "ประสบการณ์",
+    style: "bg-[#F4FE57] text-gray-800 font-black",
+    x: "3%",
+    y: "10%",
+    rotate: -8,
+    size: "text-sm font-medium",
+  },
+  {
+    text: "Experience",
+    style: "bg-gray-100 text-gray-500 border border-gray-200",
+    x: "25%",
+    y: "35%",
+    rotate: 8,
+    size: "text-sm font-medium",
+  },
+  {
+    text: "Project",
+    style:
+      "bg-[#F4FE57] text-gray-800 font-black border-2 border-dashed border-gray-500",
+    x: "65%",
+    y: "30%",
+    rotate: -10,
+    size: "text-sm font-medium",
+  },
+  {
+    text: "โอกาส",
+    style: "border border-gray-400 text-gray-600 bg-white",
+    x: "2%",
+    y: "50%",
+    rotate: -6,
+    size: "text-sm font-medium",
+  },
+  {
+    text: "Skill",
+    style: "bg-[#0C5BEA]/10 text-[#0C5BEA] border border-[#0C5BEA]/30",
+    x: "20%",
+    y: "65%",
+    rotate: 10,
+    size: "text-sm font-medium",
+  },
+  {
+    text: "COSCI Hub",
+    style: "bg-white text-gray-700 border border-gray-200 shadow-sm",
+    x: "55%",
+    y: "50%",
+    rotate: 2,
+    size: "text-sm font-medium",
+  },
+];
+
+const ICON_BUBBLES_DESKTOP = [
   {
     emoji: "🎓",
     x: "48%",
@@ -168,13 +242,55 @@ const ICON_BUBBLES = [
   },
 ];
 
-const FloatingKeywords = () => (
-  <div className="relative w-full min-h-[420px]">
-    {KEYWORDS.map((kw, i) => (
+const ICON_BUBBLES_MOBILE = [
+  {
+    emoji: "🎓",
+    x: "10%",
+    y: "30%",
+    size: "w-9 h-9",
+    border: "bg-white shadow-sm border border-gray-100",
+    rotate: -8,
+  },
+  {
+    emoji: "💼",
+    x: "50%",
+    y: "4%",
+    size: "w-9 h-9",
+    border: "border border-dashed border-gray-300 bg-white",
+    rotate: 12,
+  },
+  {
+    emoji: "⭐",
+    x: "35%",
+    y: "52%",
+    size: "w-9 h-9",
+    border: "bg-yellow-50 border border-yellow-200",
+    rotate: 5,
+  },
+  {
+    emoji: "❤️",
+    x: "85%",
+    y: "50%",
+    size: "w-10 h-10",
+    border: "border border-pink-200 bg-white shadow-sm",
+    rotate: -8,
+  },
+];
+
+// ── render helper ──────────────────────────────────────────────────────────────
+const KeywordLayer = ({
+  keywords,
+  icons,
+}: {
+  keywords: typeof KEYWORDS_DESKTOP;
+  icons: typeof ICON_BUBBLES_DESKTOP;
+}) => (
+  <>
+    {keywords.map((kw, i) => (
       <motion.span
         key={i}
-        initial={{ opacity: 0, scale: 0.7, rotate: kw.rotate - 5 }}
-        whileInView={{ opacity: 1, scale: 1, rotate: kw.rotate }}
+        initial={{ opacity: 0, scale: 0.7 }}
+        whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{
           delay: i * 0.07,
@@ -182,14 +298,14 @@ const FloatingKeywords = () => (
           ease: [0.22, 1, 0.36, 1],
         }}
         whileHover={{ scale: 1.12, rotate: 0 }}
-        className={`absolute px-10 py-2 rounded-full cursor-default select-none ${kw.size} ${kw.style}`}
+        // className={`absolute px-4 py-2 rounded-full cursor-default select-none ${kw.size} ${kw.style}`}
+        className={`absolute px-5 py-2 rounded-full cursor-default select-none ${kw.size} ${kw.style}`}
         style={{ left: kw.x, top: kw.y, rotate: `${kw.rotate}deg` }}
       >
         {kw.text}
       </motion.span>
     ))}
-
-    {ICON_BUBBLES.map((b, i) => (
+    {icons.map((b, i) => (
       <motion.div
         key={i}
         initial={{ opacity: 0, scale: 0.5 }}
@@ -201,14 +317,28 @@ const FloatingKeywords = () => (
           type: "spring",
           stiffness: 200,
         }}
-        whileHover={{ scale: 1.15, rotate: 0 }}
+        whileHover={{ scale: 1.15 }}
+        // className={`absolute ${b.size} rounded-full flex items-center justify-center text-lg ${b.border}`}
         className={`absolute ${b.size} rounded-full flex items-center justify-center text-xl ${b.border}`}
         style={{ left: b.x, top: b.y, rotate: `${b.rotate}deg` }}
       >
         {b.emoji}
       </motion.div>
     ))}
-  </div>
+  </>
+);
+
+const FloatingKeywords = () => (
+  <>
+    {/* Mobile */}
+    <div className="relative w-full min-h-[360px] md:hidden">
+      <KeywordLayer keywords={KEYWORDS_MOBILE} icons={ICON_BUBBLES_MOBILE} />
+    </div>
+    {/* Desktop */}
+    <div className="relative w-full min-h-[480px] hidden md:block">
+      <KeywordLayer keywords={KEYWORDS_DESKTOP} icons={ICON_BUBBLES_DESKTOP} />
+    </div>
+  </>
 );
 
 // --- Hero Slides ---
@@ -305,20 +435,19 @@ const CategoryCard = ({ title, icon, bgColor, path }) => (
     >
       <div
         className={`
-        ${bgColor} 
-        rounded-full p-4 mb-3 flex items-center justify-center 
-        size-14 md:size-16 
-        transform transition-all duration-300 
-        group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-blue-200
-      `}
+          ${bgColor} 
+          rounded-full p-4 mb-3 flex items-center justify-center 
+          size-14 md:size-16 
+          transform transition-all duration-300 
+          group-hover:scale-110
+        `}
       >
         {icon}
       </div>
-
       <h4
         className="text-[10px] md:text-[11px] font-bold text-gray-700 text-center 
-                     group-hover:text-[#0C5BEA] transition-colors 
-                     leading-tight break-words px-1 h-auto"
+                   group-hover:text-[#0C5BEA] transition-colors 
+                   leading-tight break-words px-1 h-auto"
       >
         {title}
       </h4>
@@ -349,7 +478,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การจัดการธุรกิจไซเบอร์",
@@ -376,7 +505,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "นวัตกรรมคอมพิวเตอร์เพื่อการสื่อสาร",
@@ -399,7 +528,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การผลิตภาพยนตร์และสื่อดิจิทัล",
@@ -422,7 +551,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การแสดงและกำกับการแสดงภาพยนตร์",
@@ -447,7 +576,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การออกแบบเพื่องานภาพยนตร์และสื่อดิจิทัล",
@@ -471,7 +600,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การจัดการภาพยนตร์และสื่อดิจิทัล",
@@ -495,7 +624,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อการท่องเที่ยว",
@@ -520,7 +649,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อสุขภาพ",
@@ -543,7 +672,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อการจัดการนวัตกรรม",
@@ -567,7 +696,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
   {
     id: "การสื่อสารเพื่อเศรษฐศาสตร์",
@@ -590,7 +719,7 @@ const MAJOR = [
       </svg>
     ),
     bgColor:
-      "bg-[#0C5BEA] hover:bg-white border border-[#0C5BEA] transition-all duration-300 shadow-md",
+      "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
   },
 ];
 // ---------------------------------------------
@@ -638,7 +767,7 @@ const ABOUT_FEATURES = [
   },
   {
     title: "สะสมประสบการณ์จริง",
-    description: "พัฒนทักษะและต่อยอดสู่การทำงานจริงในอนาคต",
+    description: "พัฒนาทักษะและต่อยอดสู่การทำงานจริงในอนาคต",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -656,6 +785,95 @@ const ABOUT_FEATURES = [
 
 // ---------------------------------------------
 
+export function MobileFeatureSlider({ features }: { features: Feature[] }) {
+  const [current, setCurrent] = useState(0);
+  const touchStartX = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const goTo = useCallback(
+    (index: number) => {
+      setCurrent((index + features.length) % features.length);
+    },
+    [features.length],
+  );
+
+  // Auto-play
+  useEffect(() => {
+    timerRef.current = setInterval(() => goTo(current + 1), 3500);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [current, goTo]);
+
+  const stopPlay = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  return (
+    <div className="relative w-full overflow-hidden">
+      {/* Slide */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current}
+          initial={{ opacity: 0, x: 60 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -60 }}
+          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+          className="bg-gradient-to-b from-[#0C5BEA] to-[#3B76DE]/90 rounded-[2.5rem] p-8 flex flex-col items-center text-center gap-5 min-h-[320px]"
+          onTouchStart={(e) => {
+            touchStartX.current = e.touches[0].clientX;
+            stopPlay();
+          }}
+          onTouchEnd={(e) => {
+            const dx = e.changedTouches[0].clientX - touchStartX.current;
+            if (Math.abs(dx) > 40) goTo(dx < 0 ? current + 1 : current - 1);
+          }}
+        >
+          {/* Counter pill
+          <span className="text-xs font-bold text-white/60 tracking-widest uppercase">
+            {String(current + 1).padStart(2, "0")} /{" "}
+            {String(features.length).padStart(2, "0")}
+          </span> */}
+
+          {/* Icon */}
+          <div className="flex-1 flex items-center justify-center w-full py-2">
+            <div className="[&>svg]:w-24 [&>svg]:h-24 text-white/90 filter drop-shadow-lg">
+              {features[current].icon}
+            </div>
+          </div>
+
+          {/* Text */}
+          <h3 className="text-xl font-black text-white leading-snug">
+            {features[current].title}
+          </h3>
+          <p className="text-[15px] text-white/80 leading-relaxed max-w-[85%]">
+            {features[current].description}
+          </p>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-2 mt-5">
+        {features.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => {
+              stopPlay();
+              goTo(i);
+            }}
+            aria-label={`Go to slide ${i + 1}`}
+            className={`rounded-full transition-all duration-300 ${
+              i === current
+                ? "w-6 h-2.5 bg-[#0C5BEA]"
+                : "w-2.5 h-2.5 bg-gray-300"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // --- 4. Main Component ---
 export default function Home() {
   const { data: session, status } = useSession();
@@ -663,6 +881,14 @@ export default function Home() {
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const currentSlideData = HERO_SLIDES[currentSlideIndex];
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollPosition = e.currentTarget.scrollLeft;
+    const cardWidth = e.currentTarget.offsetWidth;
+    const index = Math.round(scrollPosition / cardWidth);
+    setActiveIndex(index);
+  };
 
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
@@ -776,7 +1002,34 @@ export default function Home() {
         </div>
 
         <section className="bg-blue-50 w-full flex flex-col gap-8 py-5 px-5 justify-center text-center rounded-b-3xl shadow-lg">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-11 gap-4 lg:gap-6 justify-center">
+          {/* Mobile Major Section */}
+          {/* Mobile Major Section */}
+          <div className="md:hidden overflow-x-auto flex gap-4 px-2 py-2 scrollbar-hide scroll-smooth snap-x snap-mandatory">
+            {MAJOR.map((category) => (
+              <Link
+                key={category.id}
+                href={`/find-job?major=${category.id}`}
+                className="flex flex-col items-center gap-2.5 flex-shrink-0 snap-start group"
+              >
+                <div className="relative">
+                  <div className="w-[40px] h-[40px] rounded-full bg-[#0C5BEA] flex items-center justify-center transition-all duration-300 group-active:scale-95 group-active:bg-blue-700 shadow-lg shadow-blue-200 relative overflow-hidden">
+                    <div className="text-white transform transition-transform duration-300 group-hover:rotate-6 relative z-10">
+                      {React.cloneElement(category.icon, {
+                        className: "h-5 w-5",
+                      })}
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-active:bg-black/10 transition-colors duration-200" />
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-gray-500 text-center leading-tight w-[72px] opacity-90 line-clamp-2 min-h-[24px]">
+                  {category.title}
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop Major Section (เดิม) */}
+          <div className="hidden md:grid grid-cols-5 lg:grid-cols-6 xl:grid-cols-11 gap-4 lg:gap-6 justify-center">
             {MAJOR.map((category) => (
               <CategoryCard
                 key={category.id}
@@ -788,57 +1041,58 @@ export default function Home() {
         </section>
 
         {/* --- Job Recommendation Section--- */}
-        <section className="w-full flex flex-col gap-3 mt-5 mb-10 justify-center text-center py-10 px-12">
+        <section className="w-full flex flex-col gap-3 mt-5 mb-10 justify-center text-center py-10 px-6 md:px-12">
           <motion.div
             variants={fadeInUp}
-            className="flex items-center justify-between mb-6"
+            className="flex items-center justify-between mb-2 px-4 md:px-0"
           >
             <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
               งานแนะนำ<span className="text-[#0C5BEA]">สำหรับนิสิต</span>
             </h2>
-            {/* <Link
-              href="/find-job"
-              className="text-sm font-semibold text-[#0C5BEA] hover:text-[#6D91D3] flex items-center gap-1.5 transition-colors group"
-            >
-              ดูทั้งหมด{" "}
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link> */}
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4 px-4 sm:px-0">
+          {/* --- Desktop: Grid / Mobile: Carousel --- */}
+          <div
+            onScroll={handleScroll}
+            className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-6 mt-2 px-4 sm:px-0 
+               overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-hide"
+          >
             {loadingJobs ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-64 bg-gray-100 animate-pulse rounded-xl"
-                  />
-                ))}
-              </div>
+              // Skeleton Loading...
+              [1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="min-w-[85vw] md:min-w-full h-64 bg-gray-100 animate-pulse rounded-[2rem] shrink-0"
+                />
+              ))
             ) : recommendedJobs.length > 0 ? (
               recommendedJobs.map((job: any) => (
-                <JobCard
-                  fromPageName="หน้าแรก"
+                <div
                   key={job._id}
-                  isLoggedIn={isLoggedIn}
-                  isBookmarked={savedJobIds.includes(job._id)}
-                  onToggleBookmark={() => handleToggleBookmark(job._id)}
-                  data={{
-                    id: job._id,
-                    icon: getCategoryIcon(job.category),
-                    title: job.title,
-                    type: job.category,
-                    postedBy: job.owner,
-                    details: job.shortDescription,
-                    minCompensation: job.budgetMin.toLocaleString(),
-                    maxCompensation: job.budgetMax
-                      ? job.budgetMax.toLocaleString()
-                      : null,
-                    currency: "บาท",
-                    timeAgo: calculateTimeAgo(job.postedDate),
-                    isVisible: true,
-                  }}
-                />
+                  className="min-w-[85vw] md:min-w-full snap-center shrink-0 h-full pb-4"
+                >
+                  <JobCard
+                    fromPageName="หน้าแรก"
+                    isLoggedIn={isLoggedIn}
+                    isBookmarked={savedJobIds.includes(job._id)}
+                    onToggleBookmark={() => handleToggleBookmark(job._id)}
+                    data={{
+                      id: job._id,
+                      icon: getCategoryIcon(job.category),
+                      title: job.title,
+                      type: job.category,
+                      postedBy: job.owner,
+                      details: job.shortDescription,
+                      minCompensation: job.budgetMin.toLocaleString(),
+                      maxCompensation: job.budgetMax
+                        ? job.budgetMax.toLocaleString()
+                        : null,
+                      currency: "บาท",
+                      timeAgo: calculateTimeAgo(job.postedDate),
+                      isVisible: true,
+                    }}
+                  />
+                </div>
               ))
             ) : (
               <p className="col-span-full text-gray-500">
@@ -847,14 +1101,26 @@ export default function Home() {
             )}
           </div>
 
-          <Link href="/find-job" className="mt-6">
-            <button className="bg-primary-blue-500 text-white font-medium text-base py-3 px-6 rounded-full shadow-md hover:bg-primary-blue-600 transition-colors hover:shadow-lg">
+          {/* --- Mobile Pagination Dots --- */}
+          <div className="flex md:hidden justify-center gap-2 mt-2">
+            {recommendedJobs.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 transition-all duration-300 rounded-full 
+          ${activeIndex === i ? "w-6 bg-[#0C5BEA]" : "w-1.5 bg-gray-300"}`}
+              />
+            ))}
+          </div>
+
+          <Link href="/find-job" className="mt-8">
+            <button className="bg-primary-blue-500 text-white font-medium text-base py-3 px-8 rounded-full shadow-md hover:bg-primary-blue-600 transition-colors hover:shadow-lg">
               ดูงานทั้งหมด <Briefcase className="w-5 h-5 ml-2 inline" />
             </button>
           </Link>
         </section>
 
         {/* --- About Section (New Design) --- */}
+        {/* --- About Section --- */}
         <motion.section
           variants={fadeInUp}
           viewport={{ once: true, amount: 0.3 }}
@@ -862,7 +1128,7 @@ export default function Home() {
           whileInView="visible"
           className="w-full flex flex-col gap-1 my-20 justify-center text-center px-6 md:px-12 max-w-7xl mx-auto"
         >
-          {/* Header */}
+          {/* Header (เหมือนเดิม) */}
           <div className="flex flex-col items-center justify-center mb-6">
             <motion.div
               variants={fadeInUp}
@@ -880,7 +1146,6 @@ export default function Home() {
                 คืออะไร?
               </h2>
             </motion.div>
-
             <motion.p
               variants={fadeInUp}
               initial="hidden"
@@ -891,8 +1156,6 @@ export default function Home() {
             >
               แพลตฟอร์มเรียนรู้การทำงานผ่านประสบการณ์จริง
             </motion.p>
-
-            {/* Yellow pill */}
             <motion.div
               variants={fadeInUp}
               initial="hidden"
@@ -905,8 +1168,13 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Staggered Feature Cards */}
-          <div className="relative mt-5 overflow-visible">
+          {/* ─── MOBILE: Hero Slides ─── */}
+          <div className="block md:hidden mt-5">
+            <MobileFeatureSlider features={ABOUT_FEATURES} />
+          </div>
+
+          {/* ─── DESKTOP: Staggered Grid (เหมือนเดิม) ─── */}
+          <div className="relative mt-5 overflow-visible hidden md:block">
             {/* decorative circles */}
             <div className="absolute -top-10 -left-10 w-36 h-36 bg-[#F4FE57] rounded-full opacity-70 z-0 pointer-events-none" />
             <div className="absolute top-[70%] left-[20%] w-20 h-20 bg-transparent border-3 border-[#F4FE57] rounded-full z-0 pointer-events-none" />
@@ -919,7 +1187,7 @@ export default function Home() {
               viewport={{ once: true }}
               initial="hidden"
               whileInView="visible"
-              className="relative z-10 grid grid-cols-1 gap-5 md:grid-cols-4 md:items-start"
+              className="relative z-10 grid grid-cols-4 gap-4 items-start"
             >
               {ABOUT_FEATURES.map((feature, index) => (
                 <motion.div
@@ -927,24 +1195,19 @@ export default function Home() {
                   variants={fadeInUp}
                   className="w-full"
                   style={{
-                    marginTop: index % 2 === 1 ? "4rem" : "0",
+                    marginTop: index % 2 === 1 ? "clamp(1rem, 4vw, 4rem)" : "0",
                   }}
                 >
-                  <div
-                    className="bg-gradient-to-b from-[#0C5BEA] to-[#3B76DE]/90  rounded-[3rem] p-8 flex flex-col items-center text-center gap-6 h-full min-h-[320px] shadow-2xl shadow-blue-200/60 hover:scale-105 transition-transform duration-300" // ปรับ min-h ให้สูงขึ้น, p และ rounded ใหัใหญ่ขึ้น
-                  >
+                  <div className="bg-gradient-to-b from-[#0C5BEA] to-[#3B76DE]/90 rounded-[3rem] p-8 flex flex-col items-center text-center gap-6 h-full min-h-[320px] hover:scale-105 transition-transform duration-300">
                     <h4 className="text-[16px] font-black text-white leading-snug">
-                      {" "}
                       {feature.title}
                     </h4>
                     <div className="flex-1 flex items-center justify-center w-full py-2">
                       <div className="[&>svg]:w-30 [&>svg]:h-30 text-white/90 filter drop-shadow-lg">
-                        {" "}
                         {feature.icon}
                       </div>
                     </div>
                     <p className="text-[15px] text-white/80 leading-relaxed max-w-[90%]">
-                      {" "}
                       {feature.description}
                     </p>
                   </div>
@@ -960,25 +1223,29 @@ export default function Home() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
           variants={fadeInUp}
-          className="w-full py-5 px-6 md:px-16 max-w-7xl mx-auto"
+          className="w-full py-8 px-6 md:px-16 max-w-7xl mx-auto"
         >
-          <div className="relative min-h-[480px]">
+          {/* Mobile: stack vertical, Desktop: overlap layout */}
+          <div className="flex flex-col md:relative md:min-h-[480px]">
+            {/* Text — mobile: full width, desktop: absolute left */}
             <div className="relative z-10 max-w-2xl">
-              <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-4">
+              <h2 className="text-lg md:text-2xl font-black text-gray-900 leading-tight mb-4">
                 เชื่อมการเรียนรู้สู่{" "}
                 <span className="text-[#0C5BEA] bg-[#F4FE57] px-2 rounded">
                   การทำงานจริง
                 </span>{" "}
                 อย่างมีคุณภาพ
               </h2>
-              <p className="text-s text-gray-500 leading-relaxed">
+              <p className="text-xs text-gray-500 leading-relaxed">
                 แพลตฟอร์มที่เชื่อมต่อการเรียนรู้กับการทำงานจริง
                 เปิดโอกาสให้เกิดการพัฒนาทักษะ และสร้างประสบการณ์ร่วมกัน
               </p>
             </div>
 
-            {/* Floating Keywords */}
-            <div className="absolute inset-0 w-full h-full">
+            {/* <div className="hidden md:block relative min-h-[380px] md:min-h-[480px] md:-mt-24">
+              <FloatingKeywords />
+            </div> */}
+            <div className="relative min-h-[400px] md:min-h-[480px] md:-mt-24">
               <FloatingKeywords />
             </div>
           </div>

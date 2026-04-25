@@ -122,9 +122,9 @@ interface JobFilterProps {
 }
 
 const priceSortOptions = [
+    { value: 'latest', label: 'ล่าสุด' },
     { value: 'price-desc', label: 'ราคาสูงสุด' }, 
     { value: 'price-asc', label: 'ราคาต่ำสุด' },
-    { value: 'latest', label: 'ค่าเริ่มต้น' },
 ];
 
 const JobFilter: React.FC<JobFilterProps> = ({

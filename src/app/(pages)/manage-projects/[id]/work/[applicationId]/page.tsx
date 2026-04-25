@@ -23,12 +23,20 @@ import {
   MapPin,
   X,
   Pencil,
+  ChartPie,
+  Trash,
+  Wallet,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Loading from "../../../../../components/common/Loading";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
+interface IProgressLog {
+  progress: number;
+  note?: string | null;
+  createdAt: string;
+}
 
 interface ApplicationDetail {
   _id: string;
@@ -43,15 +51,19 @@ interface ApplicationDetail {
     jobType: string;
     location: string;
     owner: string;
+    ownerImage: string | null;
     deliveryDate: string;
   };
   applicantId: {
     _id: string;
     name: string;
     email: string;
+    profileImageUrl: string | null;
   };
   status: "accepted" | "in_progress" | "submitted" | "revision" | "completed";
   progress: number;
+  progressNote?: string | null;
+  progressLogs?: IProgressLog[];
   workLink?: string;
   feedback?: string;
   updatedAt: string;
@@ -68,14 +80,18 @@ export default function WorkManagementPage() {
   const [loading, setLoading] = useState(true);
 
   const [newProgress, setNewProgress] = useState(0);
+  const [progressNote, setProgressNote] = useState("");
   const [workLink, setWorkLink] = useState("");
   // const [studentNote, setStudentNote] = useState("");
   const [ownerFeedback, setOwnerFeedback] = useState("");
 
   const [isEditingSubmission, setIsEditingSubmission] = useState(false);
+  const [isEditingProgress, setIsEditingProgress] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const isFreelancer = session?.user?.role === "student";
   // const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [linkError, setLinkError] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const [existingFiles, setExistingFiles] = useState<
@@ -100,6 +116,8 @@ export default function WorkManagementPage() {
         setWorkLink(data.workLink || "");
         setOwnerFeedback(data.feedback || "");
         setExistingFiles(data.attachments || []);
+        setIsEditingProgress(false); // ← reset mode หลัง fetch
+        setProgressNote("");
       }
     } catch (err) {
       toast.error("ไม่สามารถโหลดข้อมูลการทำงานได้");
@@ -112,11 +130,25 @@ export default function WorkManagementPage() {
     {},
   );
 
+  const hasProgressChanges =
+    newProgress !== (workData?.progress || 0) || progressNote.trim() !== "";
+
+  const isValidUrl = (url: string) => {
+    if (!url) return true; // ถ้าไม่กรอกก็ผ่าน (optional field)
+    try {
+      const parsed = new URL(url);
+      return ["http:", "https:"].includes(parsed.protocol);
+    } catch {
+      return false;
+    }
+  };
+
   const handleUpdateWork = async (
     action: "updateProgress" | "submit" | "approve" | "requestRevision",
   ) => {
     try {
       const payload: any = { action };
+
       const readFileAsBase64 = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -126,8 +158,10 @@ export default function WorkManagementPage() {
         });
       };
 
+      // ✅ แก้ตรงนี้ — ส่งแค่ payload ไป API ไม่ต้องเรียก Mongoose โดยตรง
       if (action === "updateProgress") {
         payload.progress = newProgress;
+        payload.progressNote = progressNote.trim() || null;
       }
 
       if (action === "submit") {
@@ -148,7 +182,6 @@ export default function WorkManagementPage() {
         const duplicateFile = selectedFiles.find((newFile) =>
           existingFiles.some((oldFile) => oldFile.fileName === newFile.name),
         );
-
         if (duplicateFile) {
           toast.error(
             `ไฟล์ "${duplicateFile.name}" มีอยู่ในระบบแล้ว ไม่ต้องอัปโหลดซ้ำ`,
@@ -160,7 +193,6 @@ export default function WorkManagementPage() {
         const oversizedFile = selectedFiles.find(
           (file) => file.size > MAX_FILE_SIZE,
         );
-
         if (oversizedFile) {
           toast.error(`ไฟล์ "${oversizedFile.name}" ใหญ่เกิน 10MB`);
           return;
@@ -224,6 +256,7 @@ export default function WorkManagementPage() {
       setIsEditingSubmission(false);
       setSelectedFiles([]);
       setUploadProgress({});
+      if (action === "updateProgress") setProgressNote(""); // ✅ reset โน้ตหลังบันทึก
       fetchWorkDetail();
     } catch (err: any) {
       toast.error(err.response?.data?.error || "เกิดข้อผิดพลาด");
@@ -323,58 +356,61 @@ export default function WorkManagementPage() {
                 {/* <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border-2 ${statusLabel[workData.status]?.class.replace('bg-', 'border-').replace('text-', 'text-')}`}>
                   {statusLabel[workData.status]?.text}
                 </span> */}
-
-                <span
-                  className={`text-[12px] text-xs px-2.5 py-1 rounded-lg border uppercase shrink-0  ${statusLabel[workData.status]?.class}`}
-                >
-                  {statusLabel[workData.status]?.text}
-                </span>
-
-                {workData.jobId?.deliveryDate && (
-                  // <span className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[10px] font-black px-3 py-1.5 rounded-lg border border-red-100 uppercase tracking-widest">
-                  //   <Clock size={14} />
-                  //   Deadline: {new Date(workData.jobId.deliveryDate).toLocaleDateString('th-TH')}
-                  // </span>
-                  <span className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[12px] px-2.5 py-1 rounded-full border border-red-100 uppercase">
-                    <Clock size={12} />
-                    ส่งงานภายใน:{" "}
-                    {new Date(workData.jobId.deliveryDate).toLocaleDateString(
-                      "th-TH",
-                      { day: "2-digit", month: "short", year: "2-digit" },
-                    )}
-                  </span>
-                )}
               </div>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white p-3 md:p-4 rounded-[1.5rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-4 w-full md:w-auto"
+            <Link
+              href={`/account/${isFreelancer ? workData.jobId?.ownerId : workData.applicantId?._id}`}
+              target="_blank"
+              className="block w-full md:w-auto"
             >
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-black text-lg md:text-xl shrink-0">
-                {isFreelancer
-                  ? workData.jobId?.owner?.[0]
-                  : workData.applicantId?.name?.[0]}
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-white p-3 md:p-4 rounded-[1.5rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-4 transition-all hover:border-blue-200 hover:shadow-md group"
+              >
+                {/* Avatar */}
+                {(() => {
+                  const imgSrc = isFreelancer
+                    ? workData.jobId?.ownerImage
+                    : workData.applicantId?.profileImageUrl;
 
-              <div className="min-w-0 flex-1 md:flex-none">
-                <p className="text-[9px] md:text-[10px] text-gray-400 font-black uppercase mb-0.5 truncate">
-                  {isFreelancer
-                    ? "ผู้ว่าจ้าง / เจ้าของงาน"
-                    : "นิสิตผู้ปฏิบัติงาน"}
-                </p>
-                <Link
-                  href={`/account/${isFreelancer ? workData.jobId?.ownerId : workData.applicantId?._id}`}
-                  target="_blank"
-                  className="text-xs md:text-sm font-black text-gray-800 truncate max-w-[150px] md:max-w-none hover:text-[#0C5BEA] transition-colors"
-                >
-                  {isFreelancer
+                  const fallbackName = isFreelancer
                     ? workData.jobId?.owner
-                    : workData.applicantId?.name}
-                </Link>
-              </div>
-            </motion.div>
+                    : workData.applicantId?.name;
+
+                  return imgSrc ? (
+                    <img
+                      src={imgSrc}
+                      alt={fallbackName}
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover shrink-0 ring-2 ring-gray-50 group-hover:ring-blue-100 transition-all"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-black text-lg md:text-xl shrink-0 group-hover:bg-blue-100 transition-colors">
+                      {fallbackName?.[0]?.toUpperCase()}
+                    </div>
+                  );
+                })()}
+
+                <div className="min-w-0 flex-1 md:flex-none">
+                  <p className="text-[10px] md:text-[12px] text-gray-400 font-medium mb-0.5">
+                    {isFreelancer ? "ผู้ว่าจ้าง" : "นิสิตผู้ปฏิบัติงาน"}
+                  </p>
+                  <span className="text-xs md:text-sm font-black text-gray-800 truncate max-w-[150px] md:max-w-none group-hover:text-[#0C5BEA] transition-colors block">
+                    {isFreelancer
+                      ? workData.jobId?.owner
+                      : workData.applicantId?.name}
+                  </span>
+                </div>
+
+                <ExternalLink
+                  size={14}
+                  className="text-gray-300 group-hover:text-blue-500 transition-colors ml-auto md:ml-2"
+                />
+              </motion.div>
+            </Link>
           </div>
         </div>
       </motion.section>
@@ -382,157 +418,308 @@ export default function WorkManagementPage() {
       <main className="max-w-6xl mx-auto p-6 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* ── Left Column ── */}
         <div className="lg:col-span-2 space-y-10">
-          {/* ── Progress Tracker Card ── */}
-          <section className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100 relative overflow-hidden">
+          <section className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-gray-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none" />
             <div className="relative z-10">
-              <div className="flex justify-between items-center mb-10">
-                <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
-                  <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
-                    <Clock size={20} />
-                  </div>
-                  ความคืบหน้างาน
-                </h2>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+                    <div className="p-2.5 bg-blue-50 rounded-xl text-[#0A5BE9] shadow-sm">
+                      <FileText size={22} />
+                    </div>
+                    รายละเอียดงาน
+                  </h2>
+                </div>
 
-                <div className="relative">
-                  <motion.span
-                    key={newProgress}
-                    animate={{ scale: newProgress === 100 ? [1, 1.2, 1] : 1 }}
-                    className="text-5xl font-black text-blue-600 tabular-nums block relative z-10"
-                  >
-                    {newProgress}
-                    <span className="text-xl ml-1">%</span>
-                  </motion.span>
-
-                  <AnimatePresence>
-                    {newProgress === 100 && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        {confetti.map((_, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ scale: 0, x: 0, y: 0 }}
-                            animate={{
-                              scale: [0, 1, 0],
-                              x: Math.cos(i * 30 * (Math.PI / 180)) * 65,
-                              y: Math.sin(i * 30 * (Math.PI / 180)) * 65,
-                            }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                            className="absolute w-2 h-2 bg-blue-500 rounded-full"
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </AnimatePresence>
+                <div className="p-3">
+                  <p className="text-[#707070] text-sm md:text-base whitespace-pre-wrap">
+                    {workData.jobId?.description || "ไม่มีรายละเอียดเพิ่มเติม"}
+                  </p>
                 </div>
               </div>
+            </div>
+          </section>
 
-              {isFreelancer && workData.status !== "completed" && (
-                <div className="space-y-6 bg-gray-50 p-8 rounded-[2rem] border border-gray-100 shadow-inner">
-                  <div className="flex justify-between items-center px-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                      <p className="text-xs font-black text-gray-400">
-                        เลื่อนเพื่ออัปเดตสถานะ
-                      </p>
-                    </div>
-                    <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-black">
-                      {newProgress}%
-                    </div>
-                  </div>
+          {/* ── Progress Tracker Card ── */}
+          <section className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100">
+            {/* Header */}
+            <div className="flex justify-between items-center px-8 pt-8 pb-5">
+              <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
+                <div className="p-2 rounded-xl text-[#0A5BE9]">
+                  <Clock size={20} />
+                </div>
+                ความคืบหน้างาน
+              </h2>
 
-                  <div className="relative flex items-center w-full h-12 group px-2">
-                    <div className="absolute left-2 right-2 h-2 bg-gray-100 rounded-full" />
+              <div className="relative inline-block">
+                <motion.span
+                  key={newProgress}
+                  animate={{ scale: newProgress === 100 ? [1, 1.15, 1] : 1 }}
+                  className="text-4xl font-black tabular-nums block relative z-10"
+                  style={{ color: newProgress === 100 ? "#16a34a" : "#2563eb" }}
+                >
+                  {newProgress}
+                  <span className="text-lg font-black text-gray-300 ml-0.5">
+                    %
+                  </span>
+                </motion.span>
 
-                    <div className="absolute left-2 right-2 flex justify-between px-1">
-                      {[0, 25, 50, 75, 100].map((tick) => (
-                        <div
-                          key={tick}
-                          className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
-                            newProgress >= tick
-                              ? "bg-blue-600/40"
-                              : "bg-gray-300"
-                          }`}
+                <AnimatePresence>
+                  {newProgress === 100 && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                      {confetti.map((_, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+                          animate={{
+                            scale: [0, 1, 0],
+                            x: Math.cos(i * 30 * (Math.PI / 180)) * 60,
+                            y: Math.sin(i * 30 * (Math.PI / 180)) * 60,
+                            opacity: [1, 1, 0],
+                          }}
+                          transition={{ duration: 0.9, ease: "easeOut" }}
+                          className="absolute w-2 h-2 bg-green-500 rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                         />
                       ))}
                     </div>
-
-                    {/* ── Active Progress Fill ── */}
-                    <motion.div
-                      className="absolute left-2 h-2 bg-blue-600 rounded-full pointer-events-none z-10 shadow-[0_0_15px_rgba(37,99,235,0.4)]"
-                      initial={false}
-                      animate={{
-                        width: `calc(${newProgress}% - ${(newProgress / 100) * 8}px)`,
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 40,
-                      }}
-                    />
-
-                    {/* ── Range Input ── */}
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="25"
-                      value={newProgress}
-                      onChange={(e) => {
-                        const newValue = parseInt(e.target.value);
-
-                        if (newValue >= (workData?.progress || 0)) {
-                          setNewProgress(newValue);
-                        } else {
-                          toast.error("ไม่สามารถลดความคืบหน้างานลงได้", {
-                            id: "progress-error",
-                          });
-                        }
-                      }}
-                      className="absolute left-0 w-full h-10 bg-transparent appearance-none cursor-pointer z-20 
-                        [&::-webkit-slider-thumb]:appearance-none 
-                        [&::-webkit-slider-thumb]:w-6 
-                        [&::-webkit-slider-thumb]:h-6 
-                        [&::-webkit-slider-thumb]:rounded-full 
-                        [&::-webkit-slider-thumb]:bg-white 
-                        [&::-webkit-slider-thumb]:border-[4px] 
-                        [&::-webkit-slider-thumb]:border-blue-600 
-                        [&::-webkit-slider-thumb]:shadow-xl 
-                        [&::-webkit-slider-thumb]:transition-transform
-                        [&::-webkit-slider-thumb]:active:scale-125
-                        [&::-webkit-slider-thumb]:hover:scale-110"
-                    />
-                  </div>
-
-                  <div className="flex justify-between px-2 mt-2">
-                    {[0, 25, 50, 75, 100].map((val) => (
-                      <span
-                        key={val}
-                        className={`text-[9px] font-black tracking-tighter transition-colors ${
-                          newProgress === val
-                            ? "text-blue-600"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        {val}%
-                      </span>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => handleUpdateWork("updateProgress")}
-                    className="w-full py-4 bg-white border-2 border-blue-600 text-blue-600 font-black rounded-2xl hover:bg-blue-600 hover:text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm shadow-blue-50"
-                  >
-                    <CheckCircle2 size={20} />
-                    บันทึกความคืบหน้าเป็น {newProgress}%
-                  </button>
-                </div>
-              )}
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
+
+            {!isEditingProgress ? (
+              <div className="relative h-2 bg-gray-100 mx-8 rounded-full overflow-hidden mb-6">
+                <motion.div
+                  className="absolute inset-y-0 left-0 rounded-full"
+                  style={{
+                    background:
+                      newProgress === 100
+                        ? "linear-gradient(90deg, #16a34a, #4ade80)"
+                        : "linear-gradient(90deg, #2563eb, #60a5fa)",
+                  }}
+                  animate={{ width: `${newProgress}%` }}
+                  transition={{ type: "spring", stiffness: 300, damping: 35 }}
+                />
+              </div>
+            ) : (
+              // Edit mode: slider แทน bar
+              <div className="mx-8 mb-4 space-y-2">
+                <div className="relative h-2.5 flex items-center">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 rounded-full"
+                    style={{
+                      background:
+                        newProgress === 100
+                          ? "linear-gradient(90deg, #16a34a, #4ade80)"
+                          : "linear-gradient(90deg, #2563eb, #60a5fa)",
+                    }}
+                    animate={{ width: `${newProgress}%` }}
+                    transition={{ type: "spring", stiffness: 400, damping: 40 }}
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="25"
+                    value={newProgress}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (val >= (workData?.progress || 0)) setNewProgress(val);
+                      else
+                        toast.error("ไม่สามารถลดความคืบหน้างานลงได้", {
+                          id: "progress-error",
+                        });
+                    }}
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer z-10 h-full"
+                  />
+                  <motion.div
+                    className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-[4px] border-blue-600 rounded-full shadow-lg pointer-events-none"
+                    animate={{ left: `calc(${newProgress}% - 10px)` }}
+                    transition={{ type: "spring", stiffness: 400, damping: 40 }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] font-medium text-gray-300 px-0.5">
+                  {[0, 25, 50, 75, 100].map((v) => (
+                    <span
+                      key={v}
+                      className={newProgress >= v ? "text-blue-500" : ""}
+                    >
+                      {v}%
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isFreelancer && workData.status !== "completed" && (
+              <div className="px-8 pb-8 space-y-4">
+                {/* Read mode content */}
+                {!isEditingProgress && (
+                  <>
+                    {workData.progressNote && (
+                      <div className="flex gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                        <div className="w-1 self-stretch bg-blue-500 rounded-full shrink-0" />
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="text-[12px] font-black text-blue-500 uppercase mb-1">
+                            รายละเอียดการอัปเดตล่าสุด
+                          </p>
+                          <p className="text-sm text-gray-700 font-medium leading-relaxed break-words whitespace-pre-wrap">
+                            {workData.progressNote}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {workData.progressLogs &&
+                      workData.progressLogs.length > 1 && (
+                        <details className="group">
+                          <summary className="cursor-pointer flex items-center gap-2 text-[11px] font-black text-gray-400 select-none list-none py-1">
+                            <History size={12} />
+                            ประวัติการอัปเดต ({
+                              workData.progressLogs.length
+                            }{" "}
+                            ครั้ง)
+                          </summary>
+                          <div className="mt-3 space-y-2 max-h-52 overflow-y-auto">
+                            {[...workData.progressLogs]
+                              .reverse()
+                              .map((log, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-start gap-3 py-3 border-b border-gray-50 last:border-0"
+                                >
+                                  <span className="text-[11px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg shrink-0 tabular-nums">
+                                    {log.progress}%
+                                  </span>
+                                  <div className="flex-1 min-w-0 overflow-hidden">
+                                    <p className="text-xs text-gray-600 break-words whitespace-pre-wrap leading-relaxed">
+                                      {log.note || (
+                                        <span className="text-gray-300 italic">
+                                          ไม่มีรายละเอียดเพิ่มเติม
+                                        </span>
+                                      )}
+                                    </p>
+                                    <p className="text-[10px] text-gray-300 mt-0.5">
+                                      {new Date(
+                                        log.createdAt,
+                                      ).toLocaleDateString("th-TH", {
+                                        day: "2-digit",
+                                        month: "short",
+                                        year: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </details>
+                      )}
+
+                    <button
+                      onClick={() => setIsEditingProgress(true)}
+                      className="w-full py-3 bg-gray-50 border border-gray-200 text-gray-500 font-medium rounded-2xl hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 text-sm"
+                    >
+                      <Pencil size={15} />
+                      อัปเดตความคืบหน้า
+                    </button>
+                  </>
+                )}
+
+                {/* Edit mode content — ไม่มี slider แล้ว อยู่ข้างบนแล้ว */}
+                {isEditingProgress && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-5"
+                  >
+                    {/* Edit header */}
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-2 text-[11px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse shrink-0" />
+                        เลื่อนเพื่ออัปเดตสถานะ
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {!confirmCancel ? (
+                          <button
+                            onClick={() => {
+                              if (hasProgressChanges) setConfirmCancel(true);
+                              else setIsEditingProgress(false);
+                            }}
+                            className="flex items-center gap-1 text-[11px] font-black text-gray-400 hover:text-red-500 transition-colors px-3 py-1.5"
+                          >
+                            <X size={10} /> ยกเลิก
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-1 duration-300">
+                            {/* ปุ่มยืนยันการละทิ้ง */}
+                            <button
+                              onClick={() => {
+                                setIsEditingProgress(false);
+                                setNewProgress(workData?.progress || 0);
+                                setProgressNote("");
+                                setConfirmCancel(false);
+                              }}
+                              className="inline-flex items-center gap-1.5 text-[11px] font-black text-white bg-red-500 px-4 py-1.5 rounded-xl hover:bg-red-600 transition-all active:scale-95 shadow-sm shadow-red-100"
+                            >
+                              <Trash size={13} />
+                              ละทิ้ง
+                            </button>
+
+                            {/* ปุ่มย้อนกลับ (กากบาท) */}
+                            <button
+                              onClick={() => setConfirmCancel(false)}
+                              className="p-1.5 text-gray-400 hover:text-gray-600 bg-gray-100 rounded-xl transition-all active:scale-90"
+                              title="กลับไปแก้ไข"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Note */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-[11px] font-black text-gray-400 flex items-center gap-1.5">
+                          <MessageSquare size={11} /> รายละเอียดการอัปเดต
+                        </label>
+                        <span className="text-[10px] font-black text-gray-300 tabular-nums">
+                          {progressNote.length}/200
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        placeholder="สถานะงานปัจจุบัน เช่น ทำส่วน UI เสร็จแล้ว กำลังต่อ API..."
+                        value={progressNote}
+                        onChange={(e) => setProgressNote(e.target.value)}
+                        maxLength={200}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-700 placeholder-gray-300 resize-none outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* Save */}
+                    <button
+                      onClick={() => handleUpdateWork("updateProgress")}
+                      className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-200 
+                  hover:bg-blue-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+                    >
+                      <CheckCircle2 size={16} />
+                      บันทึกความคืบหน้า {newProgress}%
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* ── Submission Form ── */}
           <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-left">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-purple-600 rounded-xl text-white shadow-lg shadow-purple-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2.5  rounded-xl text-purple-600">
                   <FileText size={20} />
                 </div>
                 <h2 className="text-xl font-black text-gray-900 tracking-tight">
@@ -550,16 +737,16 @@ export default function WorkManagementPage() {
                     ?.toLowerCase()
                     .trim()
                     .includes("online") ? (
-                    <span className="text-[10px] font-black bg-red-500 text-white px-2.5 py-1 rounded-lg  shadow-sm shadow-red-100">
-                      Required
+                    <span className="text-[12px] font-medium bg-red-500 text-white px-2.5 py-1 rounded-lg border border-gray-100 ">
+                      จำเป็น
                     </span>
                   ) : (
-                    <span className="text-[10px] font-black bg-gray-100 text-gray-400 px-2.5 py-1 rounded-lg ">
-                      Optional
+                    <span className="text-[12px] font-medium bg-gray-50 text-gray-400/80 px-2 py-1 rounded-md border border-gray-100 align-middle">
+                      ถ้ามี
                     </span>
                   )}
-                  <span className="text-[10px] font-black bg-gray-50 text-black px-2.5 py-1 rounded-lg border border-gray-100 ">
-                    Max 10MB
+                  <span className="text-[12px] font-medium bg-gray-50 text-gray-500 px-2.5 py-1 rounded-lg border border-gray-200 ">
+                    สูงสุด 10MB
                   </span>
                 </div>
 
@@ -578,7 +765,6 @@ export default function WorkManagementPage() {
                     </button>
                   )}
 
-                {/* ปุ่มยกเลิกการแก้ไข */}
                 {isEditingSubmission && (
                   <button
                     onClick={() => setIsEditingSubmission(false)}
@@ -615,10 +801,30 @@ export default function WorkManagementPage() {
                     <input
                       type="url"
                       placeholder="https://..."
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all pl-12"
+                      className={`w-full p-4 bg-gray-50 border rounded-2xl focus:ring-2 outline-none transition-all pl-12
+    ${
+      linkError
+        ? "border-red-300 focus:ring-red-500 bg-red-50/30"
+        : "border-gray-100 focus:ring-blue-500"
+    }`}
                       value={workLink}
-                      onChange={(e) => setWorkLink(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setWorkLink(val);
+                        if (val && !isValidUrl(val)) {
+                          setLinkError(
+                            "กรุณาใส่ลิงก์ที่ถูกต้อง เช่น https://drive.google.com/...",
+                          );
+                        } else {
+                          setLinkError("");
+                        }
+                      }}
                     />
+                    {linkError && (
+                      <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1 pl-1">
+                        <AlertCircle size={12} /> {linkError}
+                      </p>
+                    )}
                     <ExternalLink
                       className="absolute left-4 top-4 text-gray-300 group-focus-within:text-blue-500 transition-colors"
                       size={20}
@@ -810,10 +1016,21 @@ export default function WorkManagementPage() {
                 </div>
 
                 <button
-                  onClick={() => handleUpdateWork("submit")}
-                  className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                  onClick={() => {
+                    if (workLink && !isValidUrl(workLink)) {
+                      setLinkError(
+                        "กรุณาใส่ลิงก์ที่ถูกต้อง เช่น https://drive.google.com/...",
+                      );
+                      return;
+                    }
+                    handleUpdateWork("submit");
+                  }}
+                  disabled={!!linkError}
+                  className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-lg shadow-blue-200 
+                  hover:bg-blue-700 transition-all flex items-center justify-center gap-2
+                  disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                 >
-                  <Send size={18} />{" "}
+                  <Send size={18} />
                   {isEditingSubmission ? "บันทึกการแก้ไข" : "ยืนยันการส่งงาน"}
                 </button>
               </div>
@@ -885,9 +1102,116 @@ export default function WorkManagementPage() {
         </div>
 
         <div className="space-y-6">
+          <section className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 overflow-hidden">
+            {/* Status row */}
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="p-2 rounded-xl text-[#9747FF]">
+                <ChartPie size={20} />
+              </div>
+              <h2 className="text-lg font-black text-gray-900 tracking-tight">
+                สถานะการทำงาน
+              </h2>
+              <span
+                className={`text-xs px-2.5 py-1 rounded-lg border ${statusLabel[workData.status]?.class}`}
+              >
+                {statusLabel[workData.status]?.text}
+              </span>
+            </div>
+
+            {/* Divider */}
+            {workData.jobId?.deliveryDate && (
+              <div className="h-px bg-gray-50 mb-4" />
+            )}
+
+            {/* Deadline */}
+            {workData.jobId?.deliveryDate &&
+              (() => {
+                const deadline = new Date(workData.jobId.deliveryDate);
+                const today = new Date();
+                const daysLeft = Math.ceil(
+                  (deadline.getTime() - today.getTime()) /
+                    (1000 * 60 * 60 * 24),
+                );
+                const isUrgent = daysLeft <= 3;
+                const isPast = daysLeft < 0;
+
+                return (
+                  <div
+                    className={`rounded-2xl p-4 flex items-center justify-between gap-3 ${
+                      isPast
+                        ? "bg-red-50 border border-red-100"
+                        : isUrgent
+                          ? "bg-orange-50 border border-orange-100"
+                          : "bg-gray-50 border border-gray-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                          isPast
+                            ? "bg-red-100"
+                            : isUrgent
+                              ? "bg-orange-100"
+                              : "bg-gray-100"
+                        }`}
+                      >
+                        <Clock
+                          size={14}
+                          className={
+                            isPast
+                              ? "text-red-500"
+                              : isUrgent
+                                ? "text-orange-500"
+                                : "text-gray-400"
+                          }
+                        />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-medium text-gray-400 leading-none mb-0.5">
+                          ส่งงานภายใน:
+                        </p>
+                        <p
+                          className={`text-sm font-bold ${
+                            isPast
+                              ? "text-red-600"
+                              : isUrgent
+                                ? "text-orange-600"
+                                : "text-gray-700"
+                          }`}
+                        >
+                          {deadline.toLocaleDateString("th-TH", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Days left pill */}
+                    <span
+                      className={`text-[11px] font-black px-2.5 py-1 rounded-xl tabular-nums ${
+                        isPast
+                          ? "bg-red-100 text-red-600"
+                          : isUrgent
+                            ? "bg-orange-100 text-orange-600"
+                            : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      {isPast
+                        ? `เลยกำหนด ${Math.abs(daysLeft)} วัน`
+                        : daysLeft === 0
+                          ? "ครบกำหนดวันนี้"
+                          : `อีก ${daysLeft} วัน`}
+                    </span>
+                  </div>
+                );
+              })()}
+          </section>
+
           <section className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 text-left overflow-hidden relative">
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+              <div className="p-2 rounded-xl text-indigo-600">
                 <MessageSquare size={20} />
               </div>
               <h2 className="text-lg font-black text-gray-900 tracking-tight">
@@ -920,14 +1244,26 @@ export default function WorkManagementPage() {
                 </div>
               </div>
             ) : (
-              <div className="relative p-6 bg-gray-50 rounded-2xl border border-gray-100">
+              <div
+                className={`relative p-6 rounded-2xl transition-all duration-300 ${
+                  workData.feedback
+                    ? "bg-indigo-50/40 border-1 border-indigo-100/70"
+                    : "bg-gray-50/50 border border-gray-200"
+                }`}
+              >
                 <div className="absolute top-0 right-6 -translate-y-1/2 bg-white px-3 py-1 border border-gray-100 rounded-full">
                   <span className="text-[10px] font-black text-indigo-500">
-                    Client Feedback
+                    ข้อความจากผู้ว่าจ้าง
                   </span>
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed font-medium italic">
-                  "{workData.feedback || "ยังไม่มีข้อความตอบกลับจากผู้ว่าจ้าง"}"
+                <p
+                  className={`text-sm leading-relaxed font-medium break-words whitespace-pre-wrap ${
+                    workData.feedback
+                      ? "text-indigo-900"
+                      : "text-gray-400 italic"
+                  }`}
+                >
+                  {workData.feedback || "ยังไม่มีข้อความตอบกลับจากผู้ว่าจ้าง"}
                 </p>
               </div>
             )}
@@ -938,7 +1274,7 @@ export default function WorkManagementPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6 }}
-            className="rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden flex flex-col min-h-[400px]"
+            className="rounded-[2rem] p-6 md:p-8 text-white shadow-2xl relative overflow-hidden flex flex-col min-h-[400px]"
             style={{
               background: "linear-gradient(135deg, #0C5BEA 0%, #1D4ED8 100%)",
             }}
@@ -949,50 +1285,59 @@ export default function WorkManagementPage() {
             </div>
 
             <div className="relative z-10 flex flex-col h-full">
-              <h3 className="text-sm font-black text-white/60 uppercase mb-6">
-                รายละเอียดงาน
-              </h3>
+              {/* Header: ปรับให้เหมือน Card บน (Status / การตรวจรับงาน) */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 text-white">
+                  <Wallet size={20} />
+                </div>
+                <h2 className="text-lg font-black text-white tracking-tight">
+                  งบประมาณ
+                </h2>
+              </div>
 
-              <div className="space-y-8">
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-white/50 mb-1">
-                    งบประมาณโครงการ
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-black tracking-tighter">
+              <div className="flex-grow">
+                {/* --- Budget Section --- */}
+                <div className="px-2 pb-7">
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-[40px] font-black text-white">
                       ฿{workData.jobId?.budgetMin?.toLocaleString()}
                     </span>
-                    <span className="text-4xl font-black tracking-tighter">
-                      - {workData.jobId?.budgetMax?.toLocaleString()}
-                    </span>
+                    {workData.jobId?.budgetMax && (
+                      <span className="text-xl font-bold text-white/40 whitespace-nowrap">
+                        - ฿{workData.jobId?.budgetMax?.toLocaleString()}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-5 pt-8 border-t border-white/10">
+                {/* --- Details Section --- */}
+                <div className="space-y-6 pt-8 border-t border-white/10">
+                  {/* Location */}
                   <div className="flex items-center gap-4 group">
-                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-white/20">
-                      <MapPin size={18} />
+                    <div className="w-11 h-11 bg-white/10 rounded-[1.2rem] flex items-center justify-center transition-all duration-300 group-hover:bg-white/20 group-hover:scale-110 shadow-inner">
+                      <MapPin size={20} className="text-white/80" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-white/50 uppercase">
-                        สถานที่ปฏิบัติงาน
+                      <p className="text-[12px] font-black text-white/40 mb-0.5">
+                        สถานที่ทำงาน
                       </p>
-                      <p className="text-sm font-bold">
-                        {workData.jobId?.location || "ออนไลน์"}
+                      <p className="text-[13px] font-bold text-white leading-tight">
+                        {workData.jobId?.location || "ออนไลน์ / Remote"}
                       </p>
                     </div>
                   </div>
 
+                  {/* Description */}
                   <div className="flex items-start gap-4 group">
-                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center shrink-0 transition-colors group-hover:bg-white/20">
-                      <Info size={18} />
+                    <div className="w-11 h-11 bg-white/10 rounded-[1.2rem] flex items-center justify-center shrink-0 transition-all duration-300 group-hover:bg-white/20 group-hover:scale-110 shadow-inner">
+                      <Info size={20} className="text-white/80" />
                     </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-white/50 mb-1">
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-black text-white/40 mb-1">
                         คำอธิบายงาน
                       </p>
-                      <p className="text-xs font-medium leading-relaxed opacity-80 line-clamp-6">
-                        {workData.jobId?.description}
+                      <p className="text-[12px] font-medium leading-relaxed text-white/80 line-clamp-5">
+                        {workData.jobId?.shortDescription}
                       </p>
                     </div>
                   </div>

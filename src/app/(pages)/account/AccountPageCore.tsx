@@ -361,10 +361,10 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                       }
                     }}
                     disabled={isLoading}
-                    className={`p-3.5 rounded-full shadow-xl transition-all active:scale-95 border flex items-center gap-2 font-black text-sm ${
+                    className={`p-3.5 rounded-full shadow-xl transition-all active:scale-95 border flex items-center font-black text-sm ${
                       isEditingHeader
                         ? "bg-[#10B981] text-white border-[#10B981] px-6"
-                        : "bg-white/90 backdrop-blur-xl text-[#0C5BEA] border-white px-3"
+                        : "bg-white/90 backdrop-blur-xl text-[#0C5BEA] border-white px-4"
                     } ${isLoading ? "opacity-50" : ""}`}
                   >
                     {isLoading ? (
@@ -427,18 +427,32 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
           <div ref={bioRef} className="mt-12 px-12 md:px-24 lg:px-32">
             <div className="max-w-full relative">
               {isOwnProfile && isEditingHeader ? (
-                <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <textarea
                     value={tempBio}
-                    onChange={(e) => setTempBio(e.target.value)}
-                    className="w-full p-6 bg-gray-50/50 border-2 border-[#0C5BEA]/20 focus:border-[#0C5BEA] focus:bg-white rounded-[2rem] text-gray-700 outline-none transition-all min-h-[140px] text-lg"
+                    onChange={(e) => setTempBio(e.target.value.slice(0, 200))}
+                    maxLength={200}
+                    className="w-full p-6 bg-gray-50/50 border-2 border-[#0C5BEA]/20 focus:border-[#0C5BEA] focus:bg-white rounded-[2rem] text-gray-700 outline-none transition-all min-h-[140px] text-lg resize-none"
                     placeholder="แนะนำตัวเองสั้น ๆ เพื่อให้ผู้ว่าจ้างรู้จักคุณมากขึ้น..."
                     autoFocus
                   />
+                  <div className="flex justify-end items-center px-1">
+                    <span
+                      className={`text-xs font-medium transition-colors ${
+                        tempBio.length >= 200
+                          ? "text-red-500"
+                          : tempBio.length >= 160
+                            ? "text-amber-500"
+                            : "text-gray-300"
+                      }`}
+                    >
+                      {tempBio.length}/200
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-start gap-3">
-                  <p className="text-gray-700 leading-relaxed text-[15px] md:text-base font-medium">
+                  <p className="text-gray-700 leading-relaxed text-[15px] md:text-base font-medium break-words whitespace-pre-wrap w-full">
                     "
                     {userData?.bio ||
                       "แนะนำตัวเองสั้น ๆ เพื่อให้ผู้ว่าจ้างรู้จักคุณมากขึ้น..."}
@@ -450,7 +464,6 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
           </div>
         </div>
       </div>
-
 
       {isOwnProfile &&
         userData?.role === "student" &&
@@ -551,7 +564,10 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
         {userData?.role === "student" && (
           <>
             {/* Skills */}
-            <section ref={skillsRef} className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50">
+            <section
+              ref={skillsRef}
+              className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50"
+            >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xl font-black text-gray-800">ความถนัด</h3>
                 {/* ✅ เฉพาะเจ้าของ */}
@@ -613,7 +629,10 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             </section>
 
             {/* Experiences & Portfolio */}
-            <section ref={expRef} className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50">
+            <section
+              ref={expRef}
+              className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50"
+            >
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-xl font-black text-gray-800 tracking-tight">
                   ประสบการณ์และผลงาน
@@ -1047,7 +1066,10 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             </section>
 
             {/* Resume */}
-            <section ref={resumeRef} className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50 mt-12">
+            <section
+              ref={resumeRef}
+              className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/50 border border-gray-50/50 mt-12"
+            >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-black text-gray-800 tracking-tight">
                   Resume
@@ -1300,12 +1322,12 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
         </section>
 
         {/* ✅ Logout — เฉพาะเจ้าของ */}
-        <div className="mt-24 flex flex-col items-center gap-6">
+        {/* <div className="mt-24 flex flex-col items-center gap-6">
           {isOwnProfile && <LogOutButton />}
           <p className="text-[9px] font-medium text-gray-300 uppercase">
             COSCI HUB © 2026
           </p>
-        </div>
+        </div> */}
 
         {/* Skills Modal — เฉพาะเจ้าของ */}
         {isOwnProfile && isSkillsModalOpen && (
