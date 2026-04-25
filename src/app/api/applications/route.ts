@@ -449,7 +449,7 @@ export async function GET(req: Request) {
       }
 
       const applications = await Application.find({
-        ...applicantFilter, 
+        ...applicantFilter,
         status: "completed",
       })
         .sort({ updatedAt: -1 })
@@ -458,7 +458,7 @@ export async function GET(req: Request) {
       const jobIds = applications.map((a: any) => a.jobId);
       const jobs = await (Job as any)
         .find({ _id: { $in: jobIds } })
-        .select("title category owner deliveryDate")
+        .select("title category owner ownerId deliveryDate")
         .lean();
 
       const jobMap: Record<string, any> = {};
@@ -466,19 +466,34 @@ export async function GET(req: Request) {
         jobMap[j._id.toString()] = j;
       });
 
-      const result = applications.map((a: any) => ({
-        _id: a._id.toString(),
-        jobId: a.jobId.toString(),
-        jobTitle: jobMap[a.jobId.toString()]?.title ?? "ไม่พบข้อมูล",
-        jobCategory: jobMap[a.jobId.toString()]?.category ?? "",
-        jobOwner: jobMap[a.jobId.toString()]?.owner ?? "",
-        jobDeadline: jobMap[a.jobId.toString()]?.deliveryDate ?? null,
-        status: a.status,
-        appliedDate: a.appliedDate,
-        updatedAt: a.updatedAt,
-        ownerReview: a.ownerReview?.rating ? a.ownerReview : null,
-        studentReview: a.studentReview?.rating ? a.studentReview : null,
-      }));
+      const ownerNames = [
+        ...new Set(jobs.map((j: any) => j.owner).filter(Boolean)),
+      ];
+      const ownerUsers = await User.find({ name: { $in: ownerNames } })
+        .select("name profileImageUrl")
+        .lean();
+      const ownerImageMap: Record<string, string | null> = {};
+      ownerUsers.forEach((u: any) => {
+        ownerImageMap[u.name] = u.profileImageUrl || null;
+      });
+
+      const result = applications.map((a: any) => {
+        const job = jobMap[a.jobId.toString()];
+        return {
+          _id: a._id.toString(),
+          jobId: a.jobId.toString(),
+          jobTitle: job?.title ?? "ไม่พบข้อมูล",
+          jobCategory: job?.category ?? "",
+          jobOwner: job?.owner ?? "",
+          jobOwnerImage: ownerImageMap[job?.owner] ?? null,
+          jobDeadline: job?.deliveryDate ?? null,
+          status: a.status,
+          appliedDate: a.appliedDate,
+          updatedAt: a.updatedAt,
+          ownerReview: a.ownerReview?.rating ? a.ownerReview : null,
+          studentReview: a.studentReview?.rating ? a.studentReview : null,
+        };
+      });
 
       return NextResponse.json({ applications: result });
     }

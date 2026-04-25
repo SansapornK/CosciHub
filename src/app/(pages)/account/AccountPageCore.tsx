@@ -194,7 +194,9 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 ownerName: isStudent
                   ? app.jobOwner || "ผู้ว่าจ้าง"
                   : app.applicantName || "นิสิต",
-                ownerImage: isStudent ? app.jobOwnerImage : app.profileImageUrl,
+                ownerImage: isStudent
+                  ? app.jobOwnerImage || null
+                  : app.profileImageUrl || null,
                 jobTitle: app.jobTitle || "งานที่เสร็จสิ้น",
                 date: app.updatedAt,
               };
@@ -1365,18 +1367,22 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 renderItem={(review: any, i: number) => (
                   <div
                     key={review.id || i}
-                    className="group relative bg-white shadow-sm hover:shadow-xl hover:shadow-blue-900/5 p-7 rounded-[2rem] border border-gray-100 transition-all duration-500 h-[210px] flex flex-col"
+                    className="group relative bg-white shadow-s hover:shadow-lg hover:shadow-blue-900/5 p-7 rounded-[1rem] border border-gray-100 transition-all duration-500 h-[210px] flex flex-col"
                   >
                     <div className="flex flex-col h-full">
                       <div className="flex justify-between items-start mb-5 shrink-0">
                         <div className="flex items-center gap-3 w-full min-w-0">
-                          <div className="w-12 h-12 shrink-0 rounded-2xl overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100">
+                          <div className="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100">
                             {!review.isAnonymous && review.ownerImage ? (
                               <img
                                 src={review.ownerImage}
                                 alt={review.ownerName}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                               />
+                            ) : !review.isAnonymous ? (
+                              <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-500 text-sm font-bold">
+                                {review.ownerName?.charAt(0) || "?"}
+                              </div>
                             ) : (
                               <div className="text-gray-300">
                                 <User size={24} fill="currentColor" />
@@ -1384,7 +1390,14 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                             )}
                           </div>
                           <div className="flex flex-1 min-w-0 items-center justify-between gap-2">
-                            <span className="text-base font-bold text-gray-800 truncate">
+                            <span
+                              className="text-base font-bold text-gray-800 truncate"
+                              title={
+                                review.isAnonymous
+                                  ? undefined
+                                  : review.ownerName
+                              }
+                            >
                               {review.isAnonymous
                                 ? "ไม่ระบุตัวตน"
                                 : review.ownerName}
@@ -1406,7 +1419,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                         </div>
                       </div>
                       <div className="flex-1 overflow-hidden">
-                        <p className="text-[13px] md:text-[14px] text-gray-500 leading-relaxed font-medium line-clamp-4">
+                        <p className="text-[13px] md:text-[14px] text-gray-500 leading-relaxed line-clamp-4">
                           {review.comment}
                         </p>
                       </div>
@@ -1415,18 +1428,18 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 )}
               />
             ) : (
-              <div className="py-20 bg-gray-50/50 rounded-[2.5rem] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-4 group">
-                <div className="w-16 h-16 bg-white rounded-[2rem] shadow-sm flex items-center justify-center text-gray-200 group-hover:scale-110 group-hover:text-blue-200 transition-all duration-500">
-                  <Sparkles size={32} strokeWidth={1.5} />
+              <div className="border border-dashed border-gray-200 rounded-[1rem] py-12 flex flex-col items-center gap-3 text-center">
+                <div className="w-11 h-11 bg-gray-50 rounded-[0.75rem] flex items-center justify-center">
+                  <Star size={20} className="text-gray-200" strokeWidth={1.5} />
                 </div>
-                <div className="text-center">
-                  <p className="text-sm font-black text-gray-400 uppercase">
+                <div>
+                  <p className="text-[15px] font-medium text-gray-400">
                     ยังไม่มีรีวิวจาก
                     {userData?.role === "student" ? "ผู้ว่าจ้าง" : "นิสิต"}
                   </p>
-                  <p className="text-xs text-gray-300 mt-1 font-medium italic">
+                  <p className="text-[12px] text-gray-300 mt-1">
                     {userData?.role === "student"
-                      ? "ส่งงานให้สำเร็จเพื่อรับรีวิวแรกของคุณ!"
+                      ? "ส่งงานให้สำเร็จเพื่อรับรีวิวแรกของคุณ"
                       : "นิสิตที่เคยร่วมงานกับคุณยังไม่ได้ให้รีวิวในขณะนี้"}
                   </p>
                 </div>
