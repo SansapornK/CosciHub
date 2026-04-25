@@ -11,6 +11,7 @@ import {
   Bookmark,
   AlertCircle,
   BriefcaseBusiness,
+  CalendarClock,
 } from "lucide-react";
 import Link from "next/link";
 import Loading from "../../../components/common/Loading";
@@ -24,7 +25,9 @@ interface JobDetail {
   qualifications?: string;
   category: string;
   postedDate: string;
+  applicationDeadline: string;
   owner: string;
+  ownerId: string;
   jobType?: string;
   location?: string;
   budgetMin: number;
@@ -230,7 +233,17 @@ const JobDetailPage = () => {
 
               <div className="w-full lg:w-80 shrink-0">
                 <div className="space-y-6 bg-gray-50/50 p-6 rounded-3xl border border-gray-50 mb-8">
-                  <SidebarItem icon={<User />} label={job.owner} />
+                  <div className="flex items-center gap-4 text-gray-700">
+                    <div className="text-blue-500 shrink-0">
+                      <User size={20} />
+                    </div>
+                    <Link
+                      href={`/account/${job.ownerId}`}
+                      className="font-medium hover:text-blue-500 underline decoration-dotted transition-colors"
+                    >
+                      {job.owner}
+                    </Link>
+                  </div>
                   <SidebarItem
                     icon={<MapPin />}
                     label={`${jobTypeLabel[job.jobType] ?? job.jobType} / ${
@@ -249,6 +262,11 @@ const JobDetailPage = () => {
                     icon={<Users />}
                     label={`จำนวนรับ ${job.capacity || 1} คน`}
                     iconColor="text-indigo-500"
+                  />
+                  <SidebarItem
+                    icon={<CalendarClock />}
+                    label={`ปิดรับสมัคร ${new Date(job.applicationDeadline).toLocaleDateString("th-TH", { day: "numeric", month: "numeric", year: "numeric" })}`}
+                    iconColor="text-orange-500"
                   />
                 </div>
 

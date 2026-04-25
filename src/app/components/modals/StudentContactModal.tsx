@@ -2,6 +2,22 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Phone, MessageCircle } from "lucide-react";
+
+// Helper function to get icon based on contact type
+const getContactIcon = (contact: string) => {
+  const lowerContact = contact.toLowerCase();
+  if (lowerContact.includes("อีเมล") || lowerContact.includes("email")) {
+    return <Mail className="w-4 h-4 text-primary-blue-500 flex-shrink-0" />;
+  }
+  if (lowerContact.includes("line") || lowerContact.includes("ไลน์")) {
+    return <MessageCircle className="w-4 h-4 text-green-500 flex-shrink-0" />;
+  }
+  if (lowerContact.includes("โทร") || lowerContact.includes("phone") || lowerContact.includes("เบอร์")) {
+    return <Phone className="w-4 h-4 text-orange-500 flex-shrink-0" />;
+  }
+  return <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />;
+};
 
 interface StudentContact {
   applicantName: string;
@@ -52,11 +68,14 @@ export default function StudentContactModal({
                 ช่องทางการติดต่อ
               </p>
               {student.contactInfo && student.contactInfo.length > 0 ? (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2">
                   {student.contactInfo.map((contact, index) => (
-                    <p key={index} className="text-sm font-medium text-gray-700 break-words">
-                      • {contact}
-                    </p>
+                    <div key={index} className="flex items-center gap-2">
+                      {getContactIcon(contact)}
+                      <p className="text-sm font-medium text-gray-700 break-words">
+                        {contact}
+                      </p>
+                    </div>
                   ))}
                 </div>
               ) : (

@@ -48,25 +48,32 @@ interface JobItem {
 }
 
 // Helper: ตรวจสอบว่างานหมดอายุหรือไม่
-const isJobExpired = (deadline: string) => new Date(deadline) < new Date();
+// หมดอายุหลังเที่ยงคืนของวันปิดรับสมัคร (ไม่ใช่ทันทีที่เข้าสู่วันนั้น)
+const isJobExpired = (deadline: string) => {
+  const deadlineDate = new Date(deadline);
+  deadlineDate.setHours(23, 59, 59, 999);
+  return deadlineDate < new Date();
+};
 
-// Helper: ตรวจสอบว่าน่าจะลบงานได้หรือไม่ (client-side estimate)
+// Helper: ตรวจสอบว่าน่าจะลบงานได้หรือไม่ และ return เหตุผลถ้าลบไม่ได้
 // Note: Server จะเป็นคนตัดสินใจจริง โดยเช็คว่ามี active applications หรือไม่
-const canDeleteJob = (job: JobItem) => {
+const getDeleteStatus = (job: JobItem): { canDelete: boolean; reason?: string } => {
   // draft และ completed ลบได้เสมอ
-  if (job.status === "draft") return true;
-  if (job.status === "completed") return true;
+  if (job.status === "draft") return { canDelete: true };
+  if (job.status === "completed") return { canDelete: true };
 
-  // published ที่หมดอายุแล้ว หรือ closed → ให้ลองลบได้ (server จะเช็คอีกที)
-  if (job.status === "published" && isJobExpired(job.applicationDeadline))
-    return true;
-  if (job.status === "closed") return true;
+  // in_progress หรือ awaiting หรือมีคนทำงานอยู่ → ไม่ให้ลบ
+  if (job.status === "in_progress" || job.status === "awaiting" || (job.assignedTo && job.assignedTo.length > 0)) {
+    return { canDelete: false, reason: "ไม่สามารถลบงานนี้ได้ เนื่องจากมีนิสิตกำลังดำเนินการอยู่" };
+  }
 
-  // in_progress หรือ awaiting → มีงานกำลังดำเนินการ ไม่ให้ลบ
-  if (job.status === "in_progress" || job.status === "awaiting") return false;
+  // published ที่ยังไม่หมดอายุ → ไม่ให้ลบ (ต้องปิดรับสมัครก่อน)
+  if (job.status === "published" && !isJobExpired(job.applicationDeadline)) {
+    return { canDelete: false, reason: "งานยังเผยแพร่อยู่ หากต้องการลบงานกรุณาปิดรับสมัครก่อน" };
+  }
 
-  // published ที่ยังไม่หมดอายุ → ไม่ให้ลบ (ยังเปิดรับสมัครอยู่)
-  return false;
+  // published ที่หมดอายุแล้ว หรือ closed → ลบได้
+  return { canDelete: true };
 };
 
 export default function MyJobsPage() {
@@ -116,11 +123,10 @@ export default function MyJobsPage() {
   }, [status, session]);
 
   // เปิด modal สำหรับลบงาน
-  const openDeleteModal = (job: JobItem, canDelete: boolean) => {
+  const openDeleteModal = (job: JobItem) => {
+    const { canDelete, reason } = getDeleteStatus(job);
     if (!canDelete) {
-      toast.error(
-        "ไม่สามารถลบงานนี้ได้ เนื่องจากมีนิสิตกำลังดำเนินการอยู่งานนี้",
-      );
+      toast.error(reason);
       return;
     }
     setSelectedJob(job);
@@ -326,7 +332,6 @@ export default function MyJobsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {jobs.map((job) => {
                 const expired = isJobExpired(job.applicationDeadline);
-                const canDelete = canDeleteJob(job);
 
                 // กำหนด CTA รองตามสถานะ
                 const showEdit =
@@ -349,7 +354,7 @@ export default function MyJobsPage() {
 
                     {/* ปุ่มลบ (แสดงทุกงาน) */}
                     <button
-                      onClick={() => openDeleteModal(job, canDelete)}
+                      onClick={() => openDeleteModal(job)}
                       className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-white/80 text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all shadow-sm"
                       title="ลบประกาศงาน"
                     >

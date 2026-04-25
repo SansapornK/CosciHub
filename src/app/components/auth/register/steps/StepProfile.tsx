@@ -1,5 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { Mail, Phone, MessageCircle, Plus, Trash2 } from 'lucide-react';
 import { RegisterData } from '../RegisterForm';
+
+// Contact type options
+const contactTypes = [
+  { value: "email", label: "อีเมล", icon: Mail, placeholder: "example@email.com" },
+  { value: "line", label: "Line ID", icon: MessageCircle, placeholder: "@lineid หรือ 0812345678" },
+  { value: "phone", label: "เบอร์โทรศัพท์", icon: Phone, placeholder: "081-234-5678" },
+];
+
+export interface ContactItem {
+  type: string;
+  value: string;
+}
+
+// Convert ContactItem to string for saving
+export const contactItemToString = (item: ContactItem): string => {
+  const typeLabel = contactTypes.find(t => t.value === item.type)?.label || item.type;
+  return `${typeLabel}: ${item.value}`;
+};
 
 interface StepProfileProps {
   data: RegisterData;
@@ -10,6 +29,7 @@ interface StepProfileProps {
 function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [portfolioError, setPortfolioError] = useState('');
+  const [contactItems, setContactItems] = useState<ContactItem[]>([{ type: "email", value: "" }]);
 
   // Update preview when profileImage changes (after cropping)
   useEffect(() => {
@@ -77,22 +97,35 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
     updateData({ bio: e.target.value });
   };
 
-  // Handle contact info changes
-  const handleContactInfoChange = (index: number, value: string) => {
-    const newContactInfo = [...(data.contactInfo || [''])];
-    newContactInfo[index] = value;
-    updateData({ contactInfo: newContactInfo });
+  // Sync contactItems to data.contactInfo (as strings)
+  useEffect(() => {
+    const contactStrings = contactItems
+      .filter(item => item.value.trim() !== '')
+      .map(item => contactItemToString(item));
+    updateData({ contactInfo: contactStrings.length > 0 ? contactStrings : [''] });
+  }, [contactItems]);
+
+  // Handle contact type change
+  const handleContactTypeChange = (index: number, type: string) => {
+    const newItems = [...contactItems];
+    newItems[index] = { ...newItems[index], type };
+    setContactItems(newItems);
+  };
+
+  // Handle contact value change
+  const handleContactValueChange = (index: number, value: string) => {
+    const newItems = [...contactItems];
+    newItems[index] = { ...newItems[index], value };
+    setContactItems(newItems);
   };
 
   const addContactInfo = () => {
-    const newContactInfo = [...(data.contactInfo || ['']), ''];
-    updateData({ contactInfo: newContactInfo });
+    setContactItems([...contactItems, { type: "email", value: "" }]);
   };
 
   const removeContactInfo = (index: number) => {
-    const newContactInfo = (data.contactInfo || ['']).filter((_, i) => i !== index);
-    // Keep at least one field
-    updateData({ contactInfo: newContactInfo.length > 0 ? newContactInfo : [''] });
+    const newItems = contactItems.filter((_, i) => i !== index);
+    setContactItems(newItems.length > 0 ? newItems : [{ type: "email", value: "" }]);
   };
 
   const removeProfileImage = () => {
@@ -197,63 +230,63 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
         <label className="block text-gray-700 text-sm mb-1">
           ช่องทางการติดต่อ <span className="text-red-500">*</span>
         </label>
-         <p className="text-gray-400 text-sm mb-2">
-          ช่องทางที่ผู้ว่าจ้างสามารถติดต่อคุณได้ เช่น Line, E-mail, เบอร์โทร เป็นต้น
+        <p className="text-gray-400 text-sm mb-2">
+          ช่องทางที่ผู้ว่าจ้างสามารถติดต่อคุณได้
         </p>
         <div className="flex flex-col gap-2">
-          {(data.contactInfo || ['']).map((contact, index) => (
-            <div key={index} className="flex gap-2">
-              <input
-                type="text"
-                className="input flex-1"
-                placeholder="เช่น Line ID: xxx, E-mail: xxx@gmail.com, โทร: 081-234-5678"
-                value={contact}
-                onChange={(e) => handleContactInfoChange(index, e.target.value)}
-              />
-              {(data.contactInfo || ['']).length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeContactInfo(index)}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  title="ลบช่องทางนี้"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+          {contactItems.map((contact, index) => {
+            const selectedType = contactTypes.find(t => t.value === contact.type) || contactTypes[0];
+            const IconComponent = selectedType.icon;
+
+            return (
+              <div key={index} className="flex gap-2">
+                {/* Contact Type Dropdown */}
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <IconComponent className="w-4 h-4" />
+                  </div>
+                  <select
+                    value={contact.type}
+                    onChange={(e) => handleContactTypeChange(index, e.target.value)}
+                    className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[130px]"
                   >
-                    <path d="M18 6L6 18"></path>
-                    <path d="M6 6l12 12"></path>
-                  </svg>
-                </button>
-              )}
-            </div>
-          ))}
+                    {contactTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Contact Value Input */}
+                <input
+                  type={contact.type === "email" ? "email" : "text"}
+                  className="input flex-1"
+                  placeholder={selectedType.placeholder}
+                  value={contact.value}
+                  onChange={(e) => handleContactValueChange(index, e.target.value)}
+                />
+
+                {/* Remove Button */}
+                {contactItems.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeContactInfo(index)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="ลบช่องทางนี้"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
           <button
             type="button"
             onClick={addContactInfo}
             className="flex items-center gap-2 text-sm text-primary-blue-500 hover:text-primary-blue-600 font-medium w-fit"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
+            <Plus className="w-4 h-4" />
             เพิ่มช่องทางการติดต่อ
           </button>
         </div>

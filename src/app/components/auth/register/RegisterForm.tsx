@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { signIn } from "next-auth/react";
 import StepRole from "./steps/StepRole";
 import StepPersonalInfo from "./steps/StepPersonalInfo";
 import StepMajorAndSkills from "./steps/StepMajorAndSkills";
@@ -538,10 +539,21 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       if (response.data.success) {
         // แสดงข้อความสำเร็จ
         setIsRegistrationSuccess(true);
-        
-        // รอ 2 วินาทีแล้วค่อยเปลี่ยนหน้า
-        setTimeout(() => {
-          router.push('/auth?state=login');
+
+        // Login อัตโนมัติหลังลงทะเบียนสำเร็จ
+        setTimeout(async () => {
+          const result = await signIn("credentials", {
+            email: registerData.email,
+            password: registerData.password,
+            redirect: false,
+          });
+
+          if (result?.ok) {
+            router.push("/");
+          } else {
+            // ถ้า login ไม่สำเร็จ ให้ไปหน้า login แทน
+            router.push("/auth?state=login");
+          }
         }, 2000);
       } else {
         setError("Registration failed. Please try again.");
@@ -714,7 +726,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           </div>
           <h2 className="text-xl font-medium text-gray-800 mb-2">สร้างบัญชีสำเร็จ</h2>
           <p className="text-gray-600 mb-6">
-            กำลังนำคุณไปยังหน้าเข้าสู่ระบบ...
+            กำลังเข้าสู่ระบบ...
           </p>
           <div className="flex justify-center">
             <div className="w-8 h-8 border-4 border-primary-blue-400 border-r-transparent rounded-full animate-spin"></div>

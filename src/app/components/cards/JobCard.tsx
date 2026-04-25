@@ -21,6 +21,7 @@ export interface JobCardData {
 interface JobCardProps {
   data: JobCardData;
   isLoggedIn: boolean;
+  isStudent?: boolean;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   actionButton?: React.ReactNode;
@@ -60,6 +61,7 @@ const TruncatedWithTooltip = ({
 const JobCard: React.FC<JobCardProps> = ({
   data,
   isLoggedIn,
+  isStudent = false,
   isBookmarked = false,
   onToggleBookmark,
   actionButton,
@@ -142,7 +144,7 @@ const JobCard: React.FC<JobCardProps> = ({
             </button>
           </Link>
         )}
-        {isLoggedIn && !actionButton && (
+        {isStudent && !actionButton && (
           <button
             onClick={(e) => {
               e.preventDefault();

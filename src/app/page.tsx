@@ -350,7 +350,6 @@ const HERO_SLIDES = [
     highlight: "ชาวนวัต",
     description:
       "แพลตฟอร์มหางานพิเศษ สำหรับนิสิตวิทยาลัยนวัตกรรมสื่อสารสังคม เพื่อเป็นช่องทางในการหารายได้เสริมระหว่างศึกษา รวมถึงแสดงผลงานและทักษะความสามารถเพื่อใช้ในการหางานในอนาคต",
-    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null,
   },
   {
@@ -360,7 +359,6 @@ const HERO_SLIDES = [
     highlight: "ตรงใจ",
     description:
       "สำรวจโอกาสงานพิเศษหลากหลายหมวดหมู่ ที่รอให้คุณมาโชว์ศักยภาพและเก็บประสบการณ์ก่อนก้าวสู่โลกการทำงานจริง",
-    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null,
   },
   {
@@ -370,10 +368,18 @@ const HERO_SLIDES = [
     highlight: "คณาจารย์",
     description:
       "โอกาสในการร่วมงานกับคณาจารย์ในโครงการที่น่าสนใจ เพื่อเพิ่มพูนความรู้เฉพาะทาง และสร้างพอร์ตโฟลิโอที่แข็งแกร่ง",
-    primaryButton: { text: "เริ่มต้นหางานพิเศษ", link: "/find-job" },
     secondaryButton: null,
   },
 ];
+
+// ปุ่ม Hero ตาม Role
+const getHeroPrimaryButton = (role: string | undefined) => {
+  if (role === "alumni" || role === "teacher") {
+    return { text: "เริ่มต้นลงประกาศงาน", link: "/manage-projects/create-jobs" };
+  }
+  // Default สำหรับ student หรือไม่ได้ login
+  return { text: "เริ่มต้นค้นหางานพิเศษ", link: "/find-job" };
+};
 
 const HeroCarousel = ({ images, setCurrentSlide }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -878,9 +884,11 @@ export function MobileFeatureSlider({ features }: { features: Feature[] }) {
 export default function Home() {
   const { data: session, status } = useSession();
   const isLoggedIn = status === "authenticated";
+  const userRole = session?.user?.role;
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const currentSlideData = HERO_SLIDES[currentSlideIndex];
+  const heroPrimaryButton = getHeroPrimaryButton(userRole);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -980,7 +988,7 @@ export default function Home() {
                   </p>
 
                   <div className="flex gap-4 mt-8">
-                    <Link href={currentSlideData.primaryButton.link}>
+                    <Link href={heroPrimaryButton.link}>
                       <motion.button
                         whileHover={{
                           scale: 1.05,
@@ -990,7 +998,7 @@ export default function Home() {
                         whileTap={{ scale: 0.95 }}
                         className="bg-[#0C5BEA] text-white text-sm md:text-base font-bold py-3 px-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-[#0C5BEA] transition-all flex items-center gap-2 group"
                       >
-                        {currentSlideData.primaryButton.text}
+                        {heroPrimaryButton.text}
                         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                       </motion.button>
                     </Link>
@@ -1074,6 +1082,7 @@ export default function Home() {
                   <JobCard
                     fromPageName="หน้าแรก"
                     isLoggedIn={isLoggedIn}
+                  isStudent={userRole === "student"}
                     isBookmarked={savedJobIds.includes(job._id)}
                     onToggleBookmark={() => handleToggleBookmark(job._id)}
                     data={{

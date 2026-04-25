@@ -25,7 +25,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(new URL('/verify-result?status=invalid', req.url));
     }
 
-    // 3. ตรวจสอบเงื่อนไข (Expired / Used)
+    // 3. ตรวจสอบเงื่อนไข (Expired / Used / Invalidated)
+    if (verification.invalidated) {
+      return NextResponse.redirect(new URL('/verify-result?status=outdated', req.url));
+    }
+
     if (new Date() > verification.expiresAt) {
       return NextResponse.redirect(new URL('/verify-result?status=expired', req.url));
     }
