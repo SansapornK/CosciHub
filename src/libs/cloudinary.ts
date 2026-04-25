@@ -48,9 +48,9 @@ export async function uploadToCloudinary(
         overwrite: true,
         type: 'upload'
       });
-      
       return result.secure_url; 
     }
+
     
     // สำหรับรูปภาพและไฟล์อื่นๆ
     const result = await cloudinary.uploader.upload(file, {
@@ -58,6 +58,10 @@ export async function uploadToCloudinary(
       resource_type: type === 'resume' ? 'auto' : 'image',
       public_id: publicId || (type === 'resume' ? 'resume' : (type === 'profileImage' ? 'profile' : undefined)),
       overwrite: type !== 'gallery',
+
+      format: 'webp',         // บังคับแปลงไฟล์เป็น .webp ใน storage ของ Cloudinary
+      quality: 'auto',        // ให้ Cloudinary เลือกการบีบอัดที่ดีที่สุดโดยไม่เสียรายละเอียด
+      fetch_format: 'auto',
     });
 
     return result.secure_url;

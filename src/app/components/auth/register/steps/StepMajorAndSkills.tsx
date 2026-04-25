@@ -9,6 +9,7 @@ interface StepMajorAndSkillsProps {
   updateData: (data: Partial<RegisterData>) => void;
   // skillOptions: string[];
   onOpenSkillsModal: () => void;
+  onOpenJobsModal: () => void;
   jobOptions: string[];
 }
 
@@ -17,10 +18,9 @@ function StepMajorAndSkills({
   updateData,
   // skillOptions,
   onOpenSkillsModal,
+  onOpenJobsModal,
   jobOptions,
 }: StepMajorAndSkillsProps) {
-
-
   // --- State สำหรับแยกประเภทบุคลากร (เฉพาะ Role Teacher) ---
   const [teacherType, setTeacherType] = useState<"academic" | "staff">(
     "academic",
@@ -98,10 +98,11 @@ function StepMajorAndSkills({
   };
 
   const handleJobToggle = (job: string) => {
-    const current = data.interestedJobs || [];
-    const updatedJobs = current.includes(job)
-      ? current.filter((item) => item !== job)
-      : [...current, job];
+    const currentJobs = data.interestedJobs || [];
+    const updatedJobs = currentJobs.includes(job)
+      ? currentJobs.filter((item) => item !== job)
+      : [...currentJobs, job];
+
     updateData({ interestedJobs: updatedJobs });
   };
 
@@ -245,8 +246,16 @@ function StepMajorAndSkills({
           <div className="flex items-center justify-between mb-1">
             <label className="block text-gray-700 text-sm mb-1">
               ทักษะความถนัด
-              <span className="text-xs text-gray-400 ml-1">
-                (เลือกอย่างน้อย 1 ทักษะ)
+              <span className="text-[11px] ml-1.5">
+                {data.skills.length > 0 ? (
+                  <span className="text-gray-400">
+                    (เลือกแล้ว {data.skills.length})
+                  </span>
+                ) : (
+                  <span className="text-red-500 font-medium">
+                    * เลือกอย่างน้อย 1 ทักษะ
+                  </span>
+                )}
               </span>
             </label>
             <button
@@ -288,7 +297,7 @@ function StepMajorAndSkills({
               <div className="w-full flex flex-col items-center justify-center py-4 opacity-40">
                 <Sparkles size={20} className="text-gray-300 mb-1" />
                 <p className="text-[11px] font-medium text-gray-400">
-                  ยังไม่ได้เลือกทักษะ
+                  ยังไม่ได้เลือกความถนัด
                 </p>
               </div>
             )}
@@ -298,50 +307,63 @@ function StepMajorAndSkills({
           </p>
 
           <div className="mt-4 w-full">
-            <label className="block text-gray-700 text-sm mb-1">
-              ประเภทงานที่สนใจ
-            </label>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1 border border-gray-100 rounded-lg p-2">
-              {jobOptions.map((job) => {
-                const selected = (data.interestedJobs || []).includes(job);
-                return (
-                  <button
-                    key={job}
-                    type="button"
-                    onClick={() => handleJobToggle(job)}
-                    className={`px-3 py-1 rounded-full text-sm border transition ${
-                      selected
-                        ? "bg-primary-blue-500 text-white border-primary-blue-500"
-                        : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
-                    }`}
-                  >
-                    {job}
-                  </button>
-                );
-              })}
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-gray-700 text-sm mb-1">
+                ประเภทงานที่สนใจ
+                <span className="text-[11px] ml-1.5">
+                  {data.interestedJobs.length > 0 ? (
+                    <span className="text-gray-400">
+                      (เลือกแล้ว {data.interestedJobs.length})
+                    </span>
+                  ) : (
+                    <span className="text-red-500 font-medium">
+                      * เลือกอย่างน้อย 1 ประเภท
+                    </span>
+                  )}
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={onOpenJobsModal}
+                className="text-xs font-black text-[#0C5BEA] flex items-center gap-1.5 hover:underline"
+              >
+                {(data.interestedJobs?.length || 0) > 0 ? (
+                  <>
+                    <Pencil size={12} /> แก้ไข
+                  </>
+                ) : (
+                  <>
+                    <Plus size={14} /> เลือกงานที่สนใจ
+                  </>
+                )}
+              </button>
             </div>
-            <div className="mt-3">
-              <p className="text-sm text-gray-500 mb-2">
-                งานที่สนใจ ({(data.interestedJobs || []).length})
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {(data.interestedJobs || []).map((job) => (
+
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1 border border-gray-100 rounded-xl p-3 bg-gray-50/30">
+              {(data.interestedJobs?.length || 0) > 0 ? (
+                data.interestedJobs?.map((job) => (
                   <span
                     key={job}
-                    className="bg-primary-blue-100 text-primary-blue-600 text-xs px-2 py-1 rounded-lg flex items-center"
+                    className="bg-primary-blue-100 text-primary-blue-600 text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-primary-blue-200 animate-in zoom-in-95"
                   >
                     {job}
                     <button
-                    type="button"
-                    onClick={() => handleJobToggle(job)}
-                    className="hover:text-red-500 transition-colors"
-                    aria-label={`ลบประเภทงาน ${job}`}
-                  >
-                    <X size={14} strokeWidth={2.5} />
-                  </button>
+                      type="button"
+                      onClick={() => handleJobToggle(job)}
+                      className="hover:text-red-500 transition-colors"
+                    >
+                      <X size={14} strokeWidth={2.5} />
+                    </button>
                   </span>
-                ))}
-              </div>
+                ))
+              ) : (
+                <div className="w-full flex flex-col items-center justify-center py-4 opacity-40">
+                  <Sparkles size={20} className="text-gray-300 mb-1" />
+                  <p className="text-[11px] font-medium text-gray-400">
+                    ยังไม่ได้เลือกประเภทงานที่สนใจ
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

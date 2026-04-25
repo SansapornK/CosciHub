@@ -9,6 +9,7 @@ import axios from "axios";
 import EditProfileForm from "../../components/account/EditProfileForm";
 import SkillsModal from "../../components/modals/SkillsModal";
 import ImageCropModal from "@/app/components/auth/register/steps/ImageCropModal";
+import { convertToWebP } from "@/utils/imageUtils";
 import {
   Star,
   Briefcase,
@@ -245,14 +246,38 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   }
 
   // ─── handleUpdateField (เฉพาะเจ้าของ) ────────────────────────────────────
+  // ─── handleUpdateField (เฉพาะเจ้าของ) ────────────────────────────────────
   const handleUpdateField = async (field: string, value: any) => {
-    if (!isOwnProfile) return; // guard เผื่อถูกเรียกผิดที่
+    if (!isOwnProfile) return;
     try {
       setIsLoading(true);
       let formData = new FormData();
 
       if (value instanceof FormData) {
-        formData = value;
+        // 1. สร้าง FormData ใหม่เพื่อเตรียมข้อมูลที่แปลงแล้ว
+        const newFormData = new FormData();
+
+        // 2. วนลูปตรวจสอบข้อมูลใน FormData เดิม
+        for (const [key, val] of value.entries()) {
+          // ตรวจสอบว่าเป็นไฟล์ภาพหรือไม่ (เช่น profileImage, galleryImage0, galleryImage1, ...)
+          if (val instanceof File && val.type.startsWith("image/")) {
+            try {
+              // ✨ แปลงเป็น WebP ก่อนใส่เข้าไปใน FormData ใหม่
+              const webpFile = await convertToWebP(val);
+              newFormData.append(key, webpFile);
+            } catch (error) {
+              console.error(
+                "Conversion to WebP failed, using original file:",
+                error,
+              );
+              newFormData.append(key, val); // ถ้าแปลงพลาดให้ใช้ไฟล์เดิม
+            }
+          } else {
+            // ถ้าไม่ใช่ภาพ (เช่น resume ที่เป็น PDF หรือข้อความอื่น) ให้ใส่กลับไปตามเดิม
+            newFormData.append(key, val);
+          }
+        }
+        formData = newFormData;
       } else if (field === "name") {
         const nameParts = value.trim().split(/\s+/);
         formData.append("firstName", nameParts[0] || "");

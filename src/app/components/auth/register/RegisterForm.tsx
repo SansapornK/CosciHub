@@ -1,5 +1,5 @@
 // src/app/components/auth/register/RegisterForm.tsx
-'use client';
+"use client";
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -14,6 +14,7 @@ import ImageCropModal from "./steps/ImageCropModal";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import SkillsModal from "../../modals/SkillsModal";
+import JobsModal from "../../modals/JobsModal";
 import { jobCategories } from "@/app/constants/JobCategories";
 
 interface RegisterFormProps {
@@ -38,7 +39,7 @@ export interface RegisterData {
   profileImage?: File;
   portfolioFile?: File;
   bio?: string;
-  contactInfo?: string[];  
+  contactInfo?: string[];
   galleryImages?: File[];
   interestedJobs?: string[];
   acceptedTerms: boolean;
@@ -83,40 +84,45 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   const [isRegistrationSuccess, setIsRegistrationSuccess] = useState(false);
 
   const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
+  const [isJobsModalOpen, setIsJobsModalOpen] = useState(false);
 
   const handleSaveSkills = async (selectedSkills: string[]) => {
     updateRegisterData({ skills: selectedSkills });
   };
-  
+
+  const handleSaveJobs = (selectedJobs: string[]) => {
+    updateRegisterData({ interestedJobs: selectedJobs });
+  };
+
   // Centralized validation state
   const [validation, setValidation] = useState<ValidationState>({
     studentId: {
       isChecking: false,
       exists: false,
-      error: '',
-      touched: false
+      error: "",
+      touched: false,
     },
     email: {
       isChecking: false,
       exists: false,
-      error: '',
-      touched: false
+      error: "",
+      touched: false,
     },
     firstName: {
-      error: ''
+      error: "",
     },
     lastName: {
-      error: ''
+      error: "",
     },
- // *** เพิ่ม: state สำหรับ password ***
+    // *** เพิ่ม: state สำหรับ password ***
     password: {
-      error: '',
+      error: "",
     },
     confirmPassword: {
-      error: '',
+      error: "",
     },
   });
-  
+
   const [registerData, setRegisterData] = useState<RegisterData>({
     role: "",
     firstName: "",
@@ -128,11 +134,11 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     interestedJobs: [],
     email: "",
     isEmailVerified: false,
-    teacherEmails: ['', ''],
+    teacherEmails: ["", ""],
     password: "",
     confirmPassword: "",
     bio: "",
-    contactInfo: [''],  // เริ่มต้นมี 1 ช่อง
+    contactInfo: [""], // เริ่มต้นมี 1 ช่อง
     acceptedTerms: false,
   });
 
@@ -140,8 +146,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
   // เพิ่มค่าเริ่มต้นสำหรับฟิลด์ของนิสิตเมื่อเลือกบทบาทเป็นนิสิต
   useEffect(() => {
-    if (registerData.role === 'student') {
-      setRegisterData(prev => ({
+    if (registerData.role === "student") {
+      setRegisterData((prev) => ({
         ...prev,
         skills: prev.skills.length ? prev.skills : [],
       }));
@@ -150,21 +156,27 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
   // Validate student ID pattern whenever it changes
   useEffect(() => {
-    if ((registerData.role === 'student' || registerData.role === 'alumni') && registerData.studentId) {
+    if (
+      (registerData.role === "student" || registerData.role === "alumni") &&
+      registerData.studentId
+    ) {
       if (registerData.studentId.length !== 11) {
-        setValidation(prev => ({
+        setValidation((prev) => ({
           ...prev,
-          studentId: { ...prev.studentId, error: 'รหัสนิสิตต้องมี 11 หลัก' }
+          studentId: { ...prev.studentId, error: "รหัสนิสิตต้องมี 11 หลัก" },
         }));
       } else if (!/^[0-9]+$/.test(registerData.studentId)) {
-        setValidation(prev => ({
+        setValidation((prev) => ({
           ...prev,
-          studentId: { ...prev.studentId, error: 'รหัสนิสิตต้องเป็นตัวเลขเท่านั้น' }
+          studentId: {
+            ...prev.studentId,
+            error: "รหัสนิสิตต้องเป็นตัวเลขเท่านั้น",
+          },
         }));
-      } else if (registerData.studentId.substring(3, 8) !== '30010') {
-        setValidation(prev => ({
+      } else if (registerData.studentId.substring(3, 8) !== "30010") {
+        setValidation((prev) => ({
           ...prev,
-          studentId: { ...prev.studentId, error: 'รหัสนิสิตไม่ถูกต้อง' }
+          studentId: { ...prev.studentId, error: "รหัสนิสิตไม่ถูกต้อง" },
         }));
       } else {
         // ถ้ารูปแบบถูกต้อง และรหัสนิสิตเคยถูกกรอกแล้ว (touched)
@@ -172,16 +184,16 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         if (validation.studentId.touched) {
           checkStudentIdExists(registerData.studentId);
         } else {
-          setValidation(prev => ({
+          setValidation((prev) => ({
             ...prev,
-            studentId: { ...prev.studentId, error: '' }
+            studentId: { ...prev.studentId, error: "" },
           }));
         }
       }
     } else {
-      setValidation(prev => ({
+      setValidation((prev) => ({
         ...prev,
-        studentId: { ...prev.studentId, error: '' }
+        studentId: { ...prev.studentId, error: "" },
       }));
     }
   }, [registerData.studentId, registerData.role, validation.studentId.touched]);
@@ -191,9 +203,9 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     if (registerData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(registerData.email)) {
-        setValidation(prev => ({
+        setValidation((prev) => ({
           ...prev,
-          email: { ...prev.email, error: 'กรุณากรอกอีเมลให้ถูกต้อง' }
+          email: { ...prev.email, error: "กรุณากรอกอีเมลให้ถูกต้อง" },
         }));
       } else {
         // เมื่ออีเมลถูกต้องตามรูปแบบและได้รับการแตะ (touched) แล้ว
@@ -201,16 +213,16 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         if (validation.email.touched) {
           checkEmailExists();
         } else {
-          setValidation(prev => ({
+          setValidation((prev) => ({
             ...prev,
-            email: { ...prev.email, error: '' }
+            email: { ...prev.email, error: "" },
           }));
         }
       }
     } else {
-      setValidation(prev => ({
+      setValidation((prev) => ({
         ...prev,
-        email: { ...prev.email, error: '' }
+        email: { ...prev.email, error: "" },
       }));
     }
   }, [registerData.email, validation.email.touched]);
@@ -218,28 +230,28 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   // Validate Password
   useEffect(() => {
     const { password, confirmPassword } = registerData;
-    
+
     // รีเซ็ต Error ก่อน
-    setValidation(prev => ({
+    setValidation((prev) => ({
       ...prev,
-      password: { error: '' },
-      confirmPassword: { error: '' }
+      password: { error: "" },
+      confirmPassword: { error: "" },
     }));
 
     if (password) {
       if (password.length < 8) {
-        setValidation(prev => ({
+        setValidation((prev) => ({
           ...prev,
-          password: { error: 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร' }
+          password: { error: "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร" },
         }));
       }
     }
 
     if (confirmPassword && password) {
       if (password !== confirmPassword) {
-        setValidation(prev => ({
+        setValidation((prev) => ({
           ...prev,
-          confirmPassword: { error: 'รหัสผ่านไม่ตรงกัน' }
+          confirmPassword: { error: "รหัสผ่านไม่ตรงกัน" },
         }));
       }
     }
@@ -249,68 +261,76 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   const checkStudentIdExists = async (studentId: string) => {
     if (!studentId || studentId.length !== 11) return;
 
-    setValidation(prev => ({
+    setValidation((prev) => ({
       ...prev,
-      studentId: { ...prev.studentId, isChecking: true, error: '' }
+      studentId: { ...prev.studentId, isChecking: true, error: "" },
     }));
 
     try {
-      const response = await axios.get(`/api/auth/check-student-id?studentId=${encodeURIComponent(studentId)}`);
+      const response = await axios.get(
+        `/api/auth/check-student-id?studentId=${encodeURIComponent(studentId)}`,
+      );
       const exists = response.data.exists;
-      
-      setValidation(prev => ({
+
+      setValidation((prev) => ({
         ...prev,
-        studentId: { 
-          ...prev.studentId, 
-          isChecking: false, 
+        studentId: {
+          ...prev.studentId,
+          isChecking: false,
           exists: exists,
-          error: exists ? 'มีผู้ใช้งานรหัสนิสิตนี้แล้ว' : '' 
-        }
+          error: exists ? "มีผู้ใช้งานรหัสนิสิตนี้แล้ว" : "",
+        },
       }));
     } catch (error: any) {
       console.error("Error checking student ID:", error);
-      setValidation(prev => ({
+      setValidation((prev) => ({
         ...prev,
-        studentId: { 
-          ...prev.studentId, 
+        studentId: {
+          ...prev.studentId,
           isChecking: false,
-          error: 'เกิดข้อผิดพลาดในการตรวจสอบรหัสนิสิต' 
-        }
+          error: "เกิดข้อผิดพลาดในการตรวจสอบรหัสนิสิต",
+        },
       }));
     }
   };
 
   // ตรวจสอบว่าอีเมลมีในระบบแล้วหรือไม่
   const checkEmailExists = async () => {
-    if (!registerData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerData.email)) return;
+    if (
+      !registerData.email ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerData.email)
+    )
+      return;
 
-    setValidation(prev => ({
+    setValidation((prev) => ({
       ...prev,
-      email: { ...prev.email, isChecking: true, error: '' }
+      email: { ...prev.email, isChecking: true, error: "" },
     }));
 
     try {
-      const response = await axios.get(`/api/auth/check-email?email=${encodeURIComponent(registerData.email)}`);
+      const response = await axios.get(
+        `/api/auth/check-email?email=${encodeURIComponent(registerData.email)}`,
+      );
       const exists = response.data.exists;
-      
-      setValidation(prev => ({
+
+      setValidation((prev) => ({
         ...prev,
-        email: { 
-          ...prev.email, 
-          isChecking: false, 
+        email: {
+          ...prev.email,
+          isChecking: false,
           exists: exists,
-          error: exists ? 'อีเมลนี้ได้ลงทะเบียนไปแล้ว' : '' 
-        }
+          error: exists ? "อีเมลนี้ได้ลงทะเบียนไปแล้ว" : "",
+        },
       }));
     } catch (error) {
       console.error("Error checking email:", error);
-      setValidation(prev => ({
+      setValidation((prev) => ({
         ...prev,
-        email: { 
-          ...prev.email, 
+        email: {
+          ...prev.email,
           isChecking: false,
-          error: 'เกิดข้อผิดพลาดในการตรวจสอบอีเมล' 
-        }
+          error: "เกิดข้อผิดพลาดในการตรวจสอบอีเมล",
+        },
       }));
     }
   };
@@ -322,8 +342,9 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         return !!registerData.role;
       case 2: // Personal Info
         if (!registerData.firstName || !registerData.lastName) return false;
-        if (validation.firstName.error || validation.lastName.error) return false;
-        
+        if (validation.firstName.error || validation.lastName.error)
+          return false;
+
         if (registerData.role === "student") {
           if (!registerData.studentId || registerData.studentId.length !== 11) {
             return false;
@@ -338,15 +359,20 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         if (!registerData.major) return false;
 
         // Validation สำหรับ Alumni
-        if (registerData.role === 'alumni') {
+        if (registerData.role === "alumni") {
           // ตรวจสอบรูปโปรไฟล์ (ถ้าบังคับ)
-           if (!registerData.profileImage) return false;
-           // ตรวจสอบอีเมลอาจารย์ (ต้องมีอย่างน้อย 2 อีเมลที่ถูกต้อง)
-           const validEmails = (registerData.teacherEmails || []).filter(email => emailRegex.test(email));
-           if (validEmails.length < 2) return false;
+          if (!registerData.profileImage) return false;
+          // ตรวจสอบอีเมลอาจารย์ (ต้องมีอย่างน้อย 2 อีเมลที่ถูกต้อง)
+          const validEmails = (registerData.teacherEmails || []).filter(
+            (email) => emailRegex.test(email),
+          );
+          if (validEmails.length < 2) return false;
         }
 
-        if (registerData.role === "student" && registerData.skills.length === 0) {
+        if (
+          registerData.role === "student" &&
+          registerData.skills.length === 0
+        ) {
           return false;
         }
         return true;
@@ -355,22 +381,28 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
         // ตรวจสอบ Email Error
         if (validation.email.error || validation.email.exists) return false;
-        
+
         // เพิ่ม: ตรวจสอบ Password
-        if (!registerData.password || registerData.password.length < 8) return false;
-        if (registerData.password !== registerData.confirmPassword) return false;
-        if (validation.password.error || validation.confirmPassword.error) return false;
-        
+        if (!registerData.password || registerData.password.length < 8)
+          return false;
+        if (registerData.password !== registerData.confirmPassword)
+          return false;
+        if (validation.password.error || validation.confirmPassword.error)
+          return false;
+
         if (!registerData.acceptedTerms) return false;
-        
+
         return true;
       case 5: // Profile
         // ต้องมีช่องทางการติดต่อ อย่างน้อย 1 ช่องที่ไม่ว่าง
-        const validContactInfo = (registerData.contactInfo || []).filter(info => info.trim() !== '');
+        const validContactInfo = (registerData.contactInfo || []).filter(
+          (info) => info.trim() !== "",
+        );
         if (validContactInfo.length === 0) return false;
 
         // Alumni ต้องมีรูปโปรไฟล์ (เพื่อส่งให้อาจารย์ยืนยันตัวตน)
-        if (registerData.role === 'alumni' && !registerData.profileImage) return false;
+        if (registerData.role === "alumni" && !registerData.profileImage)
+          return false;
 
         return true;
       default:
@@ -381,21 +413,21 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   const nextStep = async () => {
     // Clear previous errors
     setError("");
-    
+
     // Check if this is the final step
     if (currentStep === 5) {
       // Final step, submit form
       handleSubmit();
       return;
     }
-    
+
     // Case step 1-3, just move to next step
     if (currentStep < 4) {
       console.log(`Moving from step ${currentStep} to step ${currentStep + 1}`);
       setCurrentStep(currentStep + 1);
       return;
     }
-    
+
     // For step 4 (Email validation and OTP)
     if (currentStep === 4) {
       // ตรวจสอบว่าอีเมลมีอยู่ในระบบแล้วหรือไม่ (อีกครั้ง)
@@ -403,21 +435,26 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         setError("อีเมลนี้ได้ลงทะเบียนไปแล้ว กรุณาใช้อีเมลอื่น");
         return;
       }
-      
+
       // Check if email was already verified or if it changed
-      if (registerData.isEmailVerified && registerData.email === previousEmail) {
+      if (
+        registerData.isEmailVerified &&
+        registerData.email === previousEmail
+      ) {
         // Email already verified and not changed - go directly to next step
         setCurrentStep(5);
         return;
       }
-      
+
       // Email not verified or changed - send OTP
       setIsLoading(true);
-      
+
       try {
         // Request an OTP for verification
-        const response = await axios.get(`/api/auth/verify-otp?email=${encodeURIComponent(registerData.email)}`);
-        
+        const response = await axios.get(
+          `/api/auth/verify-otp?email=${encodeURIComponent(registerData.email)}`,
+        );
+
         if (response.data.success) {
           setPreviousEmail(registerData.email); // Save current email
           setShowOTP(true);
@@ -430,7 +467,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       } finally {
         setIsLoading(false);
       }
-      
+
       return;
     }
   };
@@ -446,61 +483,72 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   const handleSubmit = async () => {
     setIsLoading(true);
     setError("");
-    
+
     try {
       // Create FormData to send files
       const formData = new FormData();
-      
+
       // Add basic user data
-      formData.append('firstName', registerData.firstName);
-      formData.append('lastName', registerData.lastName);
-      formData.append('email', registerData.email);
-      formData.append('password', registerData.password || '');
-      formData.append('role', registerData.role);
-      formData.append('major', registerData.major);
-      
+      formData.append("firstName", registerData.firstName);
+      formData.append("lastName", registerData.lastName);
+      formData.append("email", registerData.email);
+      formData.append("password", registerData.password || "");
+      formData.append("role", registerData.role);
+      formData.append("major", registerData.major);
+
       // Add bio if provided
       if (registerData.bio) {
-        formData.append('bio', registerData.bio);
+        formData.append("bio", registerData.bio);
       }
 
       // Add interested job types if provided
-      if (registerData.interestedJobs && registerData.interestedJobs.length > 0) {
-        formData.append('interestedJobs', JSON.stringify(registerData.interestedJobs));
+      if (
+        registerData.interestedJobs &&
+        registerData.interestedJobs.length > 0
+      ) {
+        formData.append(
+          "interestedJobs",
+          JSON.stringify(registerData.interestedJobs),
+        );
       }
 
       // Add contact info if provided (filter out empty strings)
       if (registerData.contactInfo && registerData.contactInfo.length > 0) {
-        const validContactInfo = registerData.contactInfo.filter(info => info.trim() !== '');
+        const validContactInfo = registerData.contactInfo.filter(
+          (info) => info.trim() !== "",
+        );
         if (validContactInfo.length > 0) {
-          formData.append('contactInfo', JSON.stringify(validContactInfo));
+          formData.append("contactInfo", JSON.stringify(validContactInfo));
         }
       }
 
       // Add profile image if provided
       if (registerData.profileImage) {
-        formData.append('profileImage', registerData.profileImage);
+        formData.append("profileImage", registerData.profileImage);
       }
-      
+
       // เพิ่มฟิลด์เฉพาะของนิสิตเท่านั้น
-      if (registerData.role === 'student') {
+      if (registerData.role === "student") {
         // Add student ID
         if (registerData.studentId) {
-          formData.append('studentId', registerData.studentId);
+          formData.append("studentId", registerData.studentId);
         }
-        
+
         // Add skills as JSON string
         if (registerData.skills && registerData.skills.length > 0) {
-          formData.append('skills', JSON.stringify(registerData.skills));
+          formData.append("skills", JSON.stringify(registerData.skills));
         }
-        
+
         // Add portfolio file if provided
         if (registerData.portfolioFile) {
-          formData.append('portfolio', registerData.portfolioFile);
+          formData.append("portfolio", registerData.portfolioFile);
         }
-        
+
         // Add gallery images if provided
-        if (registerData.galleryImages && registerData.galleryImages.length > 0) {
+        if (
+          registerData.galleryImages &&
+          registerData.galleryImages.length > 0
+        ) {
           registerData.galleryImages.forEach((file, index) => {
             formData.append(`galleryImage${index}`, file);
           });
@@ -508,22 +556,25 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       }
 
       // เพิ่มฟิลด์เฉพาะของศิษย์เก่าเท่านั้น
-      if (registerData.role === 'alumni') {
+      if (registerData.role === "alumni") {
         if (registerData.profileImage) {
-          formData.append('profileImage', registerData.profileImage);
+          formData.append("profileImage", registerData.profileImage);
         }
         if (registerData.teacherEmails) {
-          formData.append('teacherEmails', JSON.stringify(registerData.teacherEmails));
+          formData.append(
+            "teacherEmails",
+            JSON.stringify(registerData.teacherEmails),
+          );
         }
       }
-      
+
       // Send registration request
-      const response = await axios.post('/api/auth/register', formData, {
+      const response = await axios.post("/api/auth/register", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
-      
+
       if (response.data.success) {
         // แสดงข้อความสำเร็จ
         setIsRegistrationSuccess(true);
@@ -548,7 +599,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       }
     } catch (error: any) {
       console.error("Registration error:", error);
-      
+
       // Handle specific error messages from the server
       if (error.response && error.response.data && error.response.data.error) {
         setError(error.response.data.error);
@@ -562,91 +613,101 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
   const updateRegisterData = (data: Partial<RegisterData>) => {
     // ถ้ามีการเปลี่ยนบทบาท
-    if ('role' in data && data.role !== registerData.role) {
+    if ("role" in data && data.role !== registerData.role) {
       const newData: Partial<RegisterData> = { ...data };
-      
+
       // ถ้าเปลี่ยนจากนิสิตเป็นบทบาทอื่น ให้ลบฟิลด์ที่เกี่ยวข้องกับนิสิต
-      if (data.role !== 'student') {
+      if (data.role !== "student") {
         newData.studentId = undefined;
-        newData.skills = [];  // ใช้อาร์เรย์ว่างแทนการกำหนดเป็น undefined เพื่อหลีกเลี่ยงปัญหา TypeScript
+        newData.skills = []; // ใช้อาร์เรย์ว่างแทนการกำหนดเป็น undefined เพื่อหลีกเลี่ยงปัญหา TypeScript
         newData.portfolioFile = undefined;
         newData.galleryImages = undefined;
-      } 
+      }
       // ถ้าเปลี่ยนเป็นนิสิต ให้กำหนดค่าเริ่มต้น
       else {
         newData.skills = [];
       }
-      
-      setRegisterData(prev => ({ ...prev, ...newData }));
+
+      setRegisterData((prev) => ({ ...prev, ...newData }));
       return;
     }
-    
+
     // If email is being updated, reset verification status
-    if ('email' in data && data.email !== registerData.email) {
-      setRegisterData(prev => ({ 
-        ...prev, 
-        ...data, 
-        isEmailVerified: false 
-      }));
-      
-      // Set email as touched
-      setValidation(prev => ({
+    if ("email" in data && data.email !== registerData.email) {
+      setRegisterData((prev) => ({
         ...prev,
-        email: { ...prev.email, touched: true }
+        ...data,
+        isEmailVerified: false,
+      }));
+
+      // Set email as touched
+      setValidation((prev) => ({
+        ...prev,
+        email: { ...prev.email, touched: true },
       }));
       return;
-    } 
-    
+    }
+
     // If firstName or lastName is updated, update name as well
-    if ('firstName' in data || 'lastName' in data) {
+    if ("firstName" in data || "lastName" in data) {
       const updatedData = {
-        ...data
+        ...data,
       };
-      
+
       // Create the full name by combining firstName and lastName
-      const firstName = 'firstName' in data ? data.firstName : registerData.firstName;
-      const lastName = 'lastName' in data ? data.lastName : registerData.lastName;
-      
+      const firstName =
+        "firstName" in data ? data.firstName : registerData.firstName;
+      const lastName =
+        "lastName" in data ? data.lastName : registerData.lastName;
+
       // Only set name if both firstName and lastName are present
       if (firstName && lastName) {
         updatedData.name = `${firstName} ${lastName}`;
       }
-      
-      setRegisterData(prev => ({ ...prev, ...updatedData }));
+
+      setRegisterData((prev) => ({ ...prev, ...updatedData }));
       return;
     }
-    
+
     // If studentId is updated, mark it as touched
-    if ('studentId' in data) {
-      setRegisterData(prev => ({ ...prev, ...data }));
-      
+    if ("studentId" in data) {
+      setRegisterData((prev) => ({ ...prev, ...data }));
+
       // Set studentId as touched
-      setValidation(prev => ({
+      setValidation((prev) => ({
         ...prev,
-        studentId: { ...prev.studentId, touched: true }
+        studentId: { ...prev.studentId, touched: true },
       }));
       return;
     }
-    
+
     // Default case: just update the data
-    setRegisterData(prev => ({ ...prev, ...data }));
+    setRegisterData((prev) => ({ ...prev, ...data }));
   };
 
   // Handle name validation
-  const handleNameValidation = (value: string, field: 'firstName' | 'lastName') => {
+  const handleNameValidation = (
+    value: string,
+    field: "firstName" | "lastName",
+  ) => {
     // ให้รองรับทั้งภาษาไทยและภาษาอังกฤษ ไม่รับตัวเลขและอักขระพิเศษ
     const letterRegex = /^[ก-๙a-zA-Z\s]+$/;
-    
-    if (value === '' || letterRegex.test(value)) {
-      setValidation(prev => ({
+
+    if (value === "" || letterRegex.test(value)) {
+      setValidation((prev) => ({
         ...prev,
-        [field]: { error: '' }
+        [field]: { error: "" },
       }));
       return true;
     } else {
-      setValidation(prev => ({
+      setValidation((prev) => ({
         ...prev,
-        [field]: { error: field === 'firstName' ? 'ชื่อต้องเป็นตัวอักษรเท่านั้น' : 'นามสกุลต้องเป็นตัวอักษรเท่านั้น' }
+        [field]: {
+          error:
+            field === "firstName"
+              ? "ชื่อต้องเป็นตัวอักษรเท่านั้น"
+              : "นามสกุลต้องเป็นตัวอักษรเท่านั้น",
+        },
       }));
       return false;
     }
@@ -675,47 +736,64 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
   // Touch email field
   const handleEmailTouched = () => {
-    setValidation(prev => ({
+    setValidation((prev) => ({
       ...prev,
-      email: { ...prev.email, touched: true }
+      email: { ...prev.email, touched: true },
     }));
   };
 
   // Touch studentId field
   const handleStudentIdTouched = () => {
-    setValidation(prev => ({
+    setValidation((prev) => ({
       ...prev,
-      studentId: { ...prev.studentId, touched: true }
+      studentId: { ...prev.studentId, touched: true },
     }));
   };
 
   return (
     <div className="max-w-[520px] w-full bg-white flex flex-col items-center px-6 py-8">
-            <div className="flex flex-col items-center mb-8">
-      
-              {/* โลโก้ COSCI Hub */}
-              <Image src="/logo/favicon.ico" alt="cosci hub logo" width={50} height={50} className="h-[50px] w-auto mb-5" priority/>
-              {/* <img src="/logo/favicon.ico" alt="cosci hub logo" className="h-[50px]" /> */}
-      
-              <h1 className="text-2xl font-semibold text-gray-800">
-                สร้างบัญชีผู้ใช้งาน
-              </h1>
-            </div>
-            
+      <div className="flex flex-col items-center mb-8">
+        {/* โลโก้ COSCI Hub */}
+        <Image
+          src="/logo/favicon.ico"
+          alt="cosci hub logo"
+          width={50}
+          height={50}
+          className="h-[50px] w-auto mb-5"
+          priority
+        />
+        {/* <img src="/logo/favicon.ico" alt="cosci hub logo" className="h-[50px]" /> */}
+
+        <h1 className="text-2xl font-semibold text-gray-800">
+          สร้างบัญชีผู้ใช้งาน
+        </h1>
+      </div>
+
       {isRegistrationSuccess ? (
         // หน้าสำเร็จ
         <div className="text-center py-4 w-full">
           <div className="mb-4 flex justify-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-green-500"
+              >
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </div>
           </div>
-          <h2 className="text-xl font-medium text-gray-800 mb-2">สร้างบัญชีสำเร็จ</h2>
-          <p className="text-gray-600 mb-6">
-            กำลังเข้าสู่ระบบ...
-          </p>
+          <h2 className="text-xl font-medium text-gray-800 mb-2">
+            สร้างบัญชีสำเร็จ
+          </h2>
+          <p className="text-gray-600 mb-6">กำลังเข้าสู่ระบบ...</p>
           <div className="flex justify-center">
             <div className="w-8 h-8 border-4 border-primary-blue-400 border-r-transparent rounded-full animate-spin"></div>
           </div>
@@ -740,29 +818,28 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
           <div className="flex flex-col gap-6 items-center w-full">
             {currentStep === 1 && (
-              
-              <StepRole 
+              <StepRole
                 data={registerData}
                 // validation={validation}
                 updateData={updateRegisterData}
-                // onValidateName={handleNameValidation} 
-                // selectedRole={registerData.role} 
-                // onRoleSelect={(role) => updateRegisterData({ role })}  
+                // onValidateName={handleNameValidation}
+                // selectedRole={registerData.role}
+                // onRoleSelect={(role) => updateRegisterData({ role })}
               />
 
               // <Step1_UserInfo
               //   data={registerData}
               //   validation={validation}
               //   updateData={updateRegisterData}
-              //   onValidateName={handleNameValidation} 
-              //   // selectedRole={registerData.role} 
-              //   // onRoleSelect={(role) => updateRegisterData({ role })} 
+              //   onValidateName={handleNameValidation}
+              //   // selectedRole={registerData.role}
+              //   // onRoleSelect={(role) => updateRegisterData({ role })}
               // />
             )}
 
             {currentStep === 2 && (
-              <StepPersonalInfo 
-                data={registerData} 
+              <StepPersonalInfo
+                data={registerData}
                 validation={validation}
                 updateData={updateRegisterData}
                 onValidateName={handleNameValidation}
@@ -772,15 +849,15 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
             {currentStep === 3 && (
               // (Placeholder - จะสร้าง Step 3 ในขั้นถัดไป)
-              <StepMajorAndSkills 
-                data={registerData} 
-                updateData={updateRegisterData} 
+              <StepMajorAndSkills
+                data={registerData}
+                updateData={updateRegisterData}
                 onOpenSkillsModal={() => setIsSkillsModalOpen(true)}
-                jobOptions={jobCategories}
+                onOpenJobsModal={() => setIsJobsModalOpen(true)}
               />
-              // <StepMajorAndSkills 
-              //   data={registerData} 
-              //   updateData={updateRegisterData} 
+              // <StepMajorAndSkills
+              //   data={registerData}
+              //   updateData={updateRegisterData}
               //   skillCategories={skillCategories}
               // />
             )}
@@ -796,7 +873,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
             )} */}
 
             {currentStep === 4 && (
-              <StepEmail 
+              <StepEmail
                 data={registerData}
                 validation={validation}
                 updateData={updateRegisterData}
@@ -805,8 +882,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
             )}
 
             {currentStep === 5 && (
-              <StepProfile 
-                data={registerData} 
+              <StepProfile
+                data={registerData}
                 updateData={updateRegisterData}
                 onSelectImage={(imageUrl) => setCropImage(imageUrl)}
               />
@@ -814,7 +891,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
             <div className="flex justify-between w-full">
               {currentStep > 1 ? (
-                <button 
+                <button
                   type="button"
                   onClick={prevStep}
                   className="btn-secondary"
@@ -826,23 +903,23 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
                 <div></div> // Empty div to maintain layout
               )}
 
-              <button 
+              <button
                 type="button"
                 onClick={nextStep}
                 disabled={!isStepValid() || isLoading}
-                className={`btn-primary ${!isStepValid() || isLoading ? 'opacity-50 cursor-not-allowed' : ''} w-32 flex justify-center items-center`}
+                className={`btn-primary ${!isStepValid() || isLoading ? "opacity-50 cursor-not-allowed" : ""} w-32 flex justify-center items-center`}
               >
                 {isLoading && (
                   <span className="inline-block h-4 w-4 border-2 border-white border-r-transparent rounded-full animate-spin mr-2"></span>
                 )}
-                {currentStep < 5 ? 'ถัดไป' : 'สร้างบัญชี'}
+                {currentStep < 5 ? "ถัดไป" : "สร้างบัญชี"}
               </button>
             </div>
 
             <div className="flex gap-2 justify-end text-sm w-full">
               <p className="text-gray-400">มีบัญชีอยู่แล้ว ?</p>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="text-primary-blue-500 hover:text-primary-blue-400 hover:underline"
                 onClick={onLoginClick}
               >
@@ -860,19 +937,27 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         onSave={handleSaveSkills}
       />
 
+      <JobsModal
+        isOpen={isJobsModalOpen}
+        initialSelected={registerData.interestedJobs || []}
+        jobOptions={jobCategories}
+        onClose={() => setIsJobsModalOpen(false)}
+        onSave={handleSaveJobs}
+      />
+
       {showOTP && (
-        <OTP 
-          onClose={() => setShowOTP(false)} 
-          onVerified={handleOTPVerified} 
+        <OTP
+          onClose={() => setShowOTP(false)}
+          onVerified={handleOTPVerified}
           email={registerData.email}
         />
       )}
-      
+
       {cropImage && (
-        <ImageCropModal 
-          imageSrc={cropImage} 
-          onClose={() => setCropImage(null)} 
-          onSave={handleCroppedImage} 
+        <ImageCropModal
+          imageSrc={cropImage}
+          onClose={() => setCropImage(null)}
+          onSave={handleCroppedImage}
         />
       )}
     </div>
