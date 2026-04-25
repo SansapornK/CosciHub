@@ -11,21 +11,11 @@ import {
   Users, MapPin, HelpCircle,
 } from 'lucide-react';
 import Loading from "@/app/components/common/Loading";
-import { skillCategories } from "../../create-jobs/page";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
+import { jobCategories } from "@/app/constants/JobCategories";
 
 /* ── Static Data (เหมือนกับ create-jobs) ── */
-const jobCategories = [
-  "งานด้านวิชาการ/วิจัย/ผู้ช่วย",
-  "งานกิจกรรม/อีเวนต์",
-  "งานพัฒนาออกแบบเว็บไซต์/แอปพลิเคชั่น/ระบบต่างๆ",
-  "งานสื่อมัลติมีเดีย",
-  "งานประชาสัมพันธ์/สื่อสาร",
-  "งานบริการ/ธุรการ",
-  "งานสอนพิเศษ",
-  "งานกองถ่าย/Extra",
-  "อื่น ๆ"
-];
+
 const jobForms = [
   { value: "online", label: "ออนไลน์" },
   { value: "onsite", label: "ออนไซต์" },
@@ -62,7 +52,6 @@ export default function EditJobPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDrafting, setIsDrafting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activeCategory, setActiveCategory] = useState(Object.keys(skillCategories)[0]);
 
   // Modal state
   const [showPublishModal, setShowPublishModal] = useState(false);

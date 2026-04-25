@@ -6,9 +6,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import LogOutButton from "../../components/buttons/LogOutButton";
 import EditProfileForm from "../../components/account/EditProfileForm";
-import { skillCategories } from "../../components/auth/register/RegisterForm";
+import SkillsModal from "../../components/modals/SkillsModal";
 import ImageCropModal from "@/app/components/auth/register/steps/ImageCropModal";
 import {
   Star,
@@ -339,49 +338,21 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 )}
               </div>
 
-              {/* ✅ ปุ่ม Edit Header — เฉพาะเจ้าของ */}
               {isOwnProfile && (
                 <div className="absolute top-8 right-8 z-10">
-                  <button
-                    onClick={async () => {
-                      if (isEditingHeader) {
-                        const isBioChanged =
-                          tempBio.trim() !== (userData?.bio || "");
-                        if (isBioChanged) {
-                          try {
-                            await handleUpdateField("bio", tempBio.trim());
-                          } catch {
-                            return;
-                          }
-                        }
-                        setIsEditingHeader(false);
-                      } else {
+                  {/* แสดงเฉพาะตอนที่ยังไม่ได้กดแก้ไข (ถ้ากดแล้วให้ปุ่มนี้หายไป) */}
+                  {!isEditingHeader && (
+                    <button
+                      onClick={() => {
                         setTempBio(userData?.bio || "");
                         setIsEditingHeader(true);
-                      }
-                    }}
-                    disabled={isLoading}
-                    className={`p-3.5 rounded-full shadow-xl transition-all active:scale-95 border flex items-center font-black text-sm ${
-                      isEditingHeader
-                        ? "bg-[#10B981] text-white border-[#10B981] px-6"
-                        : "bg-white/90 backdrop-blur-xl text-[#0C5BEA] border-white px-4"
-                    } ${isLoading ? "opacity-50" : ""}`}
-                  >
-                    {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : isEditingHeader ? (
-                      <CheckCircle size={22} />
-                    ) : (
+                      }}
+                      disabled={isLoading}
+                      className="p-3.5 rounded-full shadow-xl transition-all active:scale-95 border flex items-center font-black text-sm bg-white/90 backdrop-blur-xl text-[#0C5BEA] border-white px-4 hover:bg-white"
+                    >
                       <Pencil size={22} />
-                    )}
-                    <span>
-                      {isLoading
-                        ? "กำลังบันทึก..."
-                        : isEditingHeader
-                          ? "เสร็จสิ้น"
-                          : ""}
-                    </span>
-                  </button>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -413,7 +384,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 <div className="flex items-center gap-2 px-5 py-2 bg-[#FFD341] text-white rounded-full font-black text-[13px] shadow-lg hover:scale-105 transition-transform cursor-default whitespace-nowrap group relative">
                   <Star size={15} className="fill-current" />
                   <span className="tabular-nums">
-                    {userData?.avgRating || "0.0"}
+                    {userData?.avgRating || "ยังไม่มีรีวิว"}
                   </span>
                   <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                     เรตติ้งเฉลี่ยจากผู้ว่าจ้าง
@@ -423,34 +394,73 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             </div>
           </div>
 
-          {/* Bio */}
+          {/* Bio Section */}
           <div ref={bioRef} className="mt-12 px-12 md:px-24 lg:px-32">
             <div className="max-w-full relative">
               {isOwnProfile && isEditingHeader ? (
-                <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <textarea
-                    value={tempBio}
-                    onChange={(e) => setTempBio(e.target.value.slice(0, 200))}
-                    maxLength={200}
-                    className="w-full p-6 bg-gray-50/50 border-2 border-[#0C5BEA]/20 focus:border-[#0C5BEA] focus:bg-white rounded-[2rem] text-gray-700 outline-none transition-all min-h-[140px] text-lg resize-none"
-                    placeholder="แนะนำตัวเองสั้น ๆ เพื่อให้ผู้ว่าจ้างรู้จักคุณมากขึ้น..."
-                    autoFocus
-                  />
-                  <div className="flex justify-end items-center px-1">
-                    <span
-                      className={`text-xs font-medium transition-colors ${
-                        tempBio.length >= 200
-                          ? "text-red-500"
-                          : tempBio.length >= 160
-                            ? "text-amber-500"
-                            : "text-gray-300"
-                      }`}
+                <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="relative w-full">
+                    <textarea
+                      value={tempBio}
+                      onChange={(e) => setTempBio(e.target.value)}
+                      maxLength={200}
+                      placeholder="แนะนำตัวสั้น ๆ ให้ผู้ว่าจ้างรู้จักคุณมากขึ้น..."
+                      className="w-full p-4 pb-10 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none min-h-[120px]"
+                    />
+
+                    {/* ตัวนับจำนวนตัวอักษรที่วางไว้ใน input */}
+                    <div className="absolute bottom-3 right-4 pointer-events-none">
+                      <span
+                        className={`text-[10px] font-black tabular-nums px-2 py-1 rounded-lg backdrop-blur-sm ${
+                          tempBio.length >= 200
+                            ? "text-red-500"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {tempBio.length}/200
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end items-center gap-3 px-2">
+                    <button
+                      onClick={() => {
+                        setTempBio(userData?.bio || "");
+                        setIsEditingHeader(false);
+                      }}
+                      className="px-6 py-3 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors active:scale-95"
                     >
-                      {tempBio.length}/200
-                    </span>
+                      ยกเลิก
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const isBioChanged =
+                          tempBio.trim() !== (userData?.bio || "");
+                        if (isBioChanged) {
+                          try {
+                            await handleUpdateField("bio", tempBio.trim());
+                          } catch {
+                            return;
+                          }
+                        }
+                        setIsEditingHeader(false);
+                      }}
+                      disabled={isLoading}
+                      className="flex items-center justify-center gap-2 px-8 py-3 bg-[#10B981] text-white rounded-full font-black text-sm shadow-sm hover:bg-[#059669] active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      {isLoading ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <CheckCircle size={18} />
+                      )}
+                      <span>
+                        {isLoading ? "กำลังบันทึก..." : "เสร็จสิ้นการแก้ไข"}
+                      </span>
+                    </button>
                   </div>
                 </div>
               ) : (
+                /* ส่วนแสดงผล Bio ปกติ (คงเดิม) */
                 <div className="flex flex-col items-start gap-3">
                   <p className="text-gray-700 leading-relaxed text-[15px] md:text-base font-medium break-words whitespace-pre-wrap w-full">
                     "
@@ -1331,83 +1341,12 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
 
         {/* Skills Modal — เฉพาะเจ้าของ */}
         {isOwnProfile && isSkillsModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div
-              className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
-              onClick={() => setIsSkillsModalOpen(false)}
-            />
-            <div className="relative bg-white w-full max-w-2xl rounded-[3rem] p-10 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[85vh] flex flex-col">
-              <div className="flex items-center gap-4 mb-8 shrink-0">
-                <div className="p-3 bg-[#0C5BEA] text-white rounded-2xl shadow-lg shadow-blue-100">
-                  <Sparkles size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">
-                    เลือกความถนัด
-                  </h3>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                    Skills Management
-                  </p>
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto pr-4 space-y-8 custom-scrollbar">
-                {Object.entries(skillCategories).map(([category, skills]) => (
-                  <div key={category} className="space-y-4">
-                    <h4 className="text-[10px] font-black text-[#0C5BEA] uppercase tracking-[0.2em] px-1">
-                      {category}
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {(skills as string[]).map((skill) => {
-                        const isSelected = selectedSkills.includes(skill);
-                        return (
-                          <button
-                            key={skill}
-                            type="button"
-                            onClick={() =>
-                              setSelectedSkills(
-                                isSelected
-                                  ? selectedSkills.filter((s) => s !== skill)
-                                  : [...selectedSkills, skill],
-                              )
-                            }
-                            className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all text-left ${isSelected ? "border-[#0C5BEA] bg-blue-50/50 text-[#0C5BEA] shadow-sm" : "border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200 hover:bg-white"}`}
-                          >
-                            <span className="text-[11px] font-bold leading-tight">
-                              {skill}
-                            </span>
-                            {isSelected && (
-                              <CheckCircle
-                                size={14}
-                                fill="currentColor"
-                                className="text-[#0C5BEA] shrink-0 ml-2"
-                              />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-8 pt-8 border-t border-gray-100 flex gap-4 shrink-0">
-                <button
-                  onClick={() => setIsSkillsModalOpen(false)}
-                  className="flex-1 py-4 text-xs font-black text-gray-400 hover:text-gray-600 uppercase tracking-widest"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    await handleUpdateField("skills", selectedSkills);
-                    setIsSkillsModalOpen(false);
-                  }}
-                  className="flex-[2] py-4 bg-[#0C5BEA] text-white font-black rounded-[1.5rem] shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all uppercase tracking-widest"
-                >
-                  Save Skills
-                </button>
-              </div>
-            </div>
-          </div>
+          <SkillsModal
+            isOpen={isOwnProfile && isSkillsModalOpen}
+            initialSelected={selectedSkills}
+            onClose={() => setIsSkillsModalOpen(false)}
+            onSave={(skills) => handleUpdateField("skills", skills)}
+          />
         )}
 
         {/* Crop Modal — เฉพาะเจ้าของ */}

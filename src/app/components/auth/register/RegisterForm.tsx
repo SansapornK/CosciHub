@@ -13,30 +13,12 @@ import OTP from "../otp/OTP";
 import ImageCropModal from "./steps/ImageCropModal";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import SkillsModal from "../../modals/SkillsModal";
+import { jobCategories } from "@/app/constants/JobCategories";
 
 interface RegisterFormProps {
   onLoginClick: () => void;
 }
-
-// รายชื่อทักษะตามหมวดหมู่
-export const skillCategories = {
-  "IT": ["พัฒนาเว็บไซต์", "พัฒนาแอปพลิเคชัน", "วิเคราะห์ข้อมูล", "ออกแบบ UX/UI"],
-  "Public": ["เชียร์ขายสินค้า", "การประสานงาน","การแสดง", "การพูดในที่สาธารณะ"],
-  "Business": ["การตลาด", "การเขียนคอนเทนต์", "PR"],
-  "Photo/Video": ["ถ่ายภาพ/วิดีโอ", "อนิเมชัน", "โมชันกราฟฟิก", "ตัดต่อ","กราฟฟิกดีไซน์"],
-  "อื่นๆ": ["วิชาการ", "วิจัย", "แปลบทความ"]
-};
-
-const jobInterestOptions = [
-  "งานด้านวิชาการ/วิจัย/ผู้ช่วย",
-  "งานกิจกรรม/อีเวนต์",
-  "งานพัฒนาออกแบบเว็บไซต์/แอปพลิเคชั่น/ระบบต่างๆ",
-  "งานสื่อมัลติมีเดีย",
-  "งานประชาสัมพันธ์/สื่อสาร",
-  "งานบริการ/ธุรการ",
-  "งานสอนพิเศษ",
-  "งานกองถ่าย/Extra"
-];
 
 export type UserRole = "student" | "alumni" | "teacher" | "";
 
@@ -99,6 +81,12 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   const [previousEmail, setPreviousEmail] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [isRegistrationSuccess, setIsRegistrationSuccess] = useState(false);
+
+  const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
+
+  const handleSaveSkills = async (selectedSkills: string[]) => {
+    updateRegisterData({ skills: selectedSkills });
+  };
   
   // Centralized validation state
   const [validation, setValidation] = useState<ValidationState>({
@@ -787,8 +775,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
               <StepMajorAndSkills 
                 data={registerData} 
                 updateData={updateRegisterData} 
-                skillOptions={Object.values(skillCategories).flat()}
-                jobOptions={jobInterestOptions}
+                onOpenSkillsModal={() => setIsSkillsModalOpen(true)}
+                jobOptions={jobCategories}
               />
               // <StepMajorAndSkills 
               //   data={registerData} 
@@ -864,6 +852,13 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           </div>
         </div>
       )}
+
+      <SkillsModal
+        isOpen={isSkillsModalOpen}
+        initialSelected={registerData.skills}
+        onClose={() => setIsSkillsModalOpen(false)}
+        onSave={handleSaveSkills}
+      />
 
       {showOTP && (
         <OTP 

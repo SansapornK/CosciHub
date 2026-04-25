@@ -19,34 +19,11 @@ import {
   HelpCircle,
 } from "lucide-react";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
+import { jobCategories } from "@/app/constants/JobCategories";
+
+
 
 /* ===================== Static Data ===================== */
-export const skillCategories = {
-  IT: ["พัฒนาเว็บไซต์", "พัฒนาแอปพลิเคชัน", "วิเคราะห์ข้อมูล", "ออกแบบ UX/UI"],
-  Public: ["เชียร์ขายสินค้า", "การประสานงาน", "การแสดง", "การพูดในที่สาธารณะ"],
-  Business: ["การตลาด", "การเขียนคอนเทนต์", "PR"],
-  "Photo/Video": [
-    "ถ่ายภาพ/วิดีโอ",
-    "อนิเมชัน",
-    "โมชันกราฟฟิก",
-    "ตัดต่อ",
-    "กราฟฟิกดีไซน์",
-  ],
-  อื่นๆ: ["วิชาการ", "วิจัย", "แปลบทความ"],
-};
-
-// category = ประเภทงาน (เก็บใน Job.category)
-const jobCategories = [
-  "งานด้านวิชาการ/วิจัย/ผู้ช่วย",
-  "งานกิจกรรม/อีเวนต์",
-  "งานพัฒนาออกแบบเว็บไซต์/แอปพลิเคชั่น/ระบบต่างๆ",
-  "งานสื่อมัลติมีเดีย",
-  "งานประชาสัมพันธ์/สื่อสาร",
-  "งานบริการ/ธุรการ",
-  "งานสอนพิเศษ",
-  "งานกองถ่าย/Extra",
-  "อื่น ๆ"
-];
 
 // jobType = รูปแบบงาน (เก็บใน Job.jobType)
 const jobForms = [
@@ -93,9 +70,7 @@ export default function CreateJobPage() {
   const [isDrafting, setIsDrafting] = useState(false);
   const [isLoadingDuplicate, setIsLoadingDuplicate] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activeCategory, setActiveCategory] = useState(
-    Object.keys(skillCategories)[0]
-  );
+
 
   // Modal state
   const [showPublishModal, setShowPublishModal] = useState(false);

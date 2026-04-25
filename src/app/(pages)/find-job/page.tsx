@@ -6,12 +6,11 @@ import axios from "axios";
 
 import Loading from "../../components/common/Loading";
 import JobList from "../../components/lists/JobList";
-import JobFilter, {
-  MAJOR_JOB_MAPPING,
-} from "../../components/filters/JobFilter";
+import { MAJOR_JOB_MAPPING } from "@/app/constants/JobCategories";
+import JobFilter from "../../components/filters/JobFilter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Sparkles } from "lucide-react";
-
+import { jobCategories } from "@/app/constants/JobCategories";
 // ================= SearchInput =================
 const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -100,20 +99,31 @@ function FindJobPageContent() {
     max: null as number | null,
   });
 
-  // ===== ฟังก์ชันสำคัญ: คำนวณประเภทงานที่จะส่งไปกรองจริง =====
   const getEffectiveJobTypes = () => {
-    // 1. ถ้าผู้ใช้มีการเลือกติ๊กประเภทงานเอง ให้ยึดตามที่ติ๊ก
-    if (selectedJobTypes.length > 0) return selectedJobTypes;
+    const majorWorkTypes = selectedMajor && MAJOR_JOB_MAPPING[selectedMajor]
+      ? MAJOR_JOB_MAPPING[selectedMajor].map(type => type.trim())
+      : [];
 
-    // 2. ถ้าไม่ได้ติ๊กประเภทงาน แต่เลือกวิชาเอก ให้เอางานที่ Mapping ไว้มาแสดง
-    if (selectedMajor && MAJOR_JOB_MAPPING[selectedMajor]) {
-      return MAJOR_JOB_MAPPING[selectedMajor];
+    if (selectedMajor && selectedJobTypes.length > 0) {
+      const filteredTypes = selectedJobTypes.filter(type => 
+        majorWorkTypes.includes(type.trim())
+      );
+      
+      return filteredTypes.length > 0 ? filteredTypes : ["EMPTY_RESULT"]; 
+    }
+
+    if (selectedMajor) {
+      return majorWorkTypes;
+    }
+
+    if (selectedJobTypes.length > 0) {
+      return selectedJobTypes.map(type => type.trim());
     }
 
     return [];
   };
 
-  // ===== init from URL (เหมือนเดิม) =====
+  // ===== init from URL =====
   useEffect(() => {
     setSearchQuery(searchParams.get("q") || "");
     setSelectedMajor(searchParams.get("major") || "");
@@ -160,17 +170,6 @@ function FindJobPageContent() {
   };
 
   const majors = Object.keys(MAJOR_JOB_MAPPING);
-  const allJobTypes = [
-    "งานด้านวิชาการ / วิจัย / ผู้ช่วยวิจัย",
-    "งานพัฒนาเว็บไซต์ / แอปพลิเคชัน / ระบบต่าง ๆ",
-    "งานกิจกรรม / อีเวนต์",
-    "งานประชาสัมพันธ์ / สื่อสารองค์กร",
-    "งานสื่อมัลติมีเดีย",
-    "งานบริการ / ธุรการ",
-    "งานสอนพิเศษ / ติวเตอร์",
-    "งานกองถ่าย / Extra",
-    "อื่น ๆ",
-  ];
 
   return (
     <div className="flex flex-col gap-6 bg-gray-50/30 min-h-screen">
@@ -220,7 +219,7 @@ function FindJobPageContent() {
           onMajorChange={setSelectedMajor}
           priceRange={priceRange}
           onPriceRangeChange={setPriceRange}
-          availableJobTypes={allJobTypes}
+          availableJobTypes={jobCategories}
           availableMajors={majors}
           currentSort={currentSort}
           onSortChange={(val) => {
