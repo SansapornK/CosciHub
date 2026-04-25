@@ -97,7 +97,7 @@ const JobCard: React.FC<JobCardProps> = ({
         </div>
         <TruncatedWithTooltip
           text={data.title}
-          className="text-base md:text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors flex-1"
+          className="text-base md:text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors flex-1 text-left"
         />
       </div>
 
@@ -109,7 +109,7 @@ const JobCard: React.FC<JobCardProps> = ({
           </span>
           <TruncatedWithTooltip
             text={`โดย ${data.postedBy}`}
-            className="text-[12px] md:text-sm text-blue-400 w-full"
+            className="text-[12px] md:text-sm text-blue-400 w-full text-left"
           />
         </div>
       </div>

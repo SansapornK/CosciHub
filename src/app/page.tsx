@@ -1028,7 +1028,7 @@ export default function Home() {
               recommendedJobs.map((job: any) => (
                 <div
                   key={job._id}
-                  className="min-w-[85vw] md:min-w-full snap-center shrink-0 h-full pb-4"
+                  className="min-w-[85vw] md:min-w-full snap-center shrink-0 pb-4"
                 >
                   <JobCard
                     fromPageName="หน้าแรก"
