@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
   const filter: IJobFilter = {};
 
-  if (q) filter.title = { $regex: q, $options: "i" };
+  if (q) filter.title = { $regex: q.trim(), $options: "i" };
   if (jobTypes) filter.category = { $in: jobTypes.split(",") };
 
   // ถ้าไม่ได้ขอ includeDraft (สำหรับหน้า find-jobs)
@@ -71,6 +71,12 @@ export async function GET(req: Request) {
     .skip(skip)
     .limit(limit)
     .exec();
+
+  console.log("filter:", JSON.stringify(filter));
+  console.log(
+    "jobs found:",
+    jobs.map((j: any) => j.title),
+  );
 
   return NextResponse.json({ jobs, total });
 }

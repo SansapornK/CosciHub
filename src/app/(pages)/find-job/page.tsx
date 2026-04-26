@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState, useCallback, useEffect } from "react";
+import React, { Suspense, useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import Loading from "../../components/common/Loading";
@@ -44,7 +44,12 @@ const SearchInput = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onChange={(e) => onSearchChange(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && onApplyFilters()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onApplyFilters();
+            }
+          }}
           className={`relative w-full p-3.5 md:p-4 pl-12 md:pl-14 bg-white border rounded-full
   focus:outline-none text-zinc-700 placeholder:text-zinc-400 text-sm md:text-base
   transition-all duration-500 ease-out
@@ -138,8 +143,8 @@ const FindJobPage = () => (
 function FindJobPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ✅ detect mobile — อ่านครั้งแรก + ฟัง resize
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -148,7 +153,6 @@ function FindJobPageContent() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // ✅ อ่านจาก URL โดยตรง — ไม่มี useState สำหรับ filter เลย
   const searchQuery = searchParams.get("q") || "";
   const selectedMajor = searchParams.get("major") || "";
   const currentSort = searchParams.get("sort") || "latest";
@@ -160,13 +164,11 @@ function FindJobPageContent() {
     ? searchParams.get("jobTypes")!.split(",").filter(Boolean)
     : [];
 
-  // local state เฉพาะ search box (พิมพ์แล้วกด Enter ค่อย push)
   const [searchInput, setSearchInput] = useState(searchQuery);
   useEffect(() => {
     setSearchInput(searchQuery);
   }, [searchQuery]);
 
-  // ✅ helper: patch เฉพาะ key ที่เปลี่ยน + reset page=1
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
       const next = new URLSearchParams(Array.from(searchParams.entries()));
@@ -182,27 +184,23 @@ function FindJobPageContent() {
 
   const handleJobTypesChange = (types: string[]) =>
     updateParams({ jobTypes: types.length ? types.join(",") : null });
-
   const handleMajorChange = (major: string) =>
     updateParams({ major: major || null });
-
   const handlePriceRangeChange = (range: { min: number; max: number | null }) =>
     updateParams({
       minPrice: range.min > 0 ? String(range.min) : null,
       maxPrice: range.max !== null ? String(range.max) : null,
     });
-
   const handleSortChange = (sort: string) =>
     updateParams({ sort: sort !== "latest" ? sort : null });
-
-  const handleApplySearch = () => updateParams({ q: searchInput || null });
+  const handleApplySearch = () =>
+    updateParams({ q: searchInput.trim() || null });
 
   const handleResetFilters = () => {
     setSearchInput("");
     router.push("/find-job");
   };
 
-  // effective job types (major × selected)
   const getEffectiveJobTypes = (): string[] => {
     const majorTypes =
       selectedMajor && MAJOR_JOB_MAPPING[selectedMajor]
@@ -222,7 +220,6 @@ function FindJobPageContent() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6 bg-gray-50/30 min-h-screen">
-      {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white py-10 md:py-20 px-5 md:px-10 text-center rounded-b-[2rem] md:rounded-b-[3rem]">
         <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[80%] bg-blue-100/70 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[45%] h-[70%] bg-indigo-100/40 rounded-full blur-[100px] pointer-events-none" />
@@ -237,12 +234,10 @@ function FindJobPageContent() {
             <p className="inline-flex items-center gap-2 text-[11px] md:text-xs font-bold text-blue-600 uppercase bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
               COSCI HUB
             </p>
-
             <h1 className="text-[26px] leading-tight md:text-4xl font-extrabold text-slate-900 tracking-tight">
               ค้นหา <AnimatedWord />
               <br className="md:hidden" /> ในที่เดียว
             </h1>
-
             <p className="text-[10px] md:text-base text-slate-400">
               แพลตฟอร์มรวมงานพิเศษภายในวิทยาลัยฯ · สำหรับนิสิต COSCI โดยเฉพาะ!
             </p>
@@ -250,13 +245,19 @@ function FindJobPageContent() {
 
           <SearchInput
             searchQuery={searchInput}
-            onSearchChange={setSearchInput}
+            onSearchChange={(v) => {
+              setSearchInput(v);
+              if (searchDebounceRef.current)
+                clearTimeout(searchDebounceRef.current);
+              searchDebounceRef.current = setTimeout(() => {
+                updateParams({ q: v.trim() || null });
+              }, 400);
+            }}
             onApplyFilters={handleApplySearch}
           />
         </div>
       </section>
 
-      {/* Filter + List */}
       <section className="px-4 md:px-10 pb-6">
         <JobFilter
           selectedJobTypes={selectedJobTypes}
@@ -273,7 +274,6 @@ function FindJobPageContent() {
           onResetFilters={handleResetFilters}
           isMobile={isMobile}
         />
-
         <div className="mt-2">
           <JobList
             initialItemsPerPage={isMobile ? 6 : 12}
