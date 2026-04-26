@@ -152,7 +152,7 @@ const KEYWORDS_MOBILE = [
     text: "COSCI Hub",
     style: "bg-white text-gray-700 border border-gray-200 shadow-sm",
     x: "55%",
-    y: "50%",
+    y: "60%",
     rotate: 2,
     size: "text-sm font-medium",
   },
@@ -221,7 +221,7 @@ const ICON_BUBBLES_MOBILE = [
   {
     emoji: "❤️",
     x: "85%",
-    y: "50%",
+    y: "45%",
     size: "w-10 h-10",
     border: "border border-pink-200 bg-white shadow-sm",
     rotate: -8,
@@ -326,7 +326,10 @@ const HERO_SLIDES = [
 // ปุ่ม Hero ตาม Role
 const getHeroPrimaryButton = (role: string | undefined) => {
   if (role === "alumni" || role === "teacher") {
-    return { text: "เริ่มต้นลงประกาศงาน", link: "/manage-projects/create-jobs" };
+    return {
+      text: "เริ่มต้นลงประกาศงาน",
+      link: "/manage-projects/create-jobs",
+    };
   }
   // Default สำหรับ student หรือไม่ได้ login
   return { text: "เริ่มต้นค้นหางานพิเศษ", link: "/find-job" };
@@ -359,16 +362,16 @@ const HeroCarousel = ({ images, setCurrentSlide }) => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1.5, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           style={{ objectPosition: "center" }}
         />
       </AnimatePresence>
 
       {/* Overlay darkening for text readability */}
-      <div className="absolute inset-0 bg-black/20 z-10" />
+      <div className="absolute inset-0 bg-black/20 z-10 pointer-events-none" />
 
       {/* Indicator Dots */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-30">
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-20 pointer-events-auto">
         {images.map((_, index) => (
           <button
             key={index}
@@ -411,277 +414,6 @@ const CategoryCard = ({ title, icon, bgColor, path }) => (
     </Link>
   </motion.div>
 );
-
-// const MAJOR = [
-//   {
-//     id: "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย",
-//     title: "การออกแบบสื่อปฏิสัมพันธ์และมัลติมีเดีย",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-//         <circle cx="9" cy="9" r="2" />
-//         <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การจัดการธุรกิจไซเบอร์",
-//     title: "การจัดการธุรกิจไซเบอร์",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="M12 16v5" />
-//         <path d="M16 14v7" />
-//         <path d="M20 10v11" />
-//         <path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15" />
-//         <path d="M4 18v3" />
-//         <path d="M8 14v7" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "นวัตกรรมคอมพิวเตอร์เพื่อการสื่อสาร",
-//     title: "นวัตกรรมคอมพิวเตอร์เพื่อการสื่อสาร",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z" />
-//         <path d="M20.054 15.987H3.946" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การผลิตภาพยนตร์และสื่อดิจิทัล",
-//     title: "การผลิตภาพยนตร์และสื่อดิจิทัล",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" />
-//         <rect x="2" y="6" width="14" height="12" rx="2" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การแสดงและกำกับการแสดงภาพยนตร์",
-//     title: "การแสดงและกำกับการแสดงภาพยนตร์",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z" />
-//         <path d="m6.2 5.3 3.1 3.9" />
-//         <path d="m12.4 3.4 3.1 4" />
-//         <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การออกแบบเพื่องานภาพยนตร์และสื่อดิจิทัล",
-//     title: "การออกแบบเพื่องานภาพยนตร์และสื่อดิจิทัล",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="m11 10 3 3" />
-//         <path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z" />
-//         <path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การจัดการภาพยนตร์และสื่อดิจิทัล",
-//     title: "การจัดการภาพยนตร์และสื่อดิจิทัล",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34" />
-//         <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-//         <path d="M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การสื่อสารเพื่อการท่องเที่ยว",
-//     title: "การสื่อสารเพื่อการท่องเที่ยว",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="M21.54 15H17a2 2 0 0 0-2 2v4.54" />
-//         <path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17" />
-//         <path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05" />
-//         <circle cx="12" cy="12" r="10" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การสื่อสารเพื่อสุขภาพ",
-//     title: "การสื่อสารเพื่อสุขภาพ",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
-//         <path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การสื่อสารเพื่อการจัดการนวัตกรรม",
-//     title: "การสื่อสารเพื่อการจัดการนวัตกรรม",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-//         <path d="M9 18h6" />
-//         <path d="M10 22h4" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-//   {
-//     id: "การสื่อสารเพื่อเศรษฐศาสตร์",
-//     title: "การสื่อสารเพื่อเศรษฐศาสตร์",
-//     icon: (
-//       <svg
-//         xmlns="http://www.w3.org/2000/svg"
-//         width="24"
-//         height="24"
-//         viewBox="0 0 24 24"
-//         fill="none"
-//         stroke="currentColor"
-//         strokeWidth="2"
-//         strokeLinecap="round"
-//         strokeLinejoin="round"
-//         className="h-6 w-6 text-white group-hover:text-[#0C5BEA] transition-colors duration-300"
-//       >
-//         <path d="M3 3v16a2 2 0 0 0 2 2h16" />
-//         <path d="m19 9-5 5-4-4-3 3" />
-//       </svg>
-//     ),
-//     bgColor:
-//       "bg-[#0C5BEA] group-hover:bg-white border border-[#0C5BEA] group-hover:border-white transition-all duration-300 shadow-md",
-//   },
-// ];
-// ---------------------------------------------
-
-// --- FEATURES ---
 
 const ABOUT_FEATURES = [
   {
@@ -842,13 +574,19 @@ export default function Home() {
   const heroPrimaryButton = getHeroPrimaryButton(userRole);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const scrollPosition = e.currentTarget.scrollLeft;
     const cardWidth = e.currentTarget.offsetWidth;
     const index = Math.round(scrollPosition / cardWidth);
     setActiveIndex(index);
   };
-
+  const scrollToIndex = (i: number) => {
+    if (!carouselRef.current) return;
+    const cardWidth = carouselRef.current.offsetWidth;
+    carouselRef.current.scrollTo({ left: cardWidth * i, behavior: "smooth" });
+    setActiveIndex(i);
+  };
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
@@ -897,71 +635,67 @@ export default function Home() {
               setCurrentSlide={setCurrentSlideIndex}
             />
 
-            <div className="absolute inset-0 flex justify-start items-end z-20 px-6 md:px-16 lg:px-24 pb-12 md:pb-20">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentSlideIndex}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="relative flex flex-col items-start text-start text-white max-w-2xl"
-                >
-                  <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-                    <span className="text-lg md:text-xl lg:text-2xl font-black inline-block">
-                      {currentSlideData.title?.replace(
-                        currentSlideData.highlight || "",
-                        "",
-                      )}
-                    </span>
-
-                    {currentSlideData.highlight && (
-                      <span className="text-[#F4FE57] text-lg md:text-xl lg:text-2xl font-black relative inline-block ml-2">
-                        {currentSlideData.highlight}
-                        <motion.span
-                          initial={{ width: 0 }}
-                          animate={{ width: "100%" }}
-                          transition={{ delay: 0.5, duration: 0.8 }}
-                          className="absolute -bottom-1 left-0 h-1 bg-[#F4FE57] rounded-full shadow-[0_0_10px_rgba(244,254,87,0.6)]"
-                        />
+            <div className="absolute inset-0 flex justify-start items-end z-30 px-6 md:px-16 lg:px-24 pb-12 md:pb-20 pointer-events-none">
+              <div className="relative flex flex-col items-start text-start text-white max-w-2xl w-full">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentSlideIndex}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    className="pointer-events-none"
+                  >
+                    <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+                      <span className="text-lg md:text-xl lg:text-2xl font-black inline-block">
+                        {currentSlideData.title?.replace(
+                          currentSlideData.highlight || "",
+                          "",
+                        )}
                       </span>
-                    )}
+                      {currentSlideData.highlight && (
+                        <span className="text-[#F4FE57] text-lg md:text-xl lg:text-2xl font-black relative inline-block ml-2">
+                          {currentSlideData.highlight}
+                          <motion.span
+                            initial={{ width: 0 }}
+                            animate={{ width: "100%" }}
+                            transition={{ delay: 0.5, duration: 0.8 }}
+                            className="absolute -bottom-1 left-0 h-1 bg-[#F4FE57] rounded-full"
+                          />
+                        </span>
+                      )}
+                      <br className="hidden md:block" />
+                      <span className="text-base md:text-lg lg:text-xl font-bold opacity-90 block mt-1 tracking-normal">
+                        {currentSlideData.subtitle}
+                      </span>
+                    </h1>
+                    <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-xl font-medium drop-shadow-md">
+                      {currentSlideData.description}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
 
-                    <br className="hidden md:block" />
-
-                    <span className="text-base md:text-lg lg:text-xl font-bold opacity-90 block mt-1 tracking-normal">
-                      {currentSlideData.subtitle}
-                    </span>
-                  </h1>
-
-                  <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-xl font-medium drop-shadow-md">
-                    {currentSlideData.description}
-                  </p>
-
-                  <div className="flex gap-4 mt-8">
-                    <Link href={heroPrimaryButton.link}>
-                      <motion.button
-                        whileHover={{
-                          scale: 1.05,
-                          backgroundColor: "#FFFFFF",
-                          color: "#0C5BEA",
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                        className="bg-[#0C5BEA] text-white text-sm md:text-base font-bold py-3 px-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-[#0C5BEA] transition-all flex items-center gap-2 group"
-                      >
-                        {heroPrimaryButton.text}
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                      </motion.button>
-                    </Link>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
+                <div className="flex gap-4 mt-8 pointer-events-auto">
+                  <Link
+                    href={heroPrimaryButton.link}
+                    className="pointer-events-auto"
+                  >
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      className="relative bg-[#0C5BEA] text-white text-sm md:text-base font-bold py-3 px-8 rounded-2xl overflow-hidden flex items-center gap-2 group transition-all duration-300 hover:shadow-[0_0_24px_rgba(12,91,234,0.45)]"
+                    >
+                      <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                      {heroPrimaryButton.text}
+                      <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </motion.button>
+                  </Link>
+                </div>
+              </div>
             </div>
           </section>
         </div>
 
         <section className="bg-blue-50 w-full flex flex-col gap-8 py-5 px-5 justify-center text-center rounded-b-3xl shadow-lg">
-          {/* Mobile Major Section */}
           {/* Mobile Major Section */}
           <div className="md:hidden overflow-x-auto flex gap-4 px-2 py-2 scrollbar-hide scroll-smooth snap-x snap-mandatory">
             {MAJOR.map((category) => (
@@ -1012,6 +746,7 @@ export default function Home() {
 
           {/* --- Desktop: Grid / Mobile: Carousel --- */}
           <div
+            ref={carouselRef}
             onScroll={handleScroll}
             className="flex md:grid md:grid-cols-2 xl:grid-cols-3 gap-6 mt-2 px-4 sm:px-0 
                overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-hide"
@@ -1033,7 +768,7 @@ export default function Home() {
                   <JobCard
                     fromPageName="หน้าแรก"
                     isLoggedIn={isLoggedIn}
-                  isStudent={userRole === "student"}
+                    isStudent={userRole === "student"}
                     isBookmarked={savedJobIds.includes(job._id)}
                     onToggleBookmark={() => handleToggleBookmark(job._id)}
                     data={{
@@ -1064,10 +799,11 @@ export default function Home() {
           {/* --- Mobile Pagination Dots --- */}
           <div className="flex md:hidden justify-center gap-2 mt-2">
             {recommendedJobs.map((_, i) => (
-              <div
+              <button
                 key={i}
+                onClick={() => scrollToIndex(i)}
                 className={`h-1.5 transition-all duration-300 rounded-full 
-          ${activeIndex === i ? "w-6 bg-[#0C5BEA]" : "w-1.5 bg-gray-300"}`}
+        ${activeIndex === i ? "w-6 bg-[#0C5BEA]" : "w-1.5 bg-gray-300"}`}
               />
             ))}
           </div>
