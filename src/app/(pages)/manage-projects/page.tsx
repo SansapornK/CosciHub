@@ -178,6 +178,11 @@ export default function ManageProjectsPage() {
   const [page3, setPage3] = useState(0); //Row 3
   const ITEMS_PER_PAGE = 3;
 
+  // Filter สถานะใบสมัคร (ฝั่งนิสิต)
+  const [appStatusFilter, setAppStatusFilter] = useState<
+    "all" | "pending" | "accepted" | "rejected"
+  >("all");
+
   const { subscribeToProjectList } = usePusher();
 
   // --- States สำหรับ Review Modal ---
@@ -615,9 +620,9 @@ export default function ManageProjectsPage() {
         {isFreelancer ? (
           // ── ฝั่งนิสิต: งานที่สมัครไว้ ──────────────────────────────────────
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
               <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-indigo-500 rounded-xl text-white shadow-lg shadow-indigo-100">
+                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-indigo-100">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5"
@@ -644,37 +649,104 @@ export default function ManageProjectsPage() {
                 }
                 )
               </h2>
+
+              {/* Filter Badges */}
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    { key: "all", label: "ทั้งหมด" },
+                    { key: "pending", label: "รอพิจารณา" },
+                    { key: "accepted", label: "ผ่านการคัดเลือก" },
+                    { key: "rejected", label: "ไม่ผ่านการคัดเลือก" },
+                  ] as const
+                ).map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => {
+                      setAppStatusFilter(item.key);
+                      setPage1(0);
+                    }}
+                    className={`text-xs px-3 py-1.5 rounded-full  border transition-all ${
+                      appStatusFilter === item.key
+                        ? "bg-primary-blue-400 text-white border-primary-blue-400"
+                        : "bg-white text-primary-blue-400 border-primary-blue-400 hover:bg-primary-blue-50"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {jobAppLoading ? (
-              <div className="flex justify-center py-6">
-                <Loading size="small" color="primary" />
-              </div>
-            ) : jobApplications.length === 0 ? (
-              <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                  <Briefcase size={32} />
-                </div>
-                <p className="font-bold text-gray-400">
-                  คุณยังไม่ได้สมัครงานพิเศษใดๆ
-                </p>
-                <Link
-                  href="/find-job"
-                  className="text-primary-blue-500 text-sm hover:underline mt-2 inline-block"
-                >
-                  ค้นหางานพิเศษ →
-                </Link>
-              </div>
-            ) : (
-              <PaginatedGrid
-                items={jobApplications.filter(
-                  (a) =>
-                    a.status === "pending" ||
-                    a.status === "rejected" ||
-                    a.status === "accepted",
-                )}
-                page={page1}
-                setPage={setPage1}
+            {(() => {
+              const filteredApps = jobApplications.filter((a) => {
+                const isValidStatus =
+                  a.status === "pending" ||
+                  a.status === "rejected" ||
+                  a.status === "accepted";
+                if (!isValidStatus) return false;
+                if (appStatusFilter === "all") return true;
+                return a.status === appStatusFilter;
+              });
+
+              const filterLabels = {
+                all: "ทั้งหมด",
+                pending: "รอพิจารณา",
+                accepted: "ผ่านการคัดเลือก",
+                rejected: "ไม่ผ่านการคัดเลือก",
+              };
+
+              if (jobAppLoading) {
+                return (
+                  <div className="flex justify-center py-6">
+                    <Loading size="small" color="primary" />
+                  </div>
+                );
+              }
+
+              if (jobApplications.length === 0) {
+                return (
+                  <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                      <Briefcase size={32} />
+                    </div>
+                    <p className="font-bold text-gray-400">
+                      คุณยังไม่ได้สมัครงานพิเศษใดๆ
+                    </p>
+                    <Link
+                      href="/find-job"
+                      className="text-primary-blue-500 text-sm hover:underline mt-2 inline-block"
+                    >
+                      ค้นหางานพิเศษ →
+                    </Link>
+                  </div>
+                );
+              }
+
+              if (filteredApps.length === 0) {
+                return (
+                  <div className="bg-white rounded-[2rem] p-11 text-center border border-dashed border-gray-200">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                      <Briefcase size={32} />
+                    </div>
+                    <p className="font-bold text-gray-400">
+                      ไม่พบใบสมัครในสถานะ &ldquo;{filterLabels[appStatusFilter]}&rdquo;
+                    </p>
+                    <button
+                      onClick={() => setAppStatusFilter("all")}
+                      className="text-primary-blue-500 text-sm hover:underline mt-2 inline-block"
+                    >
+                      ดูใบสมัครทั้งหมด →
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <PaginatedGrid
+                  items={filteredApps}
+                  page={page1}
+                  setPage={setPage1}
                 renderItem={(app) => {
                   const s =
                     appStatusConfig[app.status] ?? appStatusConfig.pending;
@@ -772,14 +844,15 @@ export default function ManageProjectsPage() {
                   );
                 }}
               />
-            )}
+              );
+            })()}
           </div>
         ) : (
           // ── ฝั่งเจ้าของ: งานที่มีคนมาสมัคร ───────────────────────────────────
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-purple-500 rounded-xl text-white shadow-lg shadow-purple-100">
+                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-purple-100">
                   <Users size={20} />
                 </div>
                 ผู้สมัครงานพิเศษของฉัน ({ownerJobs.length})
@@ -1120,7 +1193,7 @@ export default function ManageProjectsPage() {
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-green-500 rounded-xl text-white shadow-lg shadow-green-100">
+                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-green-100">
                   <CheckCircle size={20} />
                 </div>
                 งานที่เสร็จสิ้น ({completedApplications.length})
