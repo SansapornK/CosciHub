@@ -90,6 +90,11 @@ export default function MyJobsPage() {
   const [selectedJob, setSelectedJob] = useState<JobItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Filter สถานะงาน
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "draft" | "published" | "in_progress" | "completed" | "closed"
+  >("all");
+
   // Guard: student ไม่มีสิทธิ์
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role === "student") {
@@ -270,7 +275,7 @@ export default function MyJobsPage() {
 
       <div className="max-w-6xl mx-auto p-4 md:p-7 pt-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-10 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
@@ -323,14 +328,103 @@ export default function MyJobsPage() {
         {/* Job Grid */}
         {jobs.length > 0 && (
           <>
-            <p className="text-sm text-gray-400 mb-6">
-              ทั้งหมด{" "}
-              <span className="font-semibold text-gray-700">{jobs.length}</span>{" "}
-              ประกาศ
-            </p>
+            {/* Filter Buttons */}
+            {(() => {
+              const draftCount = jobs.filter((j) => j.status === "draft").length;
+              const publishedCount = jobs.filter(
+                (j) => j.status === "published" && !isJobExpired(j.applicationDeadline)
+              ).length;
+              const inProgressCount = jobs.filter(
+                (j) => j.status === "in_progress" || j.status === "awaiting"
+              ).length;
+              const completedCount = jobs.filter((j) => j.status === "completed").length;
+              const closedCount = jobs.filter(
+                (j) =>
+                  j.status === "closed" ||
+                  (j.status === "published" && isJobExpired(j.applicationDeadline))
+              ).length;
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {jobs.map((job) => {
+              const filters = [
+                { key: "all", label: `ทั้งหมด (${jobs.length})` },
+                { key: "draft", label: `ฉบับร่าง (${draftCount})` },
+                { key: "published", label: `เปิดรับสมัคร (${publishedCount})` },
+                { key: "in_progress", label: `กำลังดำเนินการ (${inProgressCount})` },
+                { key: "completed", label: `เสร็จสิ้น (${completedCount})` },
+                { key: "closed", label: `ปิดรับสมัคร (${closedCount})` },
+              ] as const;
+
+              return (
+                <div className="flex gap-2 flex-wrap mb-6">
+                  {filters.map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => setStatusFilter(item.key)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                        statusFilter === item.key
+                          ? "bg-primary-blue-400 text-white border-primary-blue-400"
+                          : "bg-white text-primary-blue-400 border-primary-blue-400 hover:bg-primary-blue-50"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+
+            {/* Filtered Jobs */}
+            {(() => {
+              const filteredJobs = jobs.filter((job) => {
+                const expired = isJobExpired(job.applicationDeadline);
+
+                if (statusFilter === "all") return true;
+                if (statusFilter === "draft") return job.status === "draft";
+                if (statusFilter === "published")
+                  return job.status === "published" && !expired;
+                if (statusFilter === "in_progress")
+                  return job.status === "in_progress" || job.status === "awaiting";
+                if (statusFilter === "completed") return job.status === "completed";
+                if (statusFilter === "closed")
+                  return (
+                    job.status === "closed" ||
+                    (job.status === "published" && expired)
+                  );
+                return true;
+              });
+
+              const filterLabels = {
+                all: "ทั้งหมด",
+                draft: "ฉบับร่าง",
+                published: "เปิดรับสมัคร",
+                in_progress: "กำลังดำเนินการ",
+                completed: "เสร็จสิ้น",
+                closed: "ปิดรับสมัคร",
+              };
+
+              if (filteredJobs.length === 0) {
+                return (
+                  <div className="flex flex-col items-center justify-center py-16 gap-4 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                      <BriefcaseBusiness className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <div>
+                      <p className="text-gray-500">
+                        ไม่พบประกาศงานในสถานะ &ldquo;{filterLabels[statusFilter]}&rdquo;
+                      </p>
+                      <button
+                        onClick={() => setStatusFilter("all")}
+                        className="text-primary-blue-500 text-sm hover:underline mt-2 inline-block"
+                      >
+                        ดูประกาศงานทั้งหมด →
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filteredJobs.map((job) => {
                 const expired = isJobExpired(job.applicationDeadline);
 
                 // กำหนด CTA รองตามสถานะ
@@ -430,7 +524,9 @@ export default function MyJobsPage() {
                   </div>
                 );
               })}
-            </div>
+                </div>
+              );
+            })()}
           </>
         )}
       </div>

@@ -307,7 +307,7 @@ export default function EditProfilePage() {
               ช่องทางการติดต่อ
             </h3>
             <p className="text-gray-500 text-sm mb-4">
-              ช่องทางที่ผู้ว่าจ้างสามารถติดต่อคุณได้
+              ผู้ว่าจ้าง / นิสิตจะใช้ข้อมูลนี้เพื่อติดต่อคุณเกี่ยวกับงาน
             </p>
 
             <div className="flex flex-col gap-3">

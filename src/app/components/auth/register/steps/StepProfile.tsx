@@ -159,9 +159,8 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
 
       {/* Profile Image */}
       <div className="w-full">
-        
-        <div className="flex items-center gap-4">
-          <div className="w-30 h-30 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
             {previewImage ? (
               <img
                 src={previewImage}
@@ -175,8 +174,8 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
               </svg>
             )}
           </div>
-          
-          <div className="flex gap-2">
+
+          <div className="flex gap-2 justify-center">
             <label
               htmlFor="profile-image"
               className="px-3 py-1 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 text-sm inline-block"
@@ -190,7 +189,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
               className="hidden"
               onChange={handleImageChange}
             />
-            
+
             {previewImage && (
               <button
                 type="button"
@@ -217,7 +216,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
         </label>
         <textarea
           id="bio"
-          rows={3}
+          rows={2}
           className="input resize-none"
           placeholder="กรอกคำอธิบายตนเอง..."
           value={data.bio}
@@ -231,7 +230,7 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
           ช่องทางการติดต่อ <span className="text-red-500">*</span>
         </label>
         <p className="text-gray-400 text-sm mb-2">
-          ช่องทางที่ผู้ว่าจ้างสามารถติดต่อคุณได้
+          ผู้ว่าจ้าง / นิสิตจะใช้ข้อมูลนี้เพื่อติดต่อคุณเกี่ยวกับงาน
         </p>
         <div className="flex flex-col gap-2">
           {contactItems.map((contact, index) => {
@@ -242,13 +241,13 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
               <div key={index} className="flex gap-2">
                 {/* Contact Type Dropdown */}
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                  <div className="absolute left-3 top-5 -translate-y-2 pointer-events-none text-gray-400">
                     <IconComponent className="w-4 h-4" />
                   </div>
                   <select
                     value={contact.type}
                     onChange={(e) => handleContactTypeChange(index, e.target.value)}
-                    className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[130px]"
+                    className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[130px]"
                   >
                     {contactTypes.map((type) => (
                       <option key={type.value} value={type.value}>
@@ -291,144 +290,6 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
           </button>
         </div>
       </div>
-
-      {/* แสดงฟิลด์เฉพาะสำหรับนิสิตเท่านั้น */}
-      {data.role === 'student' && (
-        <>
-          {/* ราคาเริ่มต้น */}
-          {/* <div className="w-full">
-            <label htmlFor="basePrice" className="block text-gray-700 text-sm mb-1">
-              ราคาเริ่มต้น (บาท)
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                id="basePrice"
-                min="100"
-                step="100"
-                className="input max-w-32"
-                value={data.basePrice || 500}
-                onChange={handleBasePriceChange}
-              />
-              <span className="text-gray-600">บาท</span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">ราคาเริ่มต้นสำหรับการรับงาน (ขั้นต่ำ 100 บาท)</p>
-          </div> */}
-
-          {/* สถานะรับงาน */}
-          {/* <div>
-            <label className="block text-gray-700 text-sm mb-1">
-              สถานะการรับงาน
-            </label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => updateData({ isOpen: true })}
-                className={`flex items-center gap-2 px-3 py-1 rounded-lg ${
-                  data.isOpen !== false
-                    ? 'bg-green-100 text-green-700 border-2 border-green-300'
-                    : 'bg-gray-100 text-gray-500 border border-gray-300'
-                }`}
-              >
-                <span className={`w-3 h-3 rounded-full ${data.isOpen !== false ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-                พร้อมรับงาน
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => updateData({ isOpen: false })}
-                className={`flex items-center gap-2 px-3 py-1 rounded-lg ${
-                  data.isOpen === false
-                    ? 'bg-red-100 text-red-700 border-2 border-red-300'
-                    : 'bg-gray-100 text-gray-500 border border-gray-300'
-                }`}
-              >
-                <span className={`w-3 h-3 rounded-full ${data.isOpen === false ? 'bg-red-500' : 'bg-gray-400'}`}></span>
-                ไม่พร้อมรับงาน
-              </button>
-            </div>
-          </div> */}
-
-          {/* Portfolio file upload */}
-          {/* <div className="w-full">
-            <label htmlFor="portfolio" className="block text-gray-700 text-sm mb-1">
-              พอร์ตโฟลิโอ (PDF)
-            </label>
-            
-            {data.portfolioFile ? (
-              // File is selected - show file info card
-              <div className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <path d="M9 15v-4"></path>
-                        <path d="M12 15v-6"></path>
-                        <path d="M15 15v-2"></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium truncate max-w-[200px]">
-                        {data.portfolioFile.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatFileSize(data.portfolioFile.size)}
-                      </p>
-                    </div>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={removePortfolio}
-                    className="p-1 text-gray-500 hover:text-red-500 rounded-full hover:bg-gray-100"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 6L6 18"></path>
-                      <path d="M6 6l12 12"></path>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              // No file selected - show upload button
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="portfolio"
-                  className={`px-4 py-3 border border-dashed rounded-lg cursor-pointer flex items-center justify-center hover:bg-gray-50 ${
-                    portfolioError ? 'border-red-500 bg-red-50' : 'border-gray-300'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-gray-500">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  <span className="text-sm">
-                    คลิกเพื่ออัพโหลดพอร์ตโฟลิโอ PDF
-                  </span>
-                </label>
-                
-                <input
-                  type="file"
-                  id="portfolio"
-                  accept=".pdf"
-                  className="hidden"
-                  onChange={handlePortfolioChange}
-                />
-                
-                {portfolioError && (
-                  <p className="text-red-500 text-xs">{portfolioError}</p>
-                )}
-                
-                <p className="text-xs text-gray-500">
-                  ไฟล์ PDF ขนาดไม่เกิน 5MB
-                </p>
-              </div>
-            )}
-          </div> */}
-        </>
-      )}
     </div>
   );
 }

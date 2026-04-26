@@ -19,7 +19,14 @@ interface Applicant {
   userId: string | null;
   applicantName: string;
   applicantEmail: string;
-  status: "pending" | "accepted" | "rejected";
+  status:
+    | "pending"
+    | "accepted"
+    | "rejected"
+    | "in_progress"
+    | "submitted"
+    | "revision"
+    | "completed";
   appliedDate: string;
   skills: string[];
   bio: string;
@@ -248,6 +255,11 @@ export default function ApplicantsPage() {
   const [confirmAccept, setConfirmAccept] = useState<Applicant | null>(null);
   const [confirmReject, setConfirmReject] = useState<Applicant | null>(null);
 
+  // Filter สถานะผู้สมัคร
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "pending" | "accepted" | "rejected" | "working"
+  >("all");
+
   // ─── Redirect ─────────────────────────────────
   useEffect(() => {
     if (authStatus === "unauthenticated") router.push("/auth?state=login");
@@ -418,48 +430,136 @@ export default function ApplicantsPage() {
         )}
       </div>
 
-      {/* Stats row */}
-      <div className="flex gap-2 flex-wrap">
-        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full">
-          ทั้งหมด {applicants.length} คน
-        </span>
-        <span className="text-xs bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-full">
-          รอพิจารณา {pendingCount} คน
-        </span>
-        <span className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-full">
-          ผ่านการคัดเลือก {acceptedCount} คน
-        </span>
-        <span className="text-xs bg-red-100 text-red-600 px-3 py-1.5 rounded-full">
-          ไม่ผ่าน {applicants.length - pendingCount - acceptedCount} คน
-        </span>
-      </div>
+      {/* Stats row - Filter buttons */}
+      {(() => {
+        const workingStatuses = ["in_progress", "submitted", "revision", "completed"];
+        const workingCount = applicants.filter((a) =>
+          workingStatuses.includes(a.status)
+        ).length;
+        const rejectedCount = applicants.filter((a) => a.status === "rejected").length;
+
+        const filters = [
+          {
+            key: "all",
+            label: `ทั้งหมด ${applicants.length} คน`,
+            baseClass: "bg-gray-100 text-gray-600",
+            activeClass: "ring-2 ring-gray-400 ring-offset-1",
+          },
+          {
+            key: "pending",
+            label: `รอพิจารณา ${pendingCount} คน`,
+            baseClass: "bg-yellow-100 text-yellow-700",
+            activeClass: "ring-2 ring-yellow-400 ring-offset-1",
+          },
+          {
+            key: "accepted",
+            label: `ผ่านการคัดเลือก ${acceptedCount} คน`,
+            baseClass: "bg-green-100 text-green-700",
+            activeClass: "ring-2 ring-green-400 ring-offset-1",
+          },
+          {
+            key: "rejected",
+            label: `ไม่ผ่าน ${rejectedCount} คน`,
+            baseClass: "bg-red-100 text-red-600",
+            activeClass: "ring-2 ring-red-400 ring-offset-1",
+          },
+          {
+            key: "working",
+            label: `กำลังทำงาน ${workingCount} คน`,
+            baseClass: "bg-blue-100 text-blue-700",
+            activeClass: "ring-2 ring-blue-400 ring-offset-1",
+          },
+        ] as const;
+
+        return (
+          <div className="flex gap-2 flex-wrap">
+            {filters.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setStatusFilter(item.key)}
+                className={`text-xs px-3 py-1.5 rounded-full transition-all cursor-pointer hover:opacity-80 ${item.baseClass} ${
+                  statusFilter === item.key ? item.activeClass : ""
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Applicant List */}
-      {applicants.length === 0 ? (
-        <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-10 text-center">
-          <p className="text-gray-500">ยังไม่มีผู้สมัครในขณะนี้</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {/* เรียง pending ก่อน → accepted → rejected */}
-          {[...applicants]
-            .sort((a, b) => {
-              const order = { pending: 0, accepted: 1, rejected: 2 };
-              return order[a.status] - order[b.status];
-            })
-            .map((applicant) => (
-              <ApplicantCard
-                key={applicant._id}
-                applicant={applicant}
-                onAccept={() => setConfirmAccept(applicant)}
-                onReject={() => setConfirmReject(applicant)}
-                onWithdraw={setWithdrawApplicant}
-                onContact={setContactApplicant}
-                isLoading={actionLoading}
-              />
-            ))}
-        </div>
-      )}
+      {(() => {
+        const workingStatuses = ["in_progress", "submitted", "revision", "completed"];
+
+        const filteredApplicants = applicants.filter((a) => {
+          if (statusFilter === "all") return true;
+          if (statusFilter === "working") return workingStatuses.includes(a.status);
+          return a.status === statusFilter;
+        });
+
+        const filterLabels = {
+          all: "ทั้งหมด",
+          pending: "รอพิจารณา",
+          accepted: "ผ่านการคัดเลือก",
+          rejected: "ไม่ผ่านการคัดเลือก",
+          working: "กำลังทำงาน",
+        };
+
+        if (applicants.length === 0) {
+          return (
+            <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-10 text-center">
+              <p className="text-gray-500">ยังไม่มีผู้สมัครในขณะนี้</p>
+            </div>
+          );
+        }
+
+        if (filteredApplicants.length === 0) {
+          return (
+            <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-10 text-center">
+              <p className="text-gray-500">
+                ไม่พบผู้สมัครในสถานะ &ldquo;{filterLabels[statusFilter]}&rdquo;
+              </p>
+              <button
+                onClick={() => setStatusFilter("all")}
+                className="text-primary-blue-500 text-sm hover:underline mt-2 inline-block"
+              >
+                ดูผู้สมัครทั้งหมด →
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {/* เรียง pending ก่อน → accepted → rejected → working */}
+            {[...filteredApplicants]
+              .sort((a, b) => {
+                const order: Record<string, number> = {
+                  pending: 0,
+                  accepted: 1,
+                  rejected: 2,
+                  in_progress: 3,
+                  submitted: 4,
+                  revision: 5,
+                  completed: 6,
+                };
+                return (order[a.status] ?? 99) - (order[b.status] ?? 99);
+              })
+              .map((applicant) => (
+                <ApplicantCard
+                  key={applicant._id}
+                  applicant={applicant}
+                  onAccept={() => setConfirmAccept(applicant)}
+                  onReject={() => setConfirmReject(applicant)}
+                  onWithdraw={setWithdrawApplicant}
+                  onContact={setContactApplicant}
+                  isLoading={actionLoading}
+                />
+              ))}
+          </div>
+        );
+      })()}
 
       <EmployerWithdrawModal
         isOpen={!!withdrawApplicant}

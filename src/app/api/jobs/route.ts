@@ -72,11 +72,11 @@ export async function GET(req: Request) {
     .limit(limit)
     .exec();
 
-  console.log("filter:", JSON.stringify(filter));
-  console.log(
-    "jobs found:",
-    jobs.map((j: any) => j.title),
-  );
+  // console.log("filter:", JSON.stringify(filter));
+  // console.log(
+  //   "jobs found:",
+  //   jobs.map((j: any) => j.title),
+  // );
 
   return NextResponse.json({ jobs, total });
 }
