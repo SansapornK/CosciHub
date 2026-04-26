@@ -158,7 +158,8 @@ function JobList({
   }, [
     pageFromUrl, 
     searchQuery,
-    selectedJobTypes,
+    selectedJobTypes.join(','),
+    // selectedJobTypes,
     selectedMajor,
     priceRange,
     currentSort
