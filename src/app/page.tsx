@@ -634,61 +634,62 @@ export default function Home() {
               images={HERO_SLIDES}
               setCurrentSlide={setCurrentSlideIndex}
             />
-
-            <div className="absolute inset-0 flex justify-start items-end z-30 px-6 md:px-16 lg:px-24 pb-12 md:pb-20 pointer-events-none">
-              <div className="relative flex flex-col items-start text-start text-white max-w-2xl w-full">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentSlideIndex}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="pointer-events-none"
-                  >
-                    <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-                      <span className="text-lg md:text-xl lg:text-2xl font-black inline-block">
-                        {currentSlideData.title?.replace(
-                          currentSlideData.highlight || "",
-                          "",
-                        )}
-                      </span>
-                      {currentSlideData.highlight && (
-                        <span className="text-[#F4FE57] text-lg md:text-xl lg:text-2xl font-black relative inline-block ml-2">
-                          {currentSlideData.highlight}
-                          <motion.span
-                            initial={{ width: 0 }}
-                            animate={{ width: "100%" }}
-                            transition={{ delay: 0.5, duration: 0.8 }}
-                            className="absolute -bottom-1 left-0 h-1 bg-[#F4FE57] rounded-full"
-                          />
-                        </span>
-                      )}
-                      <br className="hidden md:block" />
-                      <span className="text-base md:text-lg lg:text-xl font-bold opacity-90 block mt-1 tracking-normal">
-                        {currentSlideData.subtitle}
-                      </span>
-                    </h1>
-                    <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-xl font-medium drop-shadow-md">
-                      {currentSlideData.description}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
-
-                <div className="flex gap-4 mt-8 pointer-events-auto">
-                  <Link
-                    href={heroPrimaryButton.link}
-                    className="pointer-events-auto"
-                  >
-                    <motion.button
-                      whileTap={{ scale: 0.97 }}
-                      className="relative bg-[#0C5BEA] text-white text-sm md:text-base font-bold py-3 px-8 rounded-2xl overflow-hidden flex items-center gap-2 group transition-all duration-300 hover:shadow-[0_0_24px_rgba(12,91,234,0.45)]"
+            <div className="absolute inset-0 z-30 pointer-events-none">
+              <div className="max-w-7xl mx-auto h-full flex items-end px-6 md:px-16 lg:px-24 pb-12 md:pb-20">
+                <div className="relative flex flex-col items-start text-start text-white max-w-2xl w-full">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSlideIndex}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                      className="pointer-events-none"
                     >
-                      <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-                      {heroPrimaryButton.text}
-                      <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                    </motion.button>
-                  </Link>
+                      <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+                        <span className="text-lg md:text-xl lg:text-2xl font-black inline-block">
+                          {currentSlideData.title?.replace(
+                            currentSlideData.highlight || "",
+                            "",
+                          )}
+                        </span>
+                        {currentSlideData.highlight && (
+                          <span className="text-[#F4FE57] text-lg md:text-xl lg:text-2xl font-black relative inline-block ml-2">
+                            {currentSlideData.highlight}
+                            <motion.span
+                              initial={{ width: 0 }}
+                              animate={{ width: "100%" }}
+                              transition={{ delay: 0.5, duration: 0.8 }}
+                              className="absolute -bottom-1 left-0 h-1 bg-[#F4FE57] rounded-full"
+                            />
+                          </span>
+                        )}
+                        <br className="hidden md:block" />
+                        <span className="text-base md:text-lg lg:text-xl font-bold opacity-90 block mt-1 tracking-normal">
+                          {currentSlideData.subtitle}
+                        </span>
+                      </h1>
+                      <p className="mt-4 text-sm md:text-base text-white/90 leading-relaxed max-w-xl font-medium drop-shadow-md">
+                        {currentSlideData.description}
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  <div className="flex gap-4 mt-8 pointer-events-auto">
+                    <Link
+                      href={heroPrimaryButton.link}
+                      className="pointer-events-auto"
+                    >
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        className="relative bg-[#0C5BEA] text-white text-sm md:text-base font-bold py-3 px-8 rounded-2xl overflow-hidden flex items-center gap-2 group transition-all duration-300 hover:shadow-[0_0_24px_rgba(12,91,234,0.45)]"
+                      >
+                        <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                        {heroPrimaryButton.text}
+                        <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </motion.button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
@@ -815,7 +816,6 @@ export default function Home() {
           </Link>
         </section>
 
-        {/* --- About Section (New Design) --- */}
         {/* --- About Section --- */}
         <motion.section
           variants={fadeInUp}
@@ -824,7 +824,7 @@ export default function Home() {
           whileInView="visible"
           className="w-full flex flex-col gap-1 my-20 justify-center text-center px-6 md:px-12 max-w-7xl mx-auto"
         >
-          {/* Header (เหมือนเดิม) */}
+          {/* Header */}
           <div className="flex flex-col items-center justify-center mb-6">
             <motion.div
               variants={fadeInUp}

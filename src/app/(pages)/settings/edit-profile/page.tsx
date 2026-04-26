@@ -239,7 +239,7 @@ export default function EditProfilePage() {
         >
           <ArrowLeft className="w-6 h-6 text-gray-600" />
         </Link>
-        <h2 className="text-2xl font-bold text-gray-800">แก้ไขข้อมูลส่วนตัว</h2>
+        <h2 className="text-lg md:text-2xl font-bold text-gray-800">แก้ไขข้อมูลส่วนตัว</h2>
       </div>
 
       {/* Form */}

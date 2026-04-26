@@ -7,26 +7,28 @@ import { ArrowLeft } from "lucide-react";
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="flex flex-col gap-6 pb-10 max-w-4xl mx-auto w-full px-4">
+    <div className="flex flex-col gap-6 pb-10 max-w-4xl mx-auto w-full px-4 md:px-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mt-8">
+      <div className="flex items-center gap-3 mt-6 md:mt-8">
         <Link
           href="/settings"
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="p-2 hover:bg-gray-100 active:bg-gray-100 rounded-full transition-colors shrink-0"
         >
-          <ArrowLeft className="w-6 h-6 text-gray-600" />
+          <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
         </Link>
-        <h2 className="text-2xl font-bold text-gray-800">
+        <h2 className="text-lg md:text-2xl font-bold text-gray-800">
           ข้อตกลงและเงื่อนไขการใช้งาน
         </h2>
       </div>
 
       {/* Content */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-8">
         <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed space-y-6">
           <p>
-            COSCI Hub (แพลตฟอร์ม) จัดทำขึ้นเพื่อเป็นพื้นที่กลางในการอำนวยความสะดวกและเชื่อมโยงนิสิต
-            (ฟรีแลนซ์) กับคณาจารย์ ศิษย์เก่า และบุคลากรของวิทยาลัยนวัตกรรมสื่อสารสังคม (ผู้ว่าจ้าง)
+            COSCI Hub (แพลตฟอร์ม)
+            จัดทำขึ้นเพื่อเป็นพื้นที่กลางในการอำนวยความสะดวกและเชื่อมโยงนิสิต
+            (ฟรีแลนซ์) กับคณาจารย์ ศิษย์เก่า
+            และบุคลากรของวิทยาลัยนวัตกรรมสื่อสารสังคม (ผู้ว่าจ้าง)
             <br />
             <br />
             กรุณาอ่านข้อตกลงและเงื่อนไขเหล่านี้อย่างละเอียด
@@ -57,8 +59,8 @@ export default function PrivacyPolicyPage() {
               วิธีการชำระเงิน, และเงื่อนไขการจ้างงานอื่นๆ ทั้งหมด ถือเป็น{" "}
               <strong>ข้อตกลงโดยตรง</strong> ระหว่างผู้ว่าจ้างและฟรีแลนซ์
               แพลตฟอร์ม <strong>ไม่มีส่วนเกี่ยวข้อง</strong>{" "}
-              ในกระบวนการทางการเงิน การเจรจาต่อรอง หรือการชำระค่าตอบแทนใดๆ ทั้งสิ้น
-              และจะไม่รับผิดชอบต่อข้อพิพาทใดๆ ที่เกี่ยวข้องกับค่าตอบแทน
+              ในกระบวนการทางการเงิน การเจรจาต่อรอง หรือการชำระค่าตอบแทนใดๆ
+              ทั้งสิ้น และจะไม่รับผิดชอบต่อข้อพิพาทใดๆ ที่เกี่ยวข้องกับค่าตอบแทน
             </p>
           </div>
 
@@ -72,8 +74,9 @@ export default function PrivacyPolicyPage() {
               <strong>ไม่รับประกัน</strong> ความถูกต้องของข้อมูลโปรไฟล์,
               คุณภาพของงาน, ความสามารถของฟรีแลนซ์,
               หรือความน่าเชื่อถือของผู้ว่าจ้าง แพลตฟอร์ม{" "}
-              <strong>ไม่รับผิดชอบ</strong> ต่อความเสียหาย, ความสูญเสีย, ข้อพิพาท,
-              หรือความเสี่ยงใดๆ ที่อาจเกิดขึ้นจากการตกลงว่าจ้าง, การดำเนินงาน,
+              <strong>ไม่รับผิดชอบ</strong> ต่อความเสียหาย, ความสูญเสีย,
+              ข้อพิพาท, หรือความเสี่ยงใดๆ ที่อาจเกิดขึ้นจากการตกลงว่าจ้าง,
+              การดำเนินงาน,
               หรือผลลัพธ์ของงานที่เกิดขึ้นระหว่างผู้ว่าจ้างและฟรีแลนซ์
             </p>
           </div>

@@ -140,7 +140,7 @@ export default function ChangePasswordPage() {
         >
           <ArrowLeft className="w-6 h-6 text-gray-600" />
         </Link>
-        <h2 className="text-2xl font-bold text-gray-800">เปลี่ยนรหัสผ่าน</h2>
+        <h2 className="text-lg md:text-2xl font-bold text-gray-800">เปลี่ยนรหัสผ่าน</h2>
       </div>
 
       {/* Form */}

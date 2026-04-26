@@ -26,7 +26,7 @@ interface JobCardProps {
   onToggleBookmark?: () => void;
   actionButton?: React.ReactNode;
   fromPageName?: string;
-  isMobile?: boolean; // ✅ prop ใหม่
+  isMobile?: boolean;
 }
 
 const TruncatedWithTooltip = ({
@@ -70,10 +70,9 @@ const JobCardMobile: React.FC<JobCardProps> = ({
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
-      className="bg-white rounded-[20px] overflow-hidden"
+      className="bg-white/80 backdrop-blur-sm shadow-sm border border-white rounded-[20px] overflow-hidden"
     >
       <div className="flex flex-col p-4 gap-2.5">
-
         {/* ── Row 1: Icon + Title + Bookmark ── */}
         <div className="flex items-start gap-3">
           <div className="w-[46px] h-[46px] rounded-[14px] bg-indigo-50 flex items-center justify-center shrink-0 text-indigo-500">
@@ -85,9 +84,16 @@ const JobCardMobile: React.FC<JobCardProps> = ({
               {data.title}
             </p>
             <div className="flex items-center gap-1">
-              <svg className="w-[11px] h-[11px] text-blue-400 shrink-0" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 0 0-16 0" />
+              <svg
+                className="w-[11px] h-[11px] text-blue-400 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M20 21a8 8 0 0 0-16 0" />
               </svg>
               <span className="text-[12px] text-blue-400 truncate">
                 {data.postedBy}
@@ -97,12 +103,20 @@ const JobCardMobile: React.FC<JobCardProps> = ({
 
           {isStudent && (
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleBookmark?.(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleBookmark?.();
+              }}
               className={`w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 transition-all border-0 ${
-                isBookmarked ? "bg-blue-50 text-blue-500" : "bg-zinc-100 text-zinc-300"
+                isBookmarked
+                  ? "bg-blue-50 text-blue-500"
+                  : "bg-zinc-100 text-zinc-300"
               }`}
             >
-              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? "fill-current" : ""}`} />
+              <Bookmark
+                className={`w-3.5 h-3.5 ${isBookmarked ? "fill-current" : ""}`}
+              />
             </button>
           )}
         </div>
@@ -118,9 +132,16 @@ const JobCardMobile: React.FC<JobCardProps> = ({
             {data.type}
           </span>
           <span className="inline-flex items-center gap-1 bg-zinc-100 text-zinc-500 text-[11px] font-medium px-2.5 py-1 rounded-full">
-            <svg className="w-[11px] h-[11px]" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="12" cy="12" r="9" /><path d="M12 8v4l3 3" />
+            <svg
+              className="w-[11px] h-[11px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v4l3 3" />
             </svg>
             โพสต์เมื่อ {data.timeAgo}
           </span>
@@ -135,16 +156,19 @@ const JobCardMobile: React.FC<JobCardProps> = ({
             <span className="text-[20px] font-extrabold text-zinc-900">
               {compensation}
             </span>
-            <span className="text-[12px] text-zinc-400 ml-1">{data.currency}</span>
+            <span className="text-[12px] text-zinc-400 ml-1">
+              {data.currency}
+            </span>
           </div>
 
-          <Link href={`/find-job/${data.id}?fromName=${encodeURIComponent(fromPageName)}`}>
+          <Link
+            href={`/find-job/${data.id}?fromName=${encodeURIComponent(fromPageName)}`}
+          >
             <button className="bg-gradient-to-br from-blue-500 to-blue-400 active:scale-95 text-white text-[13px] font-semibold px-4 py-2 rounded-xl transition-all">
               ดูรายละเอียด
             </button>
           </Link>
         </div>
-
       </div>
     </motion.div>
   );

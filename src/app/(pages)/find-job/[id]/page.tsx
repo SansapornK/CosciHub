@@ -12,6 +12,11 @@ import {
   AlertCircle,
   BriefcaseBusiness,
   CalendarClock,
+  ChevronLeft,
+  Share2,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import Loading from "../../../components/common/Loading";
@@ -53,8 +58,8 @@ const JobDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hasApplied, setHasApplied] = useState(false); // เช็คว่าสมัครไปหรือยัง
-  const [applying, setApplying] = useState(false); // Loading
+  const [hasApplied, setHasApplied] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   const jobTypeLabel: Record<string, string> = {
@@ -69,12 +74,10 @@ const JobDetailPage = () => {
   useEffect(() => {
     const fetchJobData = async () => {
       if (!params?.id) return;
-
       try {
         setLoading(true);
         const res = await axios.get(`/api/jobs/${params.id}`);
         setJob(res.data);
-
         if (status === "authenticated") {
           const checkRes = await axios.get(
             `/api/applications/check?jobId=${params.id}`,
@@ -88,7 +91,6 @@ const JobDetailPage = () => {
         setLoading(false);
       }
     };
-
     fetchJobData();
   }, [params.id, status]);
 
@@ -115,7 +117,6 @@ const JobDetailPage = () => {
       const response = await axios.post("/api/applications", {
         jobId: job._id,
       });
-
       if (response.status === 201) {
         setHasApplied(true);
         setIsModalOpen(false);
@@ -137,7 +138,6 @@ const JobDetailPage = () => {
                   />
                 </svg>
               </div>
-
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900 leading-snug">
                   ส่งใบสมัครเรียบร้อยแล้ว! 🎉
@@ -146,7 +146,6 @@ const JobDetailPage = () => {
                   ติดตามสถานะได้ที่เมนู{" "}
                   <span className="font-semibold text-gray-700">งานของฉัน</span>
                 </p>
-
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={() => {
@@ -181,7 +180,6 @@ const JobDetailPage = () => {
                   </button>
                 </div>
               </div>
-
               <button
                 onClick={() => toast.dismiss(t.id)}
                 className="shrink-0 text-gray-300 hover:text-gray-500 transition-colors mt-0.5"
@@ -275,13 +273,56 @@ const JobDetailPage = () => {
 
   return (
     <div className="min-h-screen">
-      <nav className="max-w-6xl mx-auto px-6 py-6 flex items-center gap-2 text-sm md:text-base">
+      {/* ═══════════════════════════════════════
+          MOBILE ONLY — Sticky top app bar
+          (hidden on md and above)
+      ═══════════════════════════════════════ */}
+      <div className="md:hidden sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100/60">
+        <div className="flex items-center justify-between px-3 h-14">
+          {/* Back button — pill style */}
+          <button
+            onClick={handleGoBack}
+            className="flex items-center gap-1 pl-1 pr-3 py-1.5 text-gray-500 hover:text-primary-blue-500 font-medium active:scale-95 transition-all"
+          >
+            <ChevronLeft className="w-5 h-5 text-primary-blue-500" />
+            <span>{fromPageName}</span>
+          </button>
+
+          {/* Page title — center */}
+          {/* <p className="absolute left-1/2 -translate-x-1/2 text-sm font-bold text-gray-800 max-w-[140px] truncate">
+            {job.title}
+          </p> */}
+
+          {/* Actions */}
+          <div className="flex items-center gap-1">
+            {isStudent && (
+              <button
+                onClick={toggleBookmark}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
+                  isBookmarked
+                    ? "bg-blue-50 text-blue-500"
+                    : "bg-gray-100/80 text-gray-400"
+                }`}
+              >
+                <Bookmark
+                  className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
+                />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════
+          DESKTOP ONLY — Original breadcrumb nav
+          (hidden on mobile)
+      ═══════════════════════════════════════ */}
+      <nav className="hidden md:flex max-w-6xl mx-auto px-6 py-6 items-center gap-2 text-sm md:text-base">
         <button
           onClick={handleGoBack}
           className="flex items-center gap-2 text-gray-500 hover:text-primary-blue-500 transition-colors font-medium cursor-pointer"
         >
-          <BriefcaseBusiness className="w-5 h-5 text-primary-blue-500" />
-          {/* ✅ แสดงชื่อหน้าที่ส่งมา */}
+          <ChevronLeft className="w-5 h-5 text-primary-blue-500" />
           <span>{fromPageName}</span>
         </button>
         <span className="text-gray-300 font-light px-1">/</span>
@@ -290,8 +331,99 @@ const JobDetailPage = () => {
         </span>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-4 pb-12">
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+      {/* ═══════════════════════════════════════
+          MOBILE ONLY — Hero card (all job info)
+          (hidden on md and above)
+      ═══════════════════════════════════════ */}
+      <div className="md:hidden px-4 pt-4 pb-2">
+        <div className="bg-white rounded-[1.75rem] shadow-[0_2px_20px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
+          {/* Accent stripe */}
+          <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-indigo-400 to-blue-300" />
+
+          <div className="p-5">
+            {/* Title */}
+            <h1 className="text-[1.2rem] font-extrabold text-gray-900 leading-tight mb-1">
+              {job.title}
+            </h1>
+
+            {/* Category badge */}
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-[10px] font-medium mb-3">
+              {job.category}
+            </span>
+
+            {/* Posted time */}
+            <p className="text-[11px] text-blue-400 font-medium mb-4 flex items-center gap-1.5">
+              <Clock size={12} />{" "}
+              <span>โพสต์เมื่อ {calculateTimeAgo(job.postedDate)}</span>
+            </p>
+
+            {/* Divider */}
+            <div className="border-t border-dashed border-gray-100 mb-4" />
+
+            {/* Owner row */}
+            <Link
+              href={`/account/${job.ownerId}?fromName=${encodeURIComponent(job.title)}`}
+              className="flex items-center gap-2.5 mb-4 group"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0 shadow-sm">
+                <User className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p className="text-[11px] text-gray-400 font-medium">
+                  ผู้ว่าจ้าง
+                </p>
+                <p className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors leading-tight flex items-center gap-1">
+                  {job.owner}
+                  <ExternalLink size={12} className="opacity-70" />
+                </p>
+              </div>
+            </Link>
+
+            {/* Metadata grid — 2 columns */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <MetaCard
+                icon={<MapPin className="w-3.5 h-3.5" />}
+                label="รูปแบบ"
+                value={`${jobTypeLabel[job.jobType ?? ""] ?? job.jobType}${job.location ? ` · ${job.location}` : ""}`}
+                iconBg="bg-red-50"
+                iconColor="text-red-400"
+              />
+              <MetaCard
+                icon={<Wallet className="w-3.5 h-3.5" />}
+                label="ค่าตอบแทน"
+                value={`${job.budgetMin.toLocaleString()}${job.budgetMax ? `–${job.budgetMax.toLocaleString()}` : "+"} ฿`}
+                iconBg="bg-emerald-50"
+                iconColor="text-emerald-500"
+              />
+              <MetaCard
+                icon={<Users className="w-3.5 h-3.5" />}
+                label="จำนวนรับ"
+                value={`${job.capacity || 1} คน`}
+                iconBg="bg-indigo-50"
+                iconColor="text-indigo-500"
+              />
+              <MetaCard
+                icon={<CalendarClock className="w-3.5 h-3.5" />}
+                label="ปิดรับสมัคร"
+                value={new Date(job.applicationDeadline).toLocaleDateString(
+                  "th-TH",
+                  { day: "numeric", month: "short", year: "numeric" },
+                )}
+                iconBg="bg-orange-50"
+                iconColor="text-orange-400"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════
+          MAIN — Desktop uses original layout
+                 Mobile uses tab-controlled view
+      ═══════════════════════════════════════ */}
+      <main className="max-w-6xl mx-auto px-4 pb-32 md:pb-12 pt-3 md:pt-0">
+        {/* ── Desktop: original card (100% unchanged) ── */}
+        <div className="hidden md:block bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-8 md:p-14">
             <div className="flex flex-col lg:flex-row justify-between gap-12">
               <div className="flex-1">
@@ -333,7 +465,7 @@ const JobDetailPage = () => {
                       <User size={20} />
                     </div>
                     <Link
-                      href={`/account/${job.ownerId}`}
+                      href={`/account/${job.ownerId}?fromName=${encodeURIComponent(job.title)}`}
                       className="font-medium hover:text-blue-500 underline decoration-dotted transition-colors"
                     >
                       {job.owner}
@@ -341,16 +473,12 @@ const JobDetailPage = () => {
                   </div>
                   <SidebarItem
                     icon={<MapPin />}
-                    label={`${jobTypeLabel[job.jobType] ?? job.jobType} / ${
-                      job.location || "ทำงานออนไลน์"
-                    }`}
+                    label={`${jobTypeLabel[job.jobType] ?? job.jobType} / ${job.location || "ทำงานออนไลน์"}`}
                     iconColor="text-red-400"
                   />
                   <SidebarItem
                     icon={<Wallet />}
-                    label={`${job.budgetMin.toLocaleString()} ${
-                      job.budgetMax ? `- ${job.budgetMax.toLocaleString()}` : ""
-                    } บาท`}
+                    label={`${job.budgetMin.toLocaleString()} ${job.budgetMax ? `- ${job.budgetMax.toLocaleString()}` : ""} บาท`}
                     iconColor="text-emerald-500"
                   />
                   <SidebarItem
@@ -371,11 +499,11 @@ const JobDetailPage = () => {
                       onClick={handleApplyClick}
                       disabled={hasApplied || applying}
                       className={`flex-grow py-4 px-6 rounded-2xl text-lg font-bold transition-all active:scale-95 shadow-lg
-                                                ${
-                                                  hasApplied
-                                                    ? "bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
-                                                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
-                                                }`}
+                        ${
+                          hasApplied
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
+                            : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
+                        }`}
                     >
                       {hasApplied
                         ? "คุณสมัครงานนี้แล้ว"
@@ -383,7 +511,6 @@ const JobDetailPage = () => {
                           ? "กำลังสมัคร..."
                           : "สมัครงานนี้"}
                     </button>
-
                     <button
                       onClick={toggleBookmark}
                       className={`p-4 rounded-2xl border-2 transition-all ${
@@ -393,9 +520,7 @@ const JobDetailPage = () => {
                       }`}
                     >
                       <Bookmark
-                        className={`w-6 h-6 ${
-                          isBookmarked ? "fill-current" : ""
-                        }`}
+                        className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`}
                       />
                     </button>
                   </div>
@@ -404,12 +529,105 @@ const JobDetailPage = () => {
             </div>
           </div>
         </div>
+
+        {/* ── Mobile: full scrollable content (mirrors desktop) ── */}
+        <div className="md:hidden space-y-3">
+          <div className="bg-white rounded-[1.75rem] shadow-[0_2px_20px_rgba(0,0,0,0.06)] border border-gray-100 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1 h-5 rounded-full bg-blue-500" />
+              <h2 className="text-sm font-bold text-gray-800">รายละเอียดงาน</h2>
+            </div>
+            <div className="text-gray-500 leading-relaxed whitespace-pre-line text-sm">
+              {job.description}
+            </div>
+          </div>
+
+          {/* Qualifications */}
+          {job.qualifications && (
+            <div className="bg-white rounded-[1.75rem] shadow-[0_2px_20px_rgba(0,0,0,0.06)] border border-gray-100 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1 h-5 rounded-full bg-indigo-400" />
+                <h2 className="text-sm font-bold text-gray-800">
+                  คุณสมบัติผู้สมัคร
+                </h2>
+              </div>
+              <div className="text-gray-500 leading-relaxed whitespace-pre-line text-sm">
+                {job.qualifications}
+              </div>
+            </div>
+          )}
+        </div>
       </main>
 
-      {/* Modal ยืนยัน */}
+      {/* ═══════════════════════════════════════
+          MOBILE ONLY — Sticky bottom action bar
+      ═══════════════════════════════════════ */}
+      {isStudent && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40">
+          <div className="bg-white/95 backdrop-blur-xl border-t border-gray-100/80 px-4 pt-3 pb-7">
+            <div className="flex items-center gap-3 max-w-sm mx-auto">
+              {/* Salary */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+                  ค่าตอบแทน
+                </p>
+                <p className="text-base font-extrabold text-gray-900 truncate leading-tight">
+                  ฿{job.budgetMin.toLocaleString()}
+                  {job.budgetMax ? (
+                    <span className="text-gray-400 font-semibold">
+                      –{job.budgetMax.toLocaleString()}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400 font-semibold">+</span>
+                  )}
+                </p>
+              </div>
+
+              {/* Apply button */}
+              <button
+                onClick={handleApplyClick}
+                disabled={hasApplied || applying}
+                className={`relative px-7 py-3.5 rounded-2xl font-bold text-sm transition-all active:scale-95 shrink-0 overflow-hidden ${
+                  hasApplied
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "text-white shadow-lg shadow-blue-200/60"
+                }`}
+                style={
+                  !hasApplied
+                    ? {
+                        background:
+                          "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+                      }
+                    : {}
+                }
+              >
+                {!hasApplied && (
+                  <span className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
+                )}
+                {hasApplied ? (
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" /> สมัครแล้ว
+                  </span>
+                ) : applying ? (
+                  "กำลังสมัคร..."
+                ) : (
+                  "สมัครเลย"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════
+          MODAL
+          Desktop → original centered rounded-[3rem]
+          Mobile  → bottom sheet
+      ═══════════════════════════════════════ */}
       {isModalOpen && job && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden p-8 md:p-12 text-center">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center md:p-4 bg-black/50 backdrop-blur-sm">
+          {/* Desktop modal — 100% original */}
+          <div className="hidden md:block bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden p-8 md:p-12 text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               ยืนยันการสมัครงาน
             </h2>
@@ -437,13 +655,82 @@ const JobDetailPage = () => {
               </button>
             </div>
           </div>
+
+          {/* Mobile modal — bottom sheet */}
+          <div className="md:hidden w-full bg-white rounded-t-3xl shadow-2xl">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-2" />
+            <div className="px-5 pb-8 pt-2">
+              <h2 className="text-lg font-bold text-gray-900 mb-1">
+                ยืนยันการสมัครงาน
+              </h2>
+              <p className="text-xs text-gray-400 mb-4">
+                ตรวจสอบข้อมูลก่อนส่งใบสมัคร
+              </p>
+              <div className="bg-gray-50 rounded-2xl p-4 mb-5 border border-gray-100">
+                <DetailRow label="ชื่องาน" value={job.title} />
+                <DetailRow label="ผู้ว่าจ้าง" value={job.owner} />
+                <DetailRow
+                  label="ค่าตอบแทน"
+                  value={`${job.budgetMin.toLocaleString()} บาท`}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-3.5 bg-gray-100 text-gray-600 font-semibold rounded-2xl text-sm active:scale-95 transition-all"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={confirmApplication}
+                  disabled={applying}
+                  className="flex-1 py-3.5 bg-green-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-green-100 active:scale-95 transition-all disabled:opacity-60"
+                >
+                  {applying ? "กำลังส่ง..." : "ยืนยันสมัคร"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
+
       <Toaster position="top-center" reverseOrder={false} />
     </div>
   );
 };
 
+/* ── Mobile-only: 2-col metadata card ── */
+const MetaCard = ({
+  icon,
+  label,
+  value,
+  iconBg,
+  iconColor,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  iconBg: string;
+  iconColor: string;
+}) => (
+  <div className="bg-gray-50 rounded-2xl p-3 flex items-start gap-2.5">
+    <div
+      className={`${iconBg} ${iconColor} w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5`}
+    >
+      {icon}
+    </div>
+    <div className="min-w-0">
+      <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide leading-none mb-0.5">
+        {label}
+      </p>
+      <p className="text-xs font-bold text-gray-700 leading-snug break-words">
+        {value}
+      </p>
+    </div>
+  </div>
+);
+
+/* ── Desktop-only: SidebarItem (original, unchanged) ── */
 const SidebarItem = ({
   icon,
   label,
