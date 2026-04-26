@@ -11,6 +11,7 @@ import {
   SquarePlus,
   Pencil,
   ChevronLeft,
+  ChevronDown,
   DollarSign,
   CalendarDays,
   Users,
@@ -19,11 +20,34 @@ import {
   HelpCircle,
 } from "lucide-react";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
-import { jobCategories } from "@/app/constants/JobCategories";
-
-
 
 /* ===================== Static Data ===================== */
+export const skillCategories = {
+  IT: ["พัฒนาเว็บไซต์", "พัฒนาแอปพลิเคชัน", "วิเคราะห์ข้อมูล", "ออกแบบ UX/UI"],
+  Public: ["เชียร์ขายสินค้า", "การประสานงาน", "การแสดง", "การพูดในที่สาธารณะ"],
+  Business: ["การตลาด", "การเขียนคอนเทนต์", "PR"],
+  "Photo/Video": [
+    "ถ่ายภาพ/วิดีโอ",
+    "อนิเมชัน",
+    "โมชันกราฟฟิก",
+    "ตัดต่อ",
+    "กราฟฟิกดีไซน์",
+  ],
+  อื่นๆ: ["วิชาการ", "วิจัย", "แปลบทความ"],
+};
+
+// category = ประเภทงาน (เก็บใน Job.category)
+const jobCategories = [
+  "งานด้านวิชาการ/วิจัย/ผู้ช่วย",
+  "งานกิจกรรม/อีเวนต์",
+  "งานพัฒนาออกแบบเว็บไซต์/แอปพลิเคชั่น/ระบบต่างๆ",
+  "งานสื่อมัลติมีเดีย",
+  "งานประชาสัมพันธ์/สื่อสาร",
+  "งานบริการ/ธุรการ",
+  "งานสอนพิเศษ",
+  "งานกองถ่าย/Extra",
+  "อื่น ๆ"
+];
 
 // jobType = รูปแบบงาน (เก็บใน Job.jobType)
 const jobForms = [
@@ -55,7 +79,7 @@ const InputField = ({
       {required && <span className="text-red-400 ml-1">*</span>}
     </label>
     {children}
-    {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    {error && <p className="text-xs text-red-500">{error}</p>}
   </div>
 );
 
@@ -70,7 +94,9 @@ export default function CreateJobPage() {
   const [isDrafting, setIsDrafting] = useState(false);
   const [isLoadingDuplicate, setIsLoadingDuplicate] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const [activeCategory, setActiveCategory] = useState(
+    Object.keys(skillCategories)[0]
+  );
 
   // Modal state
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -85,9 +111,9 @@ export default function CreateJobPage() {
     jobType: "online", // รูปแบบงาน → Job.jobType
     location: "", // สถานที่ (optional)
     deliveryDate: "", // วันครบกำหนดส่งงาน (optional)
-    budgetMin: 100, // → Job.budgetMin
-    budgetMax: 1000, // → Job.budgetMax
-    capacity: 1, // → Job.capacity
+    budgetMin: "" as number | "", // → Job.budgetMin
+    budgetMax: "" as number | "", // → Job.budgetMax
+    capacity: "" as number | "", // → Job.capacity
     applicationDeadline: "", // วันสิ้นสุดรับสมัคร → Job.applicationDeadline
     requiredSkills: [] as string[],
   });
@@ -162,19 +188,19 @@ export default function CreateJobPage() {
     }
 
     // ตรวจสอบค่าตอบแทน
-    if (!formData.budgetMin || formData.budgetMin < 0) {
-      newErrors.budgetMin = "ค่าตอบแทนขั้นต่ำต้องไม่น้อยกว่า 0 บาท";
+    if (formData.budgetMin === "" || formData.budgetMin < 0) {
+      newErrors.budgetMin = "กรุณาระบุค่าตอบแทนเริ่มต้น";
     }
-    if (!formData.budgetMax || formData.budgetMax < 1) {
-      newErrors.budgetMax = "ค่าตอบแทนสูงสุดต้องไม่น้อยกว่า 1 บาท";
+    if (formData.budgetMax === "" || formData.budgetMax < 1) {
+      newErrors.budgetMax = "กรุณาระบุค่าตอบแทนสูงสุด (อย่างน้อย 1 บาท)";
     }
-    if (formData.budgetMin > formData.budgetMax) {
+    if (formData.budgetMin !== "" && formData.budgetMax !== "" && formData.budgetMin > formData.budgetMax) {
       newErrors.budgetMax = "ค่าตอบแทนสูงสุดต้องไม่น้อยกว่าค่าตอบแทนเริ่มต้น";
     }
 
     // ตรวจสอบจำนวนรับ
-    if (!formData.capacity || formData.capacity < 1) {
-      newErrors.capacity = "จำนวนรับต้องมีอย่างน้อย 1 คน";
+    if (formData.capacity === "" || formData.capacity < 1) {
+      newErrors.capacity = "กรุณาระบุจำนวนรับ (อย่างน้อย 1 คน)";
     }
 
     // ตรวจสอบวันสิ้นสุดรับสมัคร
@@ -323,12 +349,7 @@ export default function CreateJobPage() {
             </div>
 
             {/* ชื่องาน */}
-            <InputField
-              label="ชื่องาน"
-              id="title"
-              required
-              error={errors.title}
-            >
+            <InputField label="ชื่องาน" id="title" required>
               <input
                 id="title"
                 type="text"
@@ -345,52 +366,63 @@ export default function CreateJobPage() {
                     setErrors((prev) => ({ ...prev, title: "" }));
                 }}
               />
-              <p className="text-xs text-gray-400 text-right">
-                {formData.title.length}/50
-              </p>
+              <div className="flex justify-between">
+                {errors.title ? (
+                  <p className="text-xs text-red-500">{errors.title}</p>
+                ) : (
+                  <span />
+                )}
+                <p className="text-xs text-gray-400">{formData.title.length}/50</p>
+              </div>
             </InputField>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
               {/* ประเภทงาน → Job.category */}
               <InputField label="ประเภทงาน" id="category" required>
-                <select
-                  id="category"
-                  required
-                  className="w-full px-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 appearance-none"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                >
-                  {jobCategories.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="category"
+                    required
+                    className="w-full px-5 py-3.5 pr-10 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 appearance-none cursor-pointer"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                  >
+                    {jobCategories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
               </InputField>
 
               {/* รูปแบบงาน → Job.jobType */}
               <InputField label="รูปแบบงาน" id="jobType" required>
-                <select
-                  id="jobType"
-                  required
-                  className="w-full px-5 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 appearance-none"
-                  value={formData.jobType}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      jobType: e.target.value,
-                      location: "",
-                    })
-                  }
-                >
-                  {jobForms.map((f) => (
-                    <option key={f.value} value={f.value}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="jobType"
+                    required
+                    className="w-full px-5 py-3.5 pr-10 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 appearance-none cursor-pointer"
+                    value={formData.jobType}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        jobType: e.target.value,
+                        location: "",
+                      })
+                    }
+                  >
+                    {jobForms.map((f) => (
+                      <option key={f.value} value={f.value}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
               </InputField>
 
               {/* สถานที่ → Job.location (conditional) */}
@@ -433,7 +465,6 @@ export default function CreateJobPage() {
                   label="คำอธิบายงานสั้น (แสดงบนการ์ด)"
                   id="shortDescription"
                   required
-                  error={errors.shortDescription}
                 >
                   <input
                     id="shortDescription"
@@ -459,9 +490,14 @@ export default function CreateJobPage() {
                         }));
                     }}
                   />
-                  <p className="text-xs text-gray-400 mt-1 text-right">
-                    {formData.shortDescription.length}/100
-                  </p>
+                  <div className="flex justify-between">
+                    {errors.shortDescription ? (
+                      <p className="text-xs text-red-500">{errors.shortDescription}</p>
+                    ) : (
+                      <span />
+                    )}
+                    <p className="text-xs text-gray-400">{formData.shortDescription.length}/100</p>
+                  </div>
                 </InputField>
               </div>
 
@@ -475,7 +511,7 @@ export default function CreateJobPage() {
                 >
                   <textarea
                     id="description"
-                    rows={4}
+                    rows={3}
                     required
                     className={`w-full px-5 py-4 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 resize-none ${
                       errors.description ? "border-red-300" : "border-gray-200"
@@ -501,7 +537,7 @@ export default function CreateJobPage() {
                 >
                   <textarea
                     id="qualifications"
-                    rows={4}
+                    rows={3}
                     required
                     className={`w-full px-5 py-4 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 resize-none ${
                       errors.qualifications
@@ -550,12 +586,13 @@ export default function CreateJobPage() {
                     type="number"
                     min={0}
                     required
+                    placeholder="0"
                     className={`w-full pl-9 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
                       errors.budgetMin ? "border-red-300" : "border-gray-200"
                     }`}
                     value={formData.budgetMin}
                     onChange={(e) => {
-                      const value = Number(e.target.value);
+                      const value = e.target.value === "" ? "" : Number(e.target.value);
                       setFormData({ ...formData, budgetMin: value });
                       if (errors.budgetMin)
                         setErrors((prev) => ({ ...prev, budgetMin: "" }));
@@ -580,14 +617,16 @@ export default function CreateJobPage() {
                     type="number"
                     min={1}
                     required
+                    placeholder="0"
                     className={`w-full pl-9 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
                       errors.budgetMax ? "border-red-300" : "border-gray-200"
                     }`}
                     value={formData.budgetMax}
                     onChange={(e) => {
+                      const value = e.target.value === "" ? "" : Number(e.target.value);
                       setFormData({
                         ...formData,
-                        budgetMax: Number(e.target.value),
+                        budgetMax: value,
                       });
                       if (errors.budgetMax)
                         setErrors((prev) => ({ ...prev, budgetMax: "" }));
@@ -611,14 +650,16 @@ export default function CreateJobPage() {
                   type="number"
                   min={1}
                   required
+                  placeholder="0"
                   className={`w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
                     errors.capacity ? "border-red-300" : "border-gray-200"
                   }`}
                   value={formData.capacity}
                   onChange={(e) => {
+                    const value = e.target.value === "" ? "" : Number(e.target.value);
                     setFormData({
                       ...formData,
-                      capacity: Number(e.target.value),
+                      capacity: value,
                     });
                     if (errors.capacity)
                       setErrors((prev) => ({ ...prev, capacity: "" }));
