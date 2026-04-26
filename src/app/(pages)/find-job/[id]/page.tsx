@@ -17,6 +17,7 @@ import Link from "next/link";
 import Loading from "../../../components/common/Loading";
 import { useSession } from "next-auth/react";
 import { calculateTimeAgo } from "@/app/components/utils/jobHelpers";
+import toast, { Toaster } from "react-hot-toast";
 
 interface JobDetail {
   _id: string;
@@ -76,7 +77,7 @@ const JobDetailPage = () => {
 
         if (status === "authenticated") {
           const checkRes = await axios.get(
-            `/api/applications/check?jobId=${params.id}`
+            `/api/applications/check?jobId=${params.id}`,
           );
           setHasApplied(checkRes.data.hasApplied);
         }
@@ -118,12 +119,106 @@ const JobDetailPage = () => {
       if (response.status === 201) {
         setHasApplied(true);
         setIsModalOpen(false);
-        alert("ส่งใบสมัครเรียบร้อยแล้ว! ผู้ว่าจ้างจะได้รับการแจ้งเตือนของคุณ");
+        toast(
+          (t) => (
+            <div className="flex items-start gap-3 w-full">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-green-100 flex items-center justify-center mt-0.5">
+                <svg
+                  className="w-5 h-5 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 leading-snug">
+                  ส่งใบสมัครเรียบร้อยแล้ว! 🎉
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                  ติดตามสถานะได้ที่เมนู{" "}
+                  <span className="font-semibold text-gray-700">งานของฉัน</span>
+                </p>
+
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      router.push("/manage-projects");
+                      toast.dismiss(t.id);
+                    }}
+                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
+                    </svg>
+                    งานของฉัน
+                  </button>
+                  <button
+                    onClick={() => {
+                      router.push("/find-job");
+                      toast.dismiss(t.id);
+                    }}
+                    className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150"
+                  >
+                    หางานต่อ
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="shrink-0 text-gray-300 hover:text-gray-500 transition-colors mt-0.5"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          ),
+          {
+            duration: 6000,
+            style: {
+              padding: "16px",
+              borderRadius: "16px",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.10)",
+              border: "1px solid #f0fdf4",
+              background: "#ffffff",
+              maxWidth: "360px",
+            },
+          },
+        );
       }
     } catch (err: any) {
       const errorMsg =
         err.response?.data?.error || "เกิดข้อผิดพลาดในการส่งใบสมัคร";
-      alert(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setApplying(false);
     }
@@ -135,7 +230,7 @@ const JobDetailPage = () => {
       if (status === "authenticated" && params.id) {
         try {
           const res = await axios.get(
-            `/api/bookmarks/check?jobId=${params.id}`
+            `/api/bookmarks/check?jobId=${params.id}`,
           );
           setIsBookmarked(res.data.isBookmarked);
         } catch (err) {
@@ -285,8 +380,8 @@ const JobDetailPage = () => {
                       {hasApplied
                         ? "คุณสมัครงานนี้แล้ว"
                         : applying
-                        ? "กำลังสมัคร..."
-                        : "สมัครงานนี้"}
+                          ? "กำลังสมัคร..."
+                          : "สมัครงานนี้"}
                     </button>
 
                     <button
@@ -344,6 +439,7 @@ const JobDetailPage = () => {
           </div>
         </div>
       )}
+      <Toaster position="top-center" reverseOrder={false} />
     </div>
   );
 };
