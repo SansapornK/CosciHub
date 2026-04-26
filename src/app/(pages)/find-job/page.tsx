@@ -1,35 +1,42 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useState, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
 
 import Loading from "../../components/common/Loading";
 import JobList from "../../components/lists/JobList";
-import { MAJOR_JOB_MAPPING } from "@/app/constants/JobCategories";
+import {
+  MAJOR_JOB_MAPPING,
+  jobCategories,
+} from "@/app/constants/JobCategories";
 import JobFilter from "../../components/filters/JobFilter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Sparkles } from "lucide-react";
-import { jobCategories } from "@/app/constants/JobCategories";
+import { Search } from "lucide-react";
+
 // ================= SearchInput =================
-const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => {
+const SearchInput = ({
+  searchQuery,
+  onSearchChange,
+  onApplyFilters,
+}: {
+  searchQuery: string;
+  onSearchChange: (v: string) => void;
+  onApplyFilters: () => void;
+}) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <div className="w-full flex justify-center">
       <motion.div
         initial={false}
-        animate={{
-          scale: isFocused ? 1.015 : 1, // ปรับ scale ลงนิดหน่อยให้ดูไม่กระโดด
-        }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }} // ใช้ Spring นุ่มๆ
+        animate={{ scale: isFocused ? 1.015 : 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className="relative w-full md:w-3/5 lg:w-1/2 group"
       >
         <div
-          className={`absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full blur-md transition-all duration-700 
+          className={`absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-blue-500 rounded-full blur-md transition-all duration-700
             ${isFocused ? "opacity-20" : "opacity-0 group-hover:opacity-10"}`}
         />
-
         <input
           type="text"
           placeholder="ค้นหางานพิเศษที่นิสิตสนใจ..."
@@ -38,24 +45,22 @@ const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => {
           onBlur={() => setIsFocused(false)}
           onChange={(e) => onSearchChange(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onApplyFilters()}
-          className={`relative w-full p-4 pl-14 bg-white border rounded-full
-                    focus:outline-none text-gray-700 placeholder:text-gray-400
-                    transition-all duration-500 ease-out
-                    ${isFocused ? "border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.08)]" : "border-gray-200 shadow-sm"}`}
+          className={`relative w-full p-3.5 md:p-4 pl-12 md:pl-14 bg-white border rounded-full
+  focus:outline-none text-zinc-700 placeholder:text-zinc-400 text-sm md:text-base
+  transition-all duration-500 ease-out
+  ${
+    isFocused
+      ? "border-blue-400 shadow-[0_0_20px_rgba(99,102,241,0.10)]"
+      : "border-zinc-200 shadow-sm"
+  }`}
         />
-
         <motion.div
-          animate={{
-            x: isFocused ? 4 : 0,
-            scale: isFocused ? 1.1 : 1,
-            color: isFocused ? "#2563EB" : "#94A3B8",
-          }}
+          animate={{ x: isFocused ? 4 : 0, scale: isFocused ? 1.1 : 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 15 }}
-          className="absolute inset-y-0 left-0 flex items-center pl-5 pointer-events-none"
+          className="absolute inset-y-0 left-0 flex items-center pl-4 md:pl-5 pointer-events-none text-slate-400"
         >
-          <Search className={`w-5 h-5 transition-colors duration-300`} />
+          <Search className="w-4 h-4 md:w-5 md:h-5" />
         </motion.div>
-
         <AnimatePresence>
           {searchQuery && (
             <motion.div
@@ -65,7 +70,7 @@ const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => {
               transition={{ duration: 0.2 }}
               className="absolute inset-y-0 right-4 flex items-center"
             >
-              <span className="text-[9px] tracking-widest font-bold text-blue-500 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">
+              <span className="text-[8px] md:text-[9px] tracking-widest font-bold text-blue-500 bg-blue-50 px-2 md:px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">
                 ENTER
               </span>
             </motion.div>
@@ -75,168 +80,210 @@ const SearchInput = ({ searchQuery, onSearchChange, onApplyFilters }) => {
     </div>
   );
 };
-// ==============================================
 
-const FindJobPage = () => {
+// ================= AnimatedSearchWords =================
+const ROTATING_WORDS = [
+  "งานพิเศษ",
+  "โอกาสใหม่ ๆ",
+  "รายได้เสริม",
+  "พื้นที่ปล่อยของ",
+  "แรงบันดาลใจ",
+];
+
+const AnimatedWord = () => {
+  const [index, setIndex] = useState(0);
+  const [displayed, setDisplayed] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const word = ROTATING_WORDS[index];
+    let timeout: NodeJS.Timeout;
+
+    if (!isDeleting && displayed.length < word.length) {
+      timeout = setTimeout(() => {
+        setDisplayed(word.slice(0, displayed.length + 1));
+      }, 80);
+    } else if (!isDeleting && displayed.length === word.length) {
+      timeout = setTimeout(() => setIsDeleting(true), 2500);
+    } else if (isDeleting && displayed.length > 0) {
+      timeout = setTimeout(() => {
+        setDisplayed(word.slice(0, displayed.length - 1));
+      }, 40);
+    } else if (isDeleting && displayed.length === 0) {
+      setIsDeleting(false);
+      setIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayed, isDeleting, index]);
+
   return (
-    <Suspense fallback={<Loading size="large" color="primary" />}>
-      <FindJobPageContent />
-    </Suspense>
+    <span className="inline-flex items-center">
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
+        {displayed}
+      </span>
+      <span className="ml-0.5 inline-block w-[2px] h-[1em] bg-blue-500 align-middle animate-pulse" />
+    </span>
   );
 };
 
+// ================= Page Wrapper =================
+const FindJobPage = () => (
+  <Suspense fallback={<Loading size="large" color="primary" />}>
+    <FindJobPageContent />
+  </Suspense>
+);
+
+// ================= Main Content =================
 function FindJobPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
-  const [selectedMajor, setSelectedMajor] = useState("");
-  const [currentSort, setCurrentSort] = useState("latest");
-
-  const [priceRange, setPriceRange] = useState({
-    min: 0,
-    max: null as number | null,
-  });
-
-  const getEffectiveJobTypes = () => {
-    const majorWorkTypes = selectedMajor && MAJOR_JOB_MAPPING[selectedMajor]
-      ? MAJOR_JOB_MAPPING[selectedMajor].map(type => type.trim())
-      : [];
-
-    if (selectedMajor && selectedJobTypes.length > 0) {
-      const filteredTypes = selectedJobTypes.filter(type => 
-        majorWorkTypes.includes(type.trim())
-      );
-      
-      return filteredTypes.length > 0 ? filteredTypes : ["EMPTY_RESULT"]; 
-    }
-
-    if (selectedMajor) {
-      return majorWorkTypes;
-    }
-
-    if (selectedJobTypes.length > 0) {
-      return selectedJobTypes.map(type => type.trim());
-    }
-
-    return [];
-  };
-
-  // ===== init from URL =====
+  // ✅ detect mobile — อ่านครั้งแรก + ฟัง resize
+  const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
-    setSearchQuery(searchParams.get("q") || "");
-    setSelectedMajor(searchParams.get("major") || "");
-    const jobTypes = searchParams.get("jobTypes");
-    if (jobTypes) setSelectedJobTypes(jobTypes.split(","));
-    const minPrice = searchParams.get("minPrice");
-    const maxPrice = searchParams.get("maxPrice");
-    setPriceRange({
-      min: minPrice ? parseInt(minPrice) : 0,
-      max: maxPrice ? parseInt(maxPrice) : null,
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // ✅ อ่านจาก URL โดยตรง — ไม่มี useState สำหรับ filter เลย
+  const searchQuery = searchParams.get("q") || "";
+  const selectedMajor = searchParams.get("major") || "";
+  const currentSort = searchParams.get("sort") || "latest";
+  const priceMin = Number(searchParams.get("minPrice") || 0);
+  const priceMax = searchParams.get("maxPrice")
+    ? Number(searchParams.get("maxPrice"))
+    : null;
+  const selectedJobTypes = searchParams.get("jobTypes")
+    ? searchParams.get("jobTypes")!.split(",").filter(Boolean)
+    : [];
+
+  // local state เฉพาะ search box (พิมพ์แล้วกด Enter ค่อย push)
+  const [searchInput, setSearchInput] = useState(searchQuery);
+  useEffect(() => {
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
+
+  // ✅ helper: patch เฉพาะ key ที่เปลี่ยน + reset page=1
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const next = new URLSearchParams(Array.from(searchParams.entries()));
+      Object.entries(updates).forEach(([k, v]) => {
+        if (v === null || v === "") next.delete(k);
+        else next.set(k, v);
+      });
+      next.set("page", "1");
+      router.push(`/find-job?${next.toString()}`);
+    },
+    [searchParams, router],
+  );
+
+  const handleJobTypesChange = (types: string[]) =>
+    updateParams({ jobTypes: types.length ? types.join(",") : null });
+
+  const handleMajorChange = (major: string) =>
+    updateParams({ major: major || null });
+
+  const handlePriceRangeChange = (range: { min: number; max: number | null }) =>
+    updateParams({
+      minPrice: range.min > 0 ? String(range.min) : null,
+      maxPrice: range.max !== null ? String(range.max) : null,
     });
-  }, [searchParams]);
 
-  const applyFilters = () => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery);
-    if (selectedJobTypes.length > 0)
-      params.set("jobTypes", selectedJobTypes.join(","));
-    if (selectedMajor) params.set("major", selectedMajor);
-    if (priceRange.min > 0) params.set("minPrice", priceRange.min.toString());
-    if (priceRange.max !== null)
-      params.set("maxPrice", priceRange.max.toString());
+  const handleSortChange = (sort: string) =>
+    updateParams({ sort: sort !== "latest" ? sort : null });
 
-    if (currentSort !== "latest") params.set("sort", currentSort);
+  const handleApplySearch = () => updateParams({ q: searchInput || null });
 
-    router.push(`/find-job?${params.toString()}`);
+  const handleResetFilters = () => {
+    setSearchInput("");
+    router.push("/find-job");
   };
 
-  // const resetFilters = () => {
-  //   setSearchQuery("");
-  //   setSelectedJobTypes([]);
-  //   setSelectedMajor("");
-  //   setPriceRange({ min: 0, max: null });
-  //   router.push("/find-job");
-  // };
-
-  const resetFilters = () => {
-    setSearchQuery("");
-    setSelectedJobTypes([]);
-    setSelectedMajor("");
-    setPriceRange({ min: 0, max: null });
-    setCurrentSort("latest");
-    router.push("/find-job"); // กลับไปที่ URL เริ่มต้น
+  // effective job types (major × selected)
+  const getEffectiveJobTypes = (): string[] => {
+    const majorTypes =
+      selectedMajor && MAJOR_JOB_MAPPING[selectedMajor]
+        ? MAJOR_JOB_MAPPING[selectedMajor].map((t) => t.trim())
+        : [];
+    if (selectedMajor && selectedJobTypes.length > 0) {
+      const intersect = selectedJobTypes.filter((t) =>
+        majorTypes.includes(t.trim()),
+      );
+      return intersect.length > 0 ? intersect : ["EMPTY_RESULT"];
+    }
+    if (selectedMajor) return majorTypes;
+    return selectedJobTypes.map((t) => t.trim());
   };
 
   const majors = Object.keys(MAJOR_JOB_MAPPING);
 
   return (
-    <div className="flex flex-col gap-6 bg-gray-50/30 min-h-screen">
-      <section className="relative overflow-hidden bg-blue-100 py-24 px-10 text-center rounded-b-[4rem] shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
-        <div
-          className="absolute top-[-20%] left-[-10%] w-[60%] h-[80%] bg-blue-200/20 rounded-full blur-[120px] animate-pulse"
-          style={{ animationDuration: "8s" }}
-        />
-        <div
-          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[70%] bg-indigo-200/20 rounded-full blur-[120px] animate-pulse"
-          style={{ animationDuration: "10s" }}
-        />
-        <div className="absolute top-[10%] right-[10%] w-[30%] h-[40%] bg-purple-100/30 rounded-full blur-[100px]" />
+    <div className="flex flex-col gap-4 md:gap-6 bg-gray-50/30 min-h-screen">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white py-10 md:py-20 px-5 md:px-10 text-center rounded-b-[2rem] md:rounded-b-[3rem]">
+        <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[80%] bg-blue-100/70 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[45%] h-[70%] bg-indigo-100/40 rounded-full blur-[100px] pointer-events-none" />
 
-        <div className="relative z-10 space-y-6">
+        <div className="relative z-10 space-y-5 md:space-y-7">
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-2 md:space-y-3"
           >
-            <h2 className="text-primary-blue-500 font-bold tracking-[0.2em] text-xs uppercase mb-3">
+            <p className="inline-flex items-center gap-2 text-[11px] md:text-xs font-bold text-blue-600 uppercase bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
               COSCI HUB
-            </h2>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-black tracking-tight">
-              ค้นหา{" "}
-              <span className="pb-2 pt-1 px-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
-                {" "}
-                โอกาสใหม่ ๆ{" "}
-              </span>{" "}
-              ในที่เดียว
+            </p>
+
+            <h1 className="text-[26px] leading-tight md:text-4xl font-extrabold text-slate-900 tracking-tight">
+              ค้นหา <AnimatedWord />
+              <br className="md:hidden" /> ในที่เดียว
             </h1>
+
+            <p className="text-[10px] md:text-base text-slate-400">
+              แพลตฟอร์มรวมงานพิเศษภายในวิทยาลัยฯ · สำหรับนิสิต COSCI โดยเฉพาะ!
+            </p>
           </motion.div>
 
           <SearchInput
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onApplyFilters={applyFilters}
+            searchQuery={searchInput}
+            onSearchChange={setSearchInput}
+            onApplyFilters={handleApplySearch}
           />
         </div>
       </section>
 
-      <section className="px-10">
+      {/* Filter + List */}
+      <section className="px-4 md:px-10 pb-6">
         <JobFilter
           selectedJobTypes={selectedJobTypes}
-          onJobTypesChange={setSelectedJobTypes}
+          onJobTypesChange={handleJobTypesChange}
           selectedMajor={selectedMajor}
-          onMajorChange={setSelectedMajor}
-          priceRange={priceRange}
-          onPriceRangeChange={setPriceRange}
+          onMajorChange={handleMajorChange}
+          priceRange={{ min: priceMin, max: priceMax }}
+          onPriceRangeChange={handlePriceRangeChange}
           availableJobTypes={jobCategories}
           availableMajors={majors}
           currentSort={currentSort}
-          onSortChange={(val) => {
-            setCurrentSort(val);
-          }}
-          onApplyFilters={applyFilters}
-          onResetFilters={resetFilters}
+          onSortChange={handleSortChange}
+          onApplyFilters={() => {}}
+          onResetFilters={handleResetFilters}
+          isMobile={isMobile}
         />
 
         <div className="mt-2">
           <JobList
+            initialItemsPerPage={isMobile ? 6 : 12}
             searchQuery={searchQuery}
             selectedJobTypes={getEffectiveJobTypes()}
             selectedMajor={selectedMajor}
-            priceRange={priceRange}
+            priceRange={{ min: priceMin, max: priceMax }}
             currentSort={currentSort}
-            onResetFilters={resetFilters}
+            onResetFilters={handleResetFilters}
+            isMobile={isMobile}
           />
         </div>
       </section>

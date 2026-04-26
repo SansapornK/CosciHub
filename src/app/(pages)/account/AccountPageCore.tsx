@@ -1,5 +1,3 @@
-// src/app/(pages)/account/AccountPageCore.tsx
-
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -25,9 +23,11 @@ import {
   FileText,
   AlertCircle,
   Upload,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
-// ─── PaginatedGrid (เหมือนเดิม) ───────────────────────────────────────────────
+// ─── Mobile-aware PaginatedGrid (desktop: 3/page, mobile: stays as grid) ─────
 const PaginatedGrid = ({ items, page, setPage, renderItem }: any) => {
   const ITEMS_PER_PAGE = 3;
   const total = items.length;
@@ -39,11 +39,11 @@ const PaginatedGrid = ({ items, page, setPage, renderItem }: any) => {
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {paginated.map((item: any, index: number) => renderItem(item, index))}
       </div>
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-10">
+        <div className="flex items-center justify-center gap-3 mt-8">
           <button
             onClick={() => setPage(Math.max(0, page - 1))}
             disabled={page === 0}
@@ -73,12 +73,141 @@ const PaginatedGrid = ({ items, page, setPage, renderItem }: any) => {
   );
 };
 
+// ─── Mobile Single Review Carousel (หน้าละ 1 รีวิว) ──────────────────────────
+const MobileReviewCarousel = ({ reviews }: { reviews: any[] }) => {
+  const [current, setCurrent] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [direction, setDirection] = useState<"left" | "right">("right");
+
+  const goTo = (idx: number, dir: "left" | "right") => {
+    if (animating || idx < 0 || idx >= reviews.length) return;
+    setDirection(dir);
+    setAnimating(true);
+    setTimeout(() => {
+      setCurrent(idx);
+      setAnimating(false);
+    }, 220);
+  };
+
+  const review = reviews[current];
+
+  const avatarColors = [
+    "#7c3aed",
+    "#0891b2",
+    "#dc2626",
+    "#059669",
+    "#9333ea",
+    "#0369a1",
+    "#be185d",
+    "#b45309",
+  ];
+  const color = avatarColors[current % avatarColors.length];
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Card */}
+      <div
+        className="relative rounded-[20px] border border-gray-100 bg-white p-5 overflow-hidden"
+        style={{
+          opacity: animating ? 0 : 1,
+          transform: animating
+            ? `translateX(${direction === "right" ? "-12px" : "12px"})`
+            : "translateX(0)",
+          transition: "opacity 0.2s ease, transform 0.2s ease",
+        }}
+      >
+        {/* Reviewer row */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 overflow-hidden relative">
+            {review.isAnonymous ? (
+              <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white">
+                <User size={20} fill="currentColor" />
+              </div>
+            ) : review.ownerImage ? (
+              <img
+                src={review.ownerImage}
+                alt={review.ownerName}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center text-white text-base font-black"
+                style={{ background: color || "#0C5BEA" }}
+              >
+                {review.ownerName?.charAt(0) || "?"}
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[14px] font-bold text-gray-800 truncate">
+              {review.isAnonymous ? "ไม่ระบุตัวตน" : review.ownerName}
+            </p>
+          </div>
+          {/* Stars */}
+          <div className="flex gap-0.5 shrink-0">
+            {[...Array(5)].map((_, s) => (
+              <Star
+                key={s}
+                size={14}
+                className={
+                  s < review.rating
+                    ? "text-[#FBBF24] fill-current"
+                    : "text-gray-200 fill-current"
+                }
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Comment */}
+        <p className="text-[13px] text-gray-500 leading-relaxed pl-1 line-clamp-4">
+          {review.comment || "ไม่มีความคิดเห็น"}
+        </p>
+      </div>
+
+      {/* Pagination controls */}
+      <div className="flex items-center justify-between px-1">
+        <button
+          onClick={() => goTo(current - 1, "left")}
+          disabled={current === 0}
+          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 disabled:opacity-25 active:scale-95 transition-all"
+        >
+          <ChevronLeft size={17} />
+        </button>
+
+        {/* Dot indicators */}
+        <div className="flex items-center gap-1.5">
+          {reviews.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i, i > current ? "right" : "left")}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: i === current ? 24 : 6,
+                height: 6,
+                background: i === current ? "#0C5BEA" : "#e5e7eb",
+              }}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={() => goTo(current + 1, "right")}
+          disabled={current === reviews.length - 1}
+          className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 disabled:opacity-25 active:scale-95 transition-all"
+        >
+          <ChevronRight size={17} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface AccountPageCoreProps {
-  profileId?: string; // ไม่ส่ง = โปรไฟล์ตัวเอง
+  profileId?: string;
 }
 
-// AccountPageCore.tsx
 const getPreviewUrl = (file: { url: string; name: string }) =>
   `/api/user/profile/preview?url=${encodeURIComponent(file.url)}&name=${encodeURIComponent(file.name)}`;
 
@@ -110,13 +239,11 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   const [page3, setPage3] = useState(0);
 
   const experienceScrollRef = useRef<HTMLDivElement>(null);
-
   const skillsRef = useRef<HTMLElement>(null);
   const expRef = useRef<HTMLElement>(null);
   const resumeRef = useRef<HTMLElement>(null);
   const bioRef = useRef<HTMLDivElement>(null);
 
-  // scroll helper
   const scrollTo = (ref: React.RefObject<HTMLElement | HTMLDivElement>) => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
@@ -139,15 +266,11 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   useEffect(() => {
     const fetchUserData = async () => {
       if (status !== "authenticated" || !session) return;
-
       try {
         setIsLoading(true);
-
-        // ✅ เลือก endpoint ตามว่าดูของตัวเองหรือคนอื่น
         const endpoint = isOwnProfile
           ? "/api/user/profile"
           : `/api/user/profile/${profileId}`;
-
         const profileResponse = await axios.get(endpoint);
         const userProfile = profileResponse.data;
         setUserData(userProfile);
@@ -157,17 +280,11 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             userProfile.role === "student" ? "student" : "owner";
           const appsResponse = await axios.get("/api/applications", {
             params: {
-              ownerId: userProfile._id, // ✅ ส่ง ownerId เสมอ
+              ownerId: userProfile._id,
               role: requestRole,
               phase: "completed",
             },
-            // params: {
-            //   ownerId: userProfile._id,
-            //   role: requestRole,
-            //   phase: "completed",
-            // },
           });
-
           const rawJobs = appsResponse.data.jobs || [];
           const rawApps = appsResponse.data.applications || [];
           let allHiredApps: any[] =
@@ -223,7 +340,6 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
         setIsLoading(false);
       }
     };
-
     fetchUserData();
   }, [session, status, profileId, isOwnProfile]);
 
@@ -231,13 +347,13 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   if (status === "loading" || isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="w-12 h-12 border-4 border-primary-blue-400 border-t-transparent rounded-full animate-spin" />
-        <p className="mt-4 text-gray-500">กำลังโหลดข้อมูล...</p>
+        <div className="w-12 h-12 border-4 border-[#0C5BEA] border-t-transparent rounded-full animate-spin" />
+        <p className="mt-4 text-gray-500 text-sm">กำลังโหลดข้อมูล...</p>
       </div>
     );
   }
 
-  // ─── Edit Mode (เฉพาะเจ้าของ) ─────────────────────────────────────────────
+  // ─── Edit Mode ─────────────────────────────────────────────────────────────
   if (isEditing && userData && isOwnProfile) {
     return (
       <div className="w-full mx-auto">
@@ -253,62 +369,37 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
     );
   }
 
-  // ─── handleUpdateField (เฉพาะเจ้าของ) ────────────────────────────────────
+  // ─── handleUpdateField ────────────────────────────────────────────────────
   const handleUpdateField = async (field: string, value: any) => {
     if (!isOwnProfile) return;
-
     try {
       setIsLoading(true);
       let formDataToSend = new FormData();
-
-      // กรณีที่ 1: รับค่ามาเป็น FormData (เช่น การอัปโหลดไฟล์/Resume)
       if (value instanceof FormData) {
         for (const [key, val] of value.entries()) {
           if (val instanceof File && val.type.startsWith("image/")) {
             try {
               const webpFile = await convertToWebP(val);
               formDataToSend.append(key, webpFile);
-            } catch (error) {
-              console.warn(
-                "WebP conversion failed, fallback to original",
-                error,
-              );
+            } catch {
               formDataToSend.append(key, val);
             }
           } else {
             formDataToSend.append(key, val);
           }
         }
-      }
-      // กรณีที่ 2: แก้ไขชื่อ-นามสกุล (Special Case)
-      else if (field === "name" && typeof value === "string") {
+      } else if (field === "name" && typeof value === "string") {
         const nameParts = value.trim().split(/\s+/);
         formDataToSend.append("firstName", nameParts[0] || "");
         formDataToSend.append("lastName", nameParts.slice(1).join(" ") || "");
-      }
-      // กรณีที่ 3: ข้อมูลที่เป็น Array (เช่น skills, contactInfo)
-      else if (Array.isArray(value)) {
+      } else if (Array.isArray(value)) {
         formDataToSend.append(field, JSON.stringify(value));
-      }
-      // กรณีที่ 4: ข้อมูลพื้นฐานอื่น ๆ (String, Number, etc.)
-      else if (value !== null && value !== undefined) {
+      } else if (value !== null && value !== undefined) {
         formDataToSend.append(field, value);
       }
-
-      // ยิง API PATCH เพื่ออัปเดตโปรไฟล์
       const response = await axios.patch("/api/user/profile", formDataToSend);
-
-      // อัปเดต State หลักของหน้า Account
-      // if (response.data) {
-      //   setUserData((prevData) => ({
-      //     ...prevData,
-      //     ...response.data
-      //   }));
-      // }
-      if (response.data) {
-        setUserData(response.data);
-      }
-    } catch (error) {
+      if (response.data) setUserData(response.data);
+    } catch (error: any) {
       const errorMsg = error.response?.data?.error || error.message;
       console.error("Update error:", errorMsg);
       alert(`บันทึกไม่สำเร็จ: ${errorMsg}`);
@@ -327,14 +418,64 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen pb-20">
-      <div className="w-full bg-white rounded-b-[4rem] shadow-sm border-b border-gray-100 pb-16">
+      {/* ══════════════════════════════════════════════
+          HEADER SECTION
+      ══════════════════════════════════════════════ */}
+      <div className="w-full bg-white shadow-sm border-b border-gray-100 pb-6 md:pb-16 md:rounded-b-[4rem]">
         <div className="max-w-7xl mx-auto">
-          {/* Cover Photo */}
-          <div className="px-4 md:px-8 pt-6">
-            <div className="relative h-56 md:h-72 bg-gradient-to-tr from-[#E0E7FF] to-[#F0F5FF] rounded-[3rem] overflow-visible shadow-inner">
-              {/* Profile Image */}
-              <div className="absolute -bottom-34 left-12 md:left-24 z-20">
-                <div className="w-44 h-44 md:w-52 md:h-52 rounded-full border-[6px] border-white overflow-hidden bg-white">
+          {/* ── Cover Banner ── */}
+          <div className="px-0 md:px-8 md:pt-6">
+            <div className="relative h-36 md:h-72 bg-gradient-to-tr from-[#0C5BEA] via-[#3B82F6] to-[#60A5FA] md:bg-gradient-to-tr md:from-[#E0E7FF] md:to-[#F0F5FF] md:rounded-[3rem] overflow-visible">
+              {/* Decorative circles — mobile only */}
+              <div className="md:hidden absolute top-0 right-0 w-40 h-40 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/4" />
+              <div className="md:hidden absolute bottom-0 left-1/3 w-24 h-24 rounded-full bg-white/5" />
+
+              {/* ── Profile Avatar ── */}
+              {/* Mobile: centred above the white card */}
+              <div className="md:hidden absolute -bottom-14 left-1/2 -translate-x-1/2 z-20">
+                <div className="relative">
+                  <div className="w-28 h-28 rounded-full border-4 border-white overflow-hidden bg-white shadow-xl">
+                    {userData?.profileImageUrl ? (
+                      <img
+                        src={userData.profileImageUrl}
+                        alt={userData.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-[#0C5BEA] text-white text-4xl font-black">
+                        {userData?.name?.charAt(0) || "?"}
+                      </div>
+                    )}
+                  </div>
+                  {/* Edit photo button */}
+                  {isOwnProfile && isEditingHeader && (
+                    <label className="absolute bottom-1 right-1 z-30 cursor-pointer">
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () =>
+                              setCropImage(reader.result as string);
+                            reader.readAsDataURL(file);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                      <div className="w-8 h-8 bg-white text-[#0C5BEA] rounded-full shadow-lg flex items-center justify-center border border-gray-100">
+                        <Pencil size={14} />
+                      </div>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Desktop avatar (original position) */}
+              <div className="hidden md:block absolute -bottom-34 left-12 md:left-24 z-20">
+                <div className="w-44 h-44 md:w-52 md:h-52 rounded-full border-[6px] border-white overflow-hidden bg-white shadow-xl">
                   {userData?.profileImageUrl ? (
                     <img
                       src={userData.profileImageUrl}
@@ -347,8 +488,6 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     </div>
                   )}
                 </div>
-
-                {/* ✅ ปุ่มเปลี่ยนรูป — เฉพาะเจ้าของ */}
                 {isOwnProfile && isEditingHeader && (
                   <label className="absolute bottom-4 right-4 z-30 group cursor-pointer animate-in zoom-in-50 duration-300">
                     <input
@@ -367,40 +506,61 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                       }}
                     />
                     <div className="w-12 h-12 bg-[#F6F6F6] text-[#0C5BEA] rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
-                      <Pencil size={20} className="text-[#0C5BEA]" />
-                    </div>
-                    <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 pointer-events-none z-50">
-                      <div className="relative bg-[#F6F6F6] text-[#0C5BEA] text-[10px] font-medium px-5 py-1.5 rounded-lg whitespace-nowrap shadow-xl">
-                        อัปโหลดรูปโปรไฟล์ใหม่
-                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#F6F6F6] rotate-45" />
-                      </div>
+                      <Pencil size={20} />
                     </div>
                   </label>
                 )}
               </div>
 
-              {isOwnProfile && (
-                <div className="absolute top-8 right-8 z-10">
-                  {/* แสดงเฉพาะตอนที่ยังไม่ได้กดแก้ไข (ถ้ากดแล้วให้ปุ่มนี้หายไป) */}
-                  {!isEditingHeader && (
-                    <button
-                      onClick={() => {
-                        setTempBio(userData?.bio || "");
-                        setIsEditingHeader(true);
-                      }}
-                      disabled={isLoading}
-                      className="p-3.5 rounded-full shadow-xl transition-all active:scale-95 border flex items-center font-black text-sm bg-white/90 backdrop-blur-xl text-[#0C5BEA] border-white px-4 hover:bg-white"
-                    >
-                      <Pencil size={22} />
-                    </button>
-                  )}
+              {/* Edit profile button — top-right of banner */}
+              {isOwnProfile && !isEditingHeader && (
+                <div className="absolute top-4 right-4 z-10">
+                  <button
+                    onClick={() => {
+                      setTempBio(userData?.bio || "");
+                      setIsEditingHeader(true);
+                    }}
+                    disabled={isLoading}
+                    className="p-3 rounded-full shadow-lg transition-all active:scale-95 border flex items-center gap-1.5 text-xs font-bold bg-white/90 backdrop-blur-xl text-[#0C5BEA] border-white hover:bg-white md:px-4"
+                  >
+                    <Pencil size={16} />
+                    <span className="hidden md:inline">แก้ไขโปรไฟล์</span>
+                  </button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Name & Info */}
-          <div className="mt-10 px-12 md:px-24 lg:px-32">
+          {/* ── Mobile: Name block (centred, below avatar) ── */}
+          <div className="md:hidden mt-16 px-5 flex flex-col items-center text-center gap-2">
+            <h1 className="text-xl font-black text-gray-900 leading-tight">
+              {userData?.name || "ไม่ระบุชื่อ"}
+            </h1>
+            <span className="px-3 py-1 bg-[#EDEDED] text-gray-600 rounded-full text-[11px] font-medium">
+              {userData?.major || "ไม่ระบุสาขาวิชา"}
+            </span>
+
+            {/* Role + Rating badges */}
+            <div className="flex items-center gap-2 mt-1">
+              <span className="flex items-center gap-1.5 px-4 py-1.5 bg-[#0C5BEA] text-white rounded-full font-semibold text-[12px]">
+                <User size={12} fill="currentColor" />
+                {userData?.role === "student"
+                  ? "นิสิต"
+                  : userData?.role === "alumni"
+                    ? "ศิษย์เก่า"
+                    : "อาจารย์/บุคลากร"}
+              </span>
+              <div className="flex items-center gap-1.5 px-4 py-1.5 bg-[#FFD341] text-white rounded-full font-semibold text-[12px]">
+                <Star size={12} className="fill-current" />
+                <span className="tabular-nums">
+                  {userData?.avgRating || "–"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Desktop: Name block (original layout) ── */}
+          <div className="hidden md:block mt-10 px-12 md:px-24 lg:px-32">
             <div className="flex flex-col md:flex-row justify-between items-start pl-42 md:pl-58">
               <div className="flex flex-col gap-1.5 w-full">
                 <h1 className="text-xl md:text-3xl font-black text-gray-900 leading-tight">
@@ -412,9 +572,8 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                   </span>
                 </div>
               </div>
-
               <div className="flex items-center gap-3 mt-6 md:mt-0 pt-1.5 md:pt-2">
-                <span className="flex items-center gap-2 px-6 py-2 bg-[#0C5BEA] text-white rounded-full font-medium text-[13px] shadow-lg hover:scale-105 transition-transform cursor-default whitespace-nowrap">
+                <span className="flex items-center gap-2 px-6 py-2 bg-[#0C5BEA] text-white rounded-full font-medium text-[13px] shadow-lg">
                   <User size={15} fill="currentColor" />
                   {userData?.role === "student"
                     ? "นิสิต"
@@ -435,24 +594,22 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             </div>
           </div>
 
-          {/* Bio Section */}
-          <div ref={bioRef} className="mt-12 px-12 md:px-24 lg:px-32">
+          {/* ── Bio ── */}
+          <div ref={bioRef} className="mt-5 md:mt-12 px-5 md:px-24 lg:px-32">
             <div className="max-w-full relative">
               {isOwnProfile && isEditingHeader ? (
-                <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="relative w-full">
                     <textarea
                       value={tempBio}
                       onChange={(e) => setTempBio(e.target.value)}
                       maxLength={200}
                       placeholder="แนะนำตัวสั้น ๆ ให้ผู้ว่าจ้างรู้จักคุณมากขึ้น..."
-                      className="w-full p-4 pb-10 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none min-h-[120px]"
+                      className="w-full p-4 pb-10 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none min-h-[100px] text-[14px]"
                     />
-
-                    {/* ตัวนับจำนวนตัวอักษรที่วางไว้ใน input */}
                     <div className="absolute bottom-3 right-4 pointer-events-none">
                       <span
-                        className={`text-[10px] font-black tabular-nums px-2 py-1 rounded-lg backdrop-blur-sm ${
+                        className={`text-[10px] font-black tabular-nums px-2 py-1 rounded-lg ${
                           tempBio.length >= 200
                             ? "text-red-500"
                             : "text-gray-400"
@@ -462,22 +619,19 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                       </span>
                     </div>
                   </div>
-
-                  <div className="flex justify-end items-center gap-3 px-2">
+                  <div className="flex justify-end items-center gap-3">
                     <button
                       onClick={() => {
                         setTempBio(userData?.bio || "");
                         setIsEditingHeader(false);
                       }}
-                      className="px-6 py-3 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors active:scale-95"
+                      className="px-5 py-2.5 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors active:scale-95"
                     >
                       ยกเลิก
                     </button>
                     <button
                       onClick={async () => {
-                        const isBioChanged =
-                          tempBio.trim() !== (userData?.bio || "");
-                        if (isBioChanged) {
+                        if (tempBio.trim() !== (userData?.bio || "")) {
                           try {
                             await handleUpdateField("bio", tempBio.trim());
                           } catch {
@@ -487,33 +641,34 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                         setIsEditingHeader(false);
                       }}
                       disabled={isLoading}
-                      className="flex items-center justify-center gap-2 px-8 py-3 bg-[#10B981] text-white rounded-full font-bold text-sm shadow-sm hover:bg-[#059669] active:scale-95 transition-all disabled:opacity-50"
+                      className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#10B981] text-white rounded-full font-bold text-sm shadow-sm hover:bg-[#059669] active:scale-95 transition-all disabled:opacity-50"
                     >
                       {isLoading ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        <CheckCircle size={18} />
+                        <CheckCircle size={16} />
                       )}
-                      <span>
-                        {isLoading ? "กำลังบันทึก..." : "เสร็จสิ้นการแก้ไข"}
-                      </span>
+                      <span>{isLoading ? "กำลังบันทึก..." : "บันทึก"}</span>
                     </button>
                   </div>
                 </div>
               ) : (
-                /* ส่วนแสดงผล Bio ปกติ (คงเดิม) */
-                <div className="flex flex-col items-start gap-3">
-                  <p className="text-black leading-relaxed text-[15px] md:text-base break-words whitespace-pre-wrap w-full">
-                    {userData?.bio ||
-                      "แนะนำตัวเองสั้น ๆ เพื่อให้ผู้ว่าจ้างรู้จักคุณมากขึ้น..."}
-                  </p>
-                </div>
+                <p className="text-gray-600 leading-relaxed text-[13px] md:text-base break-words whitespace-pre-wrap w-full text-center md:text-left">
+                  {userData?.bio || (
+                    <span className="text-gray-300 italic">
+                      แนะนำตัวเองสั้น ๆ เพื่อให้ผู้ว่าจ้างรู้จักคุณมากขึ้น...
+                    </span>
+                  )}
+                </p>
               )}
             </div>
           </div>
         </div>
       </div>
 
+      {/* ══════════════════════════════════════════════
+          INCOMPLETE PROFILE BANNER (เจ้าของ + student)
+      ══════════════════════════════════════════════ */}
       {isOwnProfile &&
         userData?.role === "student" &&
         (() => {
@@ -521,8 +676,8 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             !userData?.bio && {
               key: "bio",
               label: "คำอธิบายตนเอง",
-              desc: "เพิ่มคำอธิบายตนเองสั้น ๆ ให้ผู้ว่าจ้างรู้จักคุณมากขึ้น",
-              status: "ยังไม่ได้ระบุข้อมูล",
+              desc: "เพิ่มคำอธิบายตนเองสั้น ๆ",
+              status: "ยังไม่ได้ระบุ",
               color: "danger",
               onClick: () => {
                 setTempBio("");
@@ -533,11 +688,11 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             (!userData?.skills || userData.skills.length < 5) && {
               key: "skills",
               label: "ทักษะของคุณ",
-              desc: `ระบุทักษะอย่างน้อย 5 รายการ`,
+              desc: "ระบุทักษะอย่างน้อย 5 รายการ",
               status:
                 userData?.skills?.length > 0
                   ? `เพิ่มแล้ว ${userData.skills.length} รายการ`
-                  : "ยังไม่ได้ระบุข้อมูล",
+                  : "ยังไม่ได้ระบุ",
               color: userData?.skills?.length > 0 ? "warning" : "danger",
               onClick: () => {
                 setSelectedSkills(userData?.skills || []);
@@ -546,9 +701,9 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             },
             (!userData?.experiences || userData.experiences.length === 0) && {
               key: "exp",
-              label: "ประสบการณ์และผลงานของคุณ",
-              desc: "เพิ่มประสบการณ์และผลงานที่เคยทำ",
-              status: "ยังไม่ได้ระบุข้อมูล",
+              label: "ประสบการณ์",
+              desc: "เพิ่มประสบการณ์และผลงาน",
+              status: "ยังไม่ได้ระบุ",
               color: "danger",
               onClick: () => {
                 setIsEditingExps(true);
@@ -557,8 +712,8 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             },
             !userData?.resumeFiles && {
               key: "resume",
-              label: "ไฟล์ Resume/CV",
-              desc: "อัปโหลด Resume เพื่อเพิ่มโอกาสในการได้งานให้เร็วขึ้น",
+              label: "Resume/CV",
+              desc: "อัปโหลดเพื่อเพิ่มโอกาสได้งาน",
               status: "ยังไม่อัปโหลด",
               color: "danger",
               onClick: () => scrollTo(resumeRef),
@@ -574,32 +729,33 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
           };
 
           return (
-            <div className="max-w-7xl mx-auto px-6 md:px-12 mt-8">
-              <p className="text-xs font-medium text-gray-400 uppercase mb-3 flex items-center gap-2">
-                <AlertCircle size={13} /> โปรไฟล์ยังไม่สมบูรณ์
+            <div className="max-w-7xl mx-auto px-4 md:px-12 mt-5 md:mt-8">
+              <p className="text-[10px] font-bold text-gray-400 uppercase mb-2.5 flex items-center gap-1.5 px-1">
+                <AlertCircle size={11} /> โปรไฟล์ยังไม่สมบูรณ์
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Mobile: horizontal scroll strip */}
+              <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-4 scrollbar-hide snap-x snap-mandatory">
                 {missing.map((item) => (
                   <button
                     key={item.key}
                     onClick={item.onClick}
-                    className="text-left bg-white border border-gray-100 rounded-[1.5rem] p-4 hover:border-[#0C5BEA]/40 hover:shadow-md transition-all active:scale-[0.98] group"
+                    className="flex-shrink-0 snap-start text-left bg-white border border-gray-100 rounded-[1.25rem] p-3.5 hover:border-[#0C5BEA]/40 hover:shadow-md transition-all active:scale-[0.97] group w-[160px] md:w-auto"
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1.5">
                       <span
-                        className={`text-[10px] font-black px-2.5 py-1 rounded-full ${colorMap[item.color]}`}
+                        className={`text-[9px] font-black px-2 py-0.5 rounded-full ${colorMap[item.color]}`}
                       >
                         {item.status}
                       </span>
                       <ArrowRight
-                        size={13}
-                        className="text-[#0C5BEA] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+                        size={11}
+                        className="text-[#0C5BEA] opacity-0 group-hover:opacity-100 transition-all"
                       />
                     </div>
-                    <p className="text-[13px] font-black text-gray-800 mb-1">
+                    <p className="text-[12px] font-black text-gray-800 mb-0.5 leading-tight">
                       {item.label}
                     </p>
-                    <p className="text-[11px] text-gray-400 leading-relaxed">
+                    <p className="text-[10px] text-gray-400 leading-relaxed">
                       {item.desc}
                     </p>
                   </button>
@@ -609,33 +765,35 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
           );
         })()}
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 mt-10 space-y-12">
+      {/* ══════════════════════════════════════════════
+          BODY SECTIONS
+      ══════════════════════════════════════════════ */}
+      <div className="max-w-7xl mx-auto px-4 md:px-12 mt-5 md:mt-10 space-y-4 md:space-y-12">
         {userData?.role === "student" && (
           <>
-            {/* Skills */}
+            {/* ── Skills ── */}
             <section
               ref={skillsRef}
-              className="bg-white rounded-[1.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/70 mt-6"
+              className="bg-white rounded-[1.25rem] md:rounded-[1.5rem] p-5 md:p-10 shadow-sm md:shadow-lg md:shadow-gray-100/70"
             >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xl font-black text-gray-800">
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h3 className="text-[15px] md:text-xl font-black text-gray-800">
                   ทักษะและความเชี่ยวชาญ
                 </h3>
-                {/* เฉพาะเจ้าของ */}
                 {isOwnProfile && (
                   <button
                     onClick={() => {
                       setSelectedSkills(userData?.skills || []);
                       setIsSkillsModalOpen(true);
                     }}
-                    className="flex items-center gap-2 text-xs font-black text-gray-500 bg-gray-100/80 px-5 py-2.5 rounded-full hover:bg-[#0C5BEA] hover:text-white transition-all active:scale-95"
+                    className="flex items-center gap-1.5 text-[11px] font-black text-gray-500 bg-gray-100/80 px-4 py-2 rounded-full hover:bg-[#0C5BEA] hover:text-white transition-all active:scale-95"
                   >
-                    <Pencil size={12} />
+                    <Pencil size={11} />
                     <span>แก้ไข</span>
                   </button>
                 )}
               </div>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="flex flex-wrap gap-2">
                 {userData?.skills?.length > 0 ? (
                   <>
                     {(isSkillsExpanded
@@ -644,7 +802,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     ).map((skill: string) => (
                       <span
                         key={skill}
-                        className="px-5 py-2 bg-white rounded-full text-[13px] font-bold text-[#0C5BEA] border border-[#0C5BEA] shadow-sm hover:shadow-md hover:bg-[#0C5BEA] hover:text-white hover:border-transparent transition-all cursor-default"
+                        className="px-4 py-1.5 bg-white rounded-full text-[12px] font-bold text-[#0C5BEA] border border-[#0C5BEA] hover:bg-[#0C5BEA] hover:text-white transition-all cursor-default"
                       >
                         {skill}
                       </span>
@@ -652,7 +810,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     {!isSkillsExpanded && userData.skills.length > 6 && (
                       <button
                         onClick={() => setIsSkillsExpanded(true)}
-                        className="px-5 py-2 bg-gray-50/50 border border-gray-200 rounded-full text-[13px] font-bold text-gray-400 hover:text-[#0C5BEA] hover:border-[#0C5BEA] transition-all active:scale-95"
+                        className="px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-[12px] font-bold text-gray-400 hover:text-[#0C5BEA] hover:border-[#0C5BEA] transition-all active:scale-95"
                       >
                         + {userData.skills.length - 6}
                       </button>
@@ -660,73 +818,70 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     {isSkillsExpanded && userData.skills.length > 6 && (
                       <button
                         onClick={() => setIsSkillsExpanded(false)}
-                        className="px-5 py-2 text-[13px] font-medium text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1 group"
+                        className="px-4 py-1.5 text-[12px] font-medium text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
                       >
                         <span>แสดงน้อยลง</span>
-                        <ArrowRight
-                          size={14}
-                          className="rotate-[-90deg] group-hover:translate-y-[-2px] transition-transform"
-                        />
+                        <ArrowRight size={12} className="rotate-[-90deg]" />
                       </button>
                     )}
                   </>
                 ) : (
-                  <div className="flex items-center gap-2 text-gray-300 italic text-sm py-2">
-                    <Sparkles size={14} className="opacity-50" />
-                    <span>ยังไม่ได้ระบุทักษะและความเชี่ยวชาญ</span>
+                  <div className="flex items-center gap-2 text-gray-300 italic text-sm py-1">
+                    <Sparkles size={13} className="opacity-50" />
+                    <span>ยังไม่ได้ระบุทักษะ</span>
                   </div>
                 )}
               </div>
             </section>
 
-            {/* Experiences & Portfolio */}
+            {/* ── Experiences & Portfolio ── */}
             <section
               ref={expRef}
-              className="bg-white rounded-[1.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/70 mt-6"
+              className="bg-white rounded-[1.25rem] md:rounded-[1.5rem] p-5 md:p-10 shadow-sm md:shadow-lg md:shadow-gray-100/70"
             >
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-xl font-black text-gray-800 tracking-tight">
+              <div className="flex items-center justify-between mb-4 md:mb-5">
+                <h3 className="text-[15px] md:text-xl font-black text-gray-800 tracking-tight">
                   ประสบการณ์และผลงาน
                 </h3>
-                {/* เฉพาะเจ้าของ */}
                 {isOwnProfile && (
                   <button
                     onClick={() => {
                       setIsEditingExps(!isEditingExps);
                       if (isEditingExps) setIsAddingExp(false);
                     }}
-                    className={`flex items-center gap-2 text-xs font-black transition-all active:scale-95 ${
+                    className={`flex items-center gap-1.5 text-[11px] font-black transition-all active:scale-95 ${
                       isEditingExps
-                        ? "bg-[#10B981] text-white px-5 py-2.5 rounded-full shadow-md"
-                        : "bg-gray-100/80 text-gray-500 px-5 py-2.5 rounded-full hover:bg-[#0C5BEA] hover:text-white"
+                        ? "bg-[#10B981] text-white px-4 py-2 rounded-full shadow-md"
+                        : "bg-gray-100/80 text-gray-500 px-4 py-2 rounded-full hover:bg-[#0C5BEA] hover:text-white"
                     }`}
                   >
                     {isEditingExps ? (
-                      <CheckCircle size={16} />
+                      <CheckCircle size={13} />
                     ) : (
-                      <Pencil size={12} />
+                      <Pencil size={11} />
                     )}
                     <span>{isEditingExps ? "เสร็จสิ้น" : "แก้ไข"}</span>
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                <div className="lg:col-span-5 flex flex-col h-[400px]">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-12">
+                {/* Experience list */}
+                <div className="lg:col-span-5 flex flex-col">
                   <div
                     ref={experienceScrollRef}
-                    className="flex-1 overflow-y-auto custom-scrollbar pr-2 relative"
+                    className="flex-1 overflow-y-auto max-h-[280px] md:max-h-[400px] pr-1"
                   >
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1">
                       {userData?.experiences?.map(
                         (exp: string, idx: number) => (
                           <div
                             key={idx}
-                            className="flex items-center justify-between group/item p-4 bg-transparent rounded-[1.5rem] transition-all hover:bg-gray-50/50"
+                            className="flex items-center justify-between group/item p-3 md:p-4 rounded-[1rem] transition-all hover:bg-gray-50/50"
                           >
-                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
                               <div className="shrink-0 text-[#0C5BEA]">
-                                <Briefcase size={18} />
+                                <Briefcase size={16} />
                               </div>
                               {isEditingExps && editingIdx === idx ? (
                                 <div className="flex-1 flex items-center gap-2">
@@ -773,9 +928,9 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                                         setNewExp("");
                                       }
                                     }}
-                                    className="w-full text-[15px] font-bold text-gray-700 outline-none bg-white px-3 py-1 rounded-lg border border-blue-100 shadow-sm"
+                                    className="w-full text-[13px] font-bold text-gray-700 outline-none bg-white px-3 py-1 rounded-lg border border-blue-100 shadow-sm"
                                   />
-                                  <span className="text-[10px] font-bold text-gray-300 min-w-[35px]">
+                                  <span className="text-[9px] font-bold text-gray-300 min-w-[30px]">
                                     {editValue.length}/30
                                   </span>
                                 </div>
@@ -787,7 +942,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                                       setEditValue(exp);
                                     }
                                   }}
-                                  className={`text-[15px] font-medium text-gray-700 leading-tight truncate ${isEditingExps ? "cursor-text hover:text-[#0C5BEA]" : ""}`}
+                                  className={`text-[13px] md:text-[15px] font-medium text-gray-700 leading-tight truncate ${isEditingExps ? "cursor-text hover:text-[#0C5BEA]" : ""}`}
                                 >
                                   {exp}
                                 </p>
@@ -796,7 +951,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                             {isEditingExps &&
                               isOwnProfile &&
                               editingIdx !== idx && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-0.5">
                                   <button
                                     onClick={() => {
                                       if (!isAddingExp) {
@@ -805,17 +960,15 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                                       }
                                     }}
                                     disabled={isAddingExp}
-                                    className="shrink-0 text-gray-300 hover:text-[#0C5BEA] transition-all p-2 hover:bg-blue-50 rounded-xl"
+                                    className="text-gray-300 hover:text-[#0C5BEA] transition-all p-1.5 hover:bg-blue-50 rounded-xl"
                                   >
-                                    <Pencil size={16} />
+                                    <Pencil size={14} />
                                   </button>
                                   <button
                                     onClick={async () => {
                                       if (isAddingExp) return;
                                       if (
-                                        confirm(
-                                          `คุณต้องการลบรายการ "${exp}" ใช่หรือไม่?`,
-                                        )
+                                        confirm(`ลบรายการ "${exp}" ใช่หรือไม่?`)
                                       ) {
                                         await handleUpdateField(
                                           "experiences",
@@ -826,9 +979,9 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                                       }
                                     }}
                                     disabled={isAddingExp}
-                                    className="shrink-0 text-red-200 hover:text-red-500 transition-all p-2 hover:bg-red-50 rounded-xl"
+                                    className="text-red-200 hover:text-red-500 transition-all p-1.5 hover:bg-red-50 rounded-xl"
                                   >
-                                    <Trash size={18} />
+                                    <Trash size={15} />
                                   </button>
                                 </div>
                               )}
@@ -841,52 +994,46 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                       (!userData?.experiences ||
                         userData.experiences.length === 0) &&
                       !isAddingExp && (
-                        <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-100 rounded-[2.5rem] bg-white group animate-in fade-in zoom-in-95">
-                          <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center mb-4">
-                            <Briefcase size={32} className="text-blue-300" />
+                        <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-gray-100 rounded-[2rem] bg-white animate-in fade-in zoom-in-95">
+                          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-3">
+                            <Briefcase size={24} className="text-blue-300" />
                           </div>
-                          <h4 className="text-[15px] font-medium text-gray-400 mb-8">
-                            เริ่มต้นสร้างประวัติผลงานของคุณ
-                          </h4>
+                          <p className="text-[13px] font-medium text-gray-400 mb-5">
+                            เริ่มต้นสร้างประวัติผลงาน
+                          </p>
                           <button
                             onClick={() => setIsAddingExp(true)}
-                            className="flex items-center gap-2 text-[13px] font-medium text-white bg-[#0C5BEA] px-5 py-2.5 rounded-full hover:bg-blue-700 transition-all active:scale-95"
+                            className="flex items-center gap-1.5 text-[12px] font-medium text-white bg-[#0C5BEA] px-4 py-2 rounded-full hover:bg-blue-700 transition-all active:scale-95"
                           >
-                            <Plus size={18} strokeWidth={2.5} />
+                            <Plus size={15} strokeWidth={2.5} />
                             <span>เพิ่มผลงาน</span>
                           </button>
                         </div>
                       )}
 
-                    {userData?.experiences?.length > 4 && (
-                      <div className="sticky bottom-0 h-10 w-full bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
-                    )}
-
                     {!isEditingExps &&
                       (!userData?.experiences ||
                         userData.experiences.length === 0) && (
-                        <div className="h-full flex flex-col items-center justify-center py-16 opacity-40">
-                          <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4">
-                            <Briefcase size={32} className="text-gray-300" />
-                          </div>
-                          <p className="text-[13px] font-bold text-gray-500">
-                            ยังไม่มีข้อมูลผลงานในขณะนี้
+                        <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                          <Briefcase size={28} className="text-gray-300 mb-2" />
+                          <p className="text-[12px] font-bold text-gray-500">
+                            ยังไม่มีข้อมูลผลงาน
                           </p>
                         </div>
                       )}
                   </div>
 
                   {isEditingExps && isOwnProfile && (
-                    <div className="pt-2 sticky bottom-0 bg-white/80 backdrop-blur-md pb-2">
+                    <div className="pt-2">
                       {!isAddingExp ? (
                         userData?.experiences?.length > 0 &&
                         userData?.experiences?.length < 10 ? (
                           <button
                             onClick={() => setIsAddingExp(true)}
-                            className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-gray-100/80 px-5 py-2.5 rounded-full hover:bg-[#0C5BEA] hover:text-white transition-all active:scale-95 ml-4 mt-2 group"
+                            className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 bg-gray-100/80 px-4 py-2 rounded-full hover:bg-[#0C5BEA] hover:text-white transition-all active:scale-95 mt-2 group"
                           >
                             <Plus
-                              size={14}
+                              size={13}
                               className="group-hover:rotate-90 transition-transform"
                             />
                             <span>
@@ -894,18 +1041,18 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                             </span>
                           </button>
                         ) : userData?.experiences?.length >= 10 ? (
-                          <p className="text-[11px] font-medium text-amber-500 ml-6 mt-3 flex items-center gap-1">
-                            <AlertCircle size={12} /> เพิ่มได้สูงสุด 10
+                          <p className="text-[10px] font-medium text-amber-500 mt-2 flex items-center gap-1">
+                            <AlertCircle size={11} /> เพิ่มได้สูงสุด 10
                             รายการแล้ว
                           </p>
                         ) : null
                       ) : (
-                        <div className="bg-white p-6 rounded-[2rem] shadow-2xl shadow-gray-200/50 border border-gray-100 animate-in zoom-in-95 mt-2 mx-2">
-                          <div className="flex items-center gap-4 px-1">
-                            <div className="shrink-0 w-10 h-10 bg-blue-50 text-[#0C5BEA] rounded-2xl flex items-center justify-center">
-                              <Briefcase size={18} />
+                        <div className="bg-white p-4 rounded-[1.5rem] shadow-xl border border-gray-100 animate-in zoom-in-95 mt-2">
+                          <div className="flex items-center gap-3">
+                            <div className="shrink-0 w-9 h-9 bg-blue-50 text-[#0C5BEA] rounded-xl flex items-center justify-center">
+                              <Briefcase size={16} />
                             </div>
-                            <div className="flex flex-col gap-1 w-full">
+                            <div className="flex flex-col gap-0.5 w-full">
                               <input
                                 autoFocus
                                 value={newExp}
@@ -933,31 +1080,31 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                                   if (e.key === "Escape") setIsAddingExp(false);
                                 }}
                                 placeholder="ระบุผลงานของคุณ..."
-                                className="w-full text-[15px] font-medium text-gray-700 outline-none bg-transparent py-1"
+                                className="w-full text-[13px] font-medium text-gray-700 outline-none bg-transparent py-1"
                               />
                               <div className="flex justify-end">
                                 <span
-                                  className={`text-[10px] font-medium ${newExp.length >= 30 ? "text-amber-500" : "text-gray-300"}`}
+                                  className={`text-[9px] font-medium ${newExp.length >= 30 ? "text-amber-500" : "text-gray-300"}`}
                                 >
                                   {newExp.length}/30
                                 </span>
                               </div>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center mt-5 pt-4 border-t border-gray-50 px-1">
-                            <div className="flex items-center gap-2">
+                          <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
+                            <div className="flex items-center gap-1.5">
                               <span className="w-1.5 h-1.5 bg-[#0C5BEA] rounded-full animate-pulse" />
-                              <span className="text-[10px] text-gray-400 font-medium uppercase">
+                              <span className="text-[9px] text-gray-400 font-medium uppercase">
                                 กด Enter เพื่อบันทึก
                               </span>
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex gap-2">
                               <button
                                 onClick={() => {
                                   setIsAddingExp(false);
                                   setNewExp("");
                                 }}
-                                className="px-4 py-2 text-xs font-medium text-gray-400 hover:text-gray-600"
+                                className="px-3 py-1.5 text-[11px] font-medium text-gray-400 hover:text-gray-600"
                               >
                                 ยกเลิก
                               </button>
@@ -981,9 +1128,9 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                                   if (updated.length >= 10)
                                     setIsAddingExp(false);
                                 }}
-                                className="px-6 py-2 text-xs font-medium text-white bg-[#0C5BEA] rounded-full shadow-lg hover:bg-blue-700 transition-all active:scale-95"
+                                className="px-5 py-1.5 text-[11px] font-medium text-white bg-[#0C5BEA] rounded-full shadow-md hover:bg-blue-700 transition-all active:scale-95"
                               >
-                                บันทึกรายการ
+                                บันทึก
                               </button>
                             </div>
                           </div>
@@ -1116,40 +1263,38 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
               </div>
             </section>
 
-            {/* Resume */}
+            {/* ── Resume ── */}
             <section
               ref={resumeRef}
-              className="bg-white rounded-[1.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/70 mt-6"
+              className="bg-white rounded-[1.25rem] md:rounded-[1.5rem] p-5 md:p-10 shadow-sm md:shadow-lg md:shadow-gray-100/70"
             >
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-xl font-black text-gray-800 tracking-tight">
-                  Resume/CV
+              <div className="flex items-center justify-between mb-4 md:mb-5">
+                <h3 className="text-[15px] md:text-xl font-black text-gray-800 tracking-tight">
+                  Resume / CV
                 </h3>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   {isOwnProfile && (userData?.resumeFiles?.length ?? 0) > 0 && (
-                    <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full">
-                      <FileText size={12} className="text-gray-400" />
-                      <span className="text-xs font-semibold text-gray-500">
+                    <div className="flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-full">
+                      <FileText size={11} className="text-gray-400" />
+                      <span className="text-[11px] font-semibold text-gray-500">
                         {userData?.resumeFiles?.length ?? 0}
-                        <span className="font-normal text-gray-400">
-                          /3 ไฟล์
-                        </span>
+                        <span className="font-normal text-gray-400">/3</span>
                       </span>
                     </div>
                   )}
                   {isOwnProfile && (userData?.resumeFiles?.length ?? 0) > 0 && (
                     <button
                       onClick={() => setIsEditingResume(!isEditingResume)}
-                      className={`flex items-center gap-2 text-xs font-black transition-all active:scale-95 ${
+                      className={`flex items-center gap-1.5 text-[11px] font-black transition-all active:scale-95 ${
                         isEditingResume
-                          ? "bg-[#10B981] text-white px-5 py-2.5 rounded-full shadow-md"
-                          : "bg-gray-100/80 text-gray-500 px-5 py-2.5 rounded-full hover:bg-[#0C5BEA] hover:text-white"
+                          ? "bg-[#10B981] text-white px-4 py-2 rounded-full shadow-md"
+                          : "bg-gray-100/80 text-gray-500 px-4 py-2 rounded-full hover:bg-[#0C5BEA] hover:text-white"
                       }`}
                     >
                       {isEditingResume ? (
-                        <CheckCircle size={16} />
+                        <CheckCircle size={13} />
                       ) : (
-                        <Pencil size={12} />
+                        <Pencil size={11} />
                       )}
                       <span>{isEditingResume ? "เสร็จสิ้น" : "แก้ไข"}</span>
                     </button>
@@ -1157,33 +1302,31 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 </div>
               </div>
 
-              {/* File cards */}
               {(userData?.resumeFiles?.length ?? 0) > 0 && (
-                <div className="flex flex-col gap-2.5 mb-3.5">
-                  {userData.resumeFiles.map((file, i) => (
+                <div className="flex flex-col gap-2 mb-3">
+                  {userData.resumeFiles.map((file: any, i: number) => (
                     <div key={i} className="relative group">
                       <a
                         href={getPreviewUrl(file)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3.5 p-3.5 bg-gray-50 border border-gray-200 rounded-[1rem] hover:border-blue-300 hover:shadow-[0_0_0_3px_rgba(12,91,234,0.06)] transition-all no-underline"
+                        className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-[0.875rem] hover:border-blue-300 transition-all no-underline"
                       >
-                        <div className="w-10 h-10 rounded-[0.75rem] bg-red-50 flex items-center justify-center shrink-0">
-                          <FileText size={18} className="text-red-400" />
+                        <div className="w-9 h-9 rounded-[0.625rem] bg-red-50 flex items-center justify-center shrink-0">
+                          <FileText size={16} className="text-red-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.875rem] font-medium text-gray-800 truncate">
+                          <p className="text-[13px] font-medium text-gray-800 truncate">
                             {file.name}
                           </p>
-                          <p className="text-[0.6875rem] text-gray-400 mt-0.5">
-                            {file.size} · คลิกเพื่อเปิดไฟล์
+                          <p className="text-[10px] text-gray-400 mt-0.5">
+                            {file.size} · คลิกเพื่อเปิด
                           </p>
                         </div>
                       </a>
                       {isOwnProfile && isEditingResume && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1.5">
-                          {/* Replace */}
-                          <label className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors">
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex gap-1">
+                          <label className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors">
                             <input
                               type="file"
                               className="hidden"
@@ -1199,12 +1342,11 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                               }}
                             />
                             <Upload
-                              size={13}
+                              size={12}
                               className="text-blue-500"
                               strokeWidth={2.5}
                             />
                           </label>
-                          {/* Delete */}
                           <button
                             onClick={async (e) => {
                               e.preventDefault();
@@ -1214,10 +1356,10 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                                 await handleUpdateField("resume", formData);
                               }
                             }}
-                            className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center hover:bg-red-100 transition-colors active:scale-90"
+                            className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center hover:bg-red-100 transition-colors active:scale-90"
                           >
                             <Trash
-                              size={13}
+                              size={12}
                               className="text-red-400"
                               strokeWidth={2.5}
                             />
@@ -1229,10 +1371,9 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 </div>
               )}
 
-              {/* Upload zone — shown when <3 files or no files yet */}
               {isOwnProfile && (userData?.resumeFiles?.length ?? 0) < 3 && (
                 <div
-                  className={`flex flex-col items-center gap-1.5 border-[1.5px] border-dashed rounded-[1rem] py-5 cursor-pointer transition-all group ${
+                  className={`flex flex-col items-center gap-1.5 border-[1.5px] border-dashed rounded-[0.875rem] py-5 cursor-pointer transition-all group ${
                     isDragging
                       ? "border-[#0C5BEA] bg-[#EEF3FF]"
                       : "border-gray-200 hover:border-[#0C5BEA] hover:bg-[#FAFBFF]"
@@ -1292,65 +1433,54 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     }}
                   />
                   <div
-                    className={`w-10 h-10 bg-white border border-gray-200 rounded-[0.75rem] flex items-center justify-center transition-all ${
+                    className={`w-9 h-9 bg-white border border-gray-200 rounded-[0.625rem] flex items-center justify-center transition-all ${
                       isDragging
-                        ? "shadow-[0_0_0_4px_rgba(12,91,234,0.15)] -translate-y-0.5"
-                        : "group-hover:shadow-[0_0_0_4px_rgba(12,91,234,0.1)] group-hover:-translate-y-0.5"
+                        ? "-translate-y-0.5"
+                        : "group-hover:-translate-y-0.5"
                     }`}
                   >
                     <Upload
-                      size={18}
+                      size={16}
                       className="text-[#0C5BEA]"
                       strokeWidth={1.75}
                     />
                   </div>
-                  <span className="text-[15px] font-medium text-gray-600">
+                  <span className="text-[13px] font-medium text-gray-600">
                     {isDragging
                       ? "วางไฟล์ได้เลย!"
-                      : "ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์"}
+                      : "ลากมาวาง หรือคลิกเลือกไฟล์"}
                   </span>
                   <span className="text-[10px] text-gray-400">
-                    PDF เท่านั้น · สูงสุด 3 ไฟล์ · ไม่เกิน 10MB ต่อไฟล์
+                    PDF เท่านั้น · สูงสุด 3 ไฟล์ · ≤10MB
                   </span>
                 </div>
               )}
 
-              {/* Empty state — visitor view */}
               {!isOwnProfile && (userData?.resumeFiles?.length ?? 0) === 0 && (
-                <div className="flex flex-col items-center justify-center py-10 opacity-40">
-                  <FileText size={28} className="text-gray-300 mb-2" />
-                  <p className="text-[0.8125rem] font-medium text-gray-500">
+                <div className="flex flex-col items-center justify-center py-8 opacity-40">
+                  <FileText size={24} className="text-gray-300 mb-2" />
+                  <p className="text-[12px] font-medium text-gray-500">
                     ยังไม่ได้อัปโหลด Resume
                   </p>
                 </div>
               )}
-
-              {/* Done button
-              {isEditingResume && (
-                <button
-                  onClick={() => setIsEditingResume(false)}
-                  className="w-full mt-3 py-3 bg-[#0C5BEA] text-white text-[0.875rem] font-semibold rounded-xl hover:bg-[#0a4fd6] transition-colors active:scale-[.98]"
-                >
-                  เสร็จสิ้น
-                </button>
-              )} */}
             </section>
           </>
         )}
 
-        {/* Reviews */}
-        <section className="bg-white rounded-[1.5rem] p-8 md:p-10 shadow-lg shadow-gray-100/70 mt-6">
+        {/* ── Reviews ── */}
+        <section className="bg-white rounded-[1.25rem] md:rounded-[1.5rem] p-5 md:p-10 shadow-sm md:shadow-lg md:shadow-gray-100/70">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <h3 className="text-xl font-black text-gray-800">
+            <div className="flex items-center gap-3">
+              <h3 className="text-[15px] md:text-xl font-black text-gray-800">
                 {userData?.role === "student"
                   ? "รีวิวจากผู้ว่าจ้าง"
                   : "รีวิวจากนิสิต"}
               </h3>
               {reviews.length > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 animate-in fade-in">
-                  <Star size={12} className="fill-current" />
-                  <span className="text-[12px] font-black">
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg border border-amber-100">
+                  <Star size={11} className="fill-current" />
+                  <span className="text-[11px] font-black">
                     {userData?.avgRating}
                   </span>
                 </div>
@@ -1358,105 +1488,115 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             </div>
           </div>
 
-          <div className="px-2 md:px-4">
-            {reviews.length > 0 ? (
-              <PaginatedGrid
-                items={reviews}
-                page={page3}
-                setPage={setPage3}
-                renderItem={(review: any, i: number) => (
-                  <div
-                    key={review.id || i}
-                    className="group relative bg-white shadow-s hover:shadow-lg hover:shadow-blue-900/5 p-7 rounded-[1rem] border border-gray-100 transition-all duration-500 h-[210px] flex flex-col"
-                  >
-                    <div className="flex flex-col h-full">
-                      <div className="flex justify-between items-start mb-5 shrink-0">
-                        <div className="flex items-center gap-3 w-full min-w-0">
-                          <div className="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100">
-                            {!review.isAnonymous && review.ownerImage ? (
-                              <img
-                                src={review.ownerImage}
-                                alt={review.ownerName}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              />
-                            ) : !review.isAnonymous ? (
-                              <div className="w-full h-full flex items-center justify-center bg-blue-50 text-blue-500 text-sm font-bold">
-                                {review.ownerName?.charAt(0) || "?"}
+          {reviews.length > 0 ? (
+            <>
+              {/* Mobile: single-card carousel */}
+              <div className="md:hidden">
+                <MobileReviewCarousel reviews={reviews} />
+              </div>
+
+              {/* Desktop: paginated grid (3 per page) */}
+              <div className="hidden md:block px-2 md:px-4">
+                <PaginatedGrid
+                  items={reviews}
+                  page={page3}
+                  setPage={setPage3}
+                  renderItem={(review: any, i: number) => {
+                    const avatarColors = [
+                      "#7c3aed",
+                      "#0891b2",
+                      "#dc2626",
+                      "#059669",
+                      "#9333ea",
+                      "#0369a1",
+                      "#be185d",
+                      "#b45309",
+                    ];
+                    const color = avatarColors[i % avatarColors.length];
+
+                    return (
+                      <div
+                        key={review.id || i}
+                        className="group relative bg-white shadow-sm hover:shadow-lg hover:shadow-blue-900/5 p-7 rounded-[1rem] border border-gray-100 transition-all duration-500 h-[210px] flex flex-col"
+                      >
+                        <div className="flex flex-col h-full">
+                          <div className="flex justify-between items-start mb-5 shrink-0">
+                            <div className="flex items-center gap-3 w-full min-w-0">
+                              <div className="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100 relative">
+                                {review.isAnonymous ? (
+                                  <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white">
+                                    <User size={24} fill="currentColor" />
+                                  </div>
+                                ) : review.ownerImage ? (
+                                  <img
+                                    src={review.ownerImage}
+                                    alt={review.ownerName}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-full h-full flex items-center justify-center text-white text-base font-black"
+                                    style={{ background: color }}
+                                  >
+                                    {review.ownerName?.charAt(0) || "?"}
+                                  </div>
+                                )}
                               </div>
-                            ) : (
-                              <div className="text-gray-300">
-                                <User size={24} fill="currentColor" />
+                              <div className="flex flex-1 min-w-0 items-center justify-between gap-2">
+                                <span className="text-base font-bold text-gray-800 truncate">
+                                  {review.isAnonymous
+                                    ? "ไม่ระบุตัวตน"
+                                    : review.ownerName}
+                                </span>
+                                <div className="flex shrink-0 gap-0.5">
+                                  {[...Array(5)].map((_, s) => (
+                                    <Star
+                                      key={s}
+                                      size={15}
+                                      className={
+                                        s < review.rating
+                                          ? "text-[#FCD34D] fill-current"
+                                          : "text-gray-100 fill-current"
+                                      }
+                                    />
+                                  ))}
+                                </div>
                               </div>
-                            )}
-                          </div>
-                          <div className="flex flex-1 min-w-0 items-center justify-between gap-2">
-                            <span
-                              className="text-base font-bold text-gray-800 truncate"
-                              title={
-                                review.isAnonymous
-                                  ? undefined
-                                  : review.ownerName
-                              }
-                            >
-                              {review.isAnonymous
-                                ? "ไม่ระบุตัวตน"
-                                : review.ownerName}
-                            </span>
-                            <div className="flex shrink-0 gap-0.5">
-                              {[...Array(5)].map((_, s) => (
-                                <Star
-                                  key={s}
-                                  size={15}
-                                  className={
-                                    s < review.rating
-                                      ? "text-[#FCD34D] fill-current"
-                                      : "text-gray-100 fill-current"
-                                  }
-                                />
-                              ))}
                             </div>
+                          </div>
+                          <div className="flex-1 overflow-hidden">
+                            <p className="text-[13px] md:text-[14px] text-gray-500 leading-relaxed line-clamp-4">
+                              {review.comment}
+                            </p>
                           </div>
                         </div>
                       </div>
-                      <div className="flex-1 overflow-hidden">
-                        <p className="text-[13px] md:text-[14px] text-gray-500 leading-relaxed line-clamp-4">
-                          {review.comment}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              />
-            ) : (
-              <div className="border border-dashed border-gray-200 rounded-[1rem] py-12 flex flex-col items-center gap-3 text-center">
-                <div className="w-11 h-11 bg-gray-50 rounded-[0.75rem] flex items-center justify-center">
-                  <Star size={20} className="text-gray-200" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="text-[15px] font-medium text-gray-400">
-                    ยังไม่มีรีวิวจาก
-                    {userData?.role === "student" ? "ผู้ว่าจ้าง" : "นิสิต"}
-                  </p>
-                  <p className="text-[12px] text-gray-300 mt-1">
-                    {userData?.role === "student"
-                      ? "ส่งงานให้สำเร็จเพื่อรับรีวิวแรกของคุณ"
-                      : "นิสิตที่เคยร่วมงานกับคุณยังไม่ได้ให้รีวิวในขณะนี้"}
-                  </p>
-                </div>
+                    );
+                  }}
+                />
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="border border-dashed border-gray-200 rounded-[1rem] py-10 flex flex-col items-center gap-3 text-center">
+              <div className="w-10 h-10 bg-gray-50 rounded-[0.75rem] flex items-center justify-center">
+                <Star size={18} className="text-gray-200" strokeWidth={1.5} />
+              </div>
+              <div>
+                <p className="text-[14px] font-medium text-gray-400">
+                  ยังไม่มีรีวิวจาก
+                  {userData?.role === "student" ? "ผู้ว่าจ้าง" : "นิสิต"}
+                </p>
+                <p className="text-[11px] text-gray-300 mt-1">
+                  {userData?.role === "student"
+                    ? "ส่งงานให้สำเร็จเพื่อรับรีวิวแรกของคุณ"
+                    : "นิสิตที่เคยร่วมงานยังไม่ได้ให้รีวิว"}
+                </p>
+              </div>
+            </div>
+          )}
         </section>
 
-        {/* ✅ Logout — เฉพาะเจ้าของ */}
-        {/* <div className="mt-24 flex flex-col items-center gap-6">
-          {isOwnProfile && <LogOutButton />}
-          <p className="text-[9px] font-medium text-gray-300 uppercase">
-            COSCI HUB © 2026
-          </p>
-        </div> */}
-
-        {/* Skills Modal — เฉพาะเจ้าของ */}
+        {/* Modals */}
         {isOwnProfile && isSkillsModalOpen && (
           <SkillsModal
             isOpen={isOwnProfile && isSkillsModalOpen}
@@ -1465,8 +1605,6 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
             onSave={(skills) => handleUpdateField("skills", skills)}
           />
         )}
-
-        {/* Crop Modal — เฉพาะเจ้าของ */}
         {isOwnProfile && cropImage && (
           <ImageCropModal
             imageSrc={cropImage}

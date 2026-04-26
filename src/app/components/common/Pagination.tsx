@@ -7,6 +7,7 @@ interface PaginationProps {
   totalPages: number;
   baseUrl: string;
   queryParams?: Record<string, string>;
+  isMobile?: boolean;
 }
 
 const Pagination: React.FC<PaginationProps> = ({

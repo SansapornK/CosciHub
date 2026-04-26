@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
@@ -8,7 +8,10 @@ import { useSession } from "next-auth/react";
 import Pagination from "../common/Pagination";
 import Loading from "../common/Loading";
 import JobCard from "../cards/JobCard";
-import { calculateTimeAgo, getCategoryIcon } from "@/app/components/utils/jobHelpers";
+import {
+  calculateTimeAgo,
+  getCategoryIcon,
+} from "@/app/components/utils/jobHelpers";
 
 /* ===================== Interfaces ===================== */
 
@@ -51,10 +54,8 @@ interface JobListProps {
   priceRange?: PriceRange;
   currentSort?: string;
   onResetFilters?: () => void;
+  isMobile?: boolean;
 }
-
-
-
 
 /* ===================== Main Component ===================== */
 
@@ -66,6 +67,7 @@ function JobList({
   priceRange = { min: 0, max: null },
   currentSort = "latest",
   onResetFilters,
+  isMobile = false,
 }: JobListProps) {
   const { data: session, status } = useSession();
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
@@ -88,37 +90,36 @@ function JobList({
 
   /* ------------- bookmark ------------- */
   useEffect(() => {
-      const fetchSavedIds = async () => {
-          if (status === "authenticated") {
-              try {
-                  // สร้าง API นี้เพื่อดึงเฉพาะ ID ของงานที่บันทึกไว้มาเป็น Array
-                  const res = await axios.get("/api/bookmarks/ids");
-                  setSavedJobIds(res.data.ids); // สมมติว่าคืนค่า { ids: ['id1', 'id2'] }
-              } catch (err) {
-                  console.error("Error fetching saved job IDs", err);
-              }
-          }
-      };
-      fetchSavedIds();
+    const fetchSavedIds = async () => {
+      if (status === "authenticated") {
+        try {
+          // สร้าง API นี้เพื่อดึงเฉพาะ ID ของงานที่บันทึกไว้มาเป็น Array
+          const res = await axios.get("/api/bookmarks/ids");
+          setSavedJobIds(res.data.ids); // สมมติว่าคืนค่า { ids: ['id1', 'id2'] }
+        } catch (err) {
+          console.error("Error fetching saved job IDs", err);
+        }
+      }
+    };
+    fetchSavedIds();
   }, [status]);
 
   const handleToggleBookmark = async (jobId: string) => {
-      if (status !== "authenticated") {
-          router.push("/auth?state=login");
-          return;
+    if (status !== "authenticated") {
+      router.push("/auth?state=login");
+      return;
+    }
+    try {
+      const res = await axios.post("/api/bookmarks", { jobId });
+      if (res.data.isBookmarked) {
+        setSavedJobIds((prev) => [...prev, jobId]);
+      } else {
+        setSavedJobIds((prev) => prev.filter((id) => id !== jobId));
       }
-      try {
-          const res = await axios.post("/api/bookmarks", { jobId });
-          if (res.data.isBookmarked) {
-              setSavedJobIds(prev => [...prev, jobId]);
-          } else {
-              setSavedJobIds(prev => prev.filter(id => id !== jobId));
-          }
-      } catch (err) {
-          alert("ไม่สามารถดำเนินการได้");
-      }
+    } catch (err) {
+      alert("ไม่สามารถดำเนินการได้");
+    }
   };
-  
 
   /* ---------- Fetch from API ---------- */
   const fetchJobs = async () => {
@@ -129,7 +130,7 @@ function JobList({
       const params: any = {
         page: pageFromUrl,
         limit: initialItemsPerPage,
-        sort: currentSort, 
+        sort: currentSort,
       };
 
       if (searchQuery) params.q = searchQuery;
@@ -140,7 +141,6 @@ function JobList({
       if (priceRange.min > 0) params.minPrice = priceRange.min;
       if (priceRange.max !== null) params.maxPrice = priceRange.max;
       if (currentSort !== "default") params.sort = currentSort;
-      
 
       const res = await axios.get("/api/jobs", { params });
 
@@ -156,15 +156,15 @@ function JobList({
   useEffect(() => {
     fetchJobs();
   }, [
-    pageFromUrl, 
+    pageFromUrl,
     searchQuery,
-    selectedJobTypes.join(','),
+    selectedJobTypes.join(","),
     // selectedJobTypes,
+    // selectedMajor.join(","),
     selectedMajor,
     priceRange,
-    currentSort
+    currentSort,
   ]);
-  
 
   const totalPages = Math.ceil(totalItems / initialItemsPerPage);
 
@@ -179,6 +179,17 @@ function JobList({
     current.delete("page"); // ลบ page ออกเพื่อให้ Pagination ใส่เอง
     const queryString = current.toString();
     return `/find-job${queryString ? `?${queryString}` : ""}`;
+  };
+
+  const getPaginationQueryParams = () => {
+    const params: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      if (key !== "page") {
+        // ไม่ต้องส่ง page เพราะ Pagination จะ set เอง
+        params[key] = value;
+      }
+    });
+    return params;
   };
 
   /* ---------- Render ---------- */
@@ -213,7 +224,11 @@ function JobList({
 
   return (
     <div>
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section
+        className={`grid gap-3 md:gap-4 ${
+          isMobile ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        }`}
+      >
         {jobItems.map((job) => (
           <JobCard
             fromPageName="ค้นหางานพิเศษ"
@@ -222,6 +237,7 @@ function JobList({
             isStudent={isStudent}
             isBookmarked={savedJobIds.includes(job._id)}
             onToggleBookmark={() => handleToggleBookmark(job._id)}
+            isMobile={isMobile}
             data={{
               id: job._id,
               icon: getCategoryIcon(job.category),
@@ -245,7 +261,9 @@ function JobList({
         <Pagination
           currentPage={pageFromUrl}
           totalPages={totalPages}
-          baseUrl="/find-job" 
+          baseUrl="/find-job"
+          queryParams={getPaginationQueryParams()}
+          isMobile={isMobile}
         />
       </div>
     </div>

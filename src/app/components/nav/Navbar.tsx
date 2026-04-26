@@ -214,9 +214,9 @@ function Navbar() {
       </nav>
       
       {/* Mobile/Burger Menu Overlay */}
-      <div style={{ top: `${navHeight}px` }} className={`fixed left-0 right-0 bottom-0 bg-black/10 backdrop-blur-sm transition-opacity duration-300 sm:hidden z-30 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={toggleMenuOpen} />
+      <div style={{ top: `${navHeight}px` }} className={`fixed left-0 right-0 bottom-0 bg-black/10 backdrop-blur-sm transition-opacity duration-300 sm:hidden z-60 ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={toggleMenuOpen} />
       
-      <div style={{ top: `${navHeight}px` }} className={`fixed left-0 w-full max-h-[calc(100vh-${navHeight}px)] bg-white shadow-lg rounded-b-2xl z-40 sm:hidden transition-all duration-500 ease-in-out overflow-auto ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-[-20px] opacity-0 pointer-events-none'}`}>
+      <div style={{ top: `${navHeight}px` }} className={`fixed left-0 w-full max-h-[calc(100vh-${navHeight}px)] bg-white shadow-lg rounded-b-2xl z-70 sm:hidden transition-all duration-500 ease-in-out overflow-auto ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-[-20px] opacity-0 pointer-events-none'}`}>
         <div className="flex flex-col p-2">
           {/* Main Items in Burger */}
           {mainNavItems.map((item) => (

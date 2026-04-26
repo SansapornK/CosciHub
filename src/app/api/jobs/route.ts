@@ -42,12 +42,12 @@ export async function GET(req: Request) {
   // ถ้าไม่ได้ขอ includeDraft (สำหรับหน้า find-jobs)
   // → แสดงเฉพาะ published + ยังไม่หมดอายุ + ไม่ใช่ closed
   // หมดอายุหลังเที่ยงคืนของวันปิดรับสมัคร (ไม่ใช่ทันทีที่เข้าสู่วันนั้น)
-  if (!includeDraft) {
-    filter.status = "published";
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    filter.applicationDeadline = { $gte: today };
-  }
+  // if (!includeDraft) {
+  //   filter.status = "published";
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+  //   filter.applicationDeadline = { $gte: today };
+  // }
   if (ownerId) filter.ownerId = ownerId;
 
   if (minPrice || maxPrice) {
