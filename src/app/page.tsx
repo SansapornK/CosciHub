@@ -474,7 +474,7 @@ const ABOUT_FEATURES = [
 
 // ---------------------------------------------
 
-export function MobileFeatureSlider({ features }: { features: Feature[] }) {
+function MobileFeatureSlider({ features }: { features: Feature[] }) {
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
