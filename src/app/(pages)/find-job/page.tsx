@@ -1,6 +1,12 @@
 "use client";
 
-import React, { Suspense, useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  Suspense,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import Loading from "../../components/common/Loading";
@@ -11,7 +17,7 @@ import {
 } from "@/app/constants/JobCategories";
 import JobFilter from "../../components/filters/JobFilter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search,X } from "lucide-react";
 
 // ================= SearchInput =================
 const SearchInput = ({
@@ -44,15 +50,9 @@ const SearchInput = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onChange={(e) => onSearchChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              onApplyFilters();
-            }
-          }}
-          className={`relative w-full p-3.5 md:p-4 pl-12 md:pl-14 bg-white border rounded-full
-  focus:outline-none text-zinc-700 placeholder:text-zinc-400 text-sm md:text-base
-  transition-all duration-500 ease-out
+          className={`relative w-full p-3.5 md:p-4 pl-12 md:pl-14 pr-10 bg-white border rounded-full
+    focus:outline-none text-zinc-700 placeholder:text-zinc-400 text-sm md:text-base
+    transition-all duration-500 ease-out
   ${
     isFocused
       ? "border-blue-400 shadow-[0_0_20px_rgba(99,102,241,0.10)]"
@@ -75,9 +75,14 @@ const SearchInput = ({
               transition={{ duration: 0.2 }}
               className="absolute inset-y-0 right-4 flex items-center"
             >
-              <span className="text-[8px] md:text-[9px] tracking-widest font-bold text-blue-500 bg-blue-50 px-2 md:px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">
-                ENTER
-              </span>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onSearchChange("")}
+                className="text-zinc-400 hover:text-zinc-600 bg-zinc-100 hover:bg-zinc-200 p-1.5 rounded-full transition-all"
+              >
+                <X size={14} />
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
