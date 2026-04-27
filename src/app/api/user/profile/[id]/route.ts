@@ -8,9 +8,10 @@ import connectToDatabase from "@/libs/mongodb";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     await connectToDatabase();
 
     const session = await getServerSession(authOptions);
@@ -18,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await User.findById(params.id).select(
+    const user = await User.findById(id).select(
       "firstName lastName name profileImageUrl bio skills experiences galleryImages resumeFiles major role avgRating totalReviews",
     );
 
