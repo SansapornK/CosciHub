@@ -708,7 +708,7 @@ export default function Home() {
                 <div className="relative">
                   <div className="w-[40px] h-[40px] rounded-full bg-[#0C5BEA] flex items-center justify-center transition-all duration-300 group-active:scale-95 group-active:bg-blue-700 shadow-lg shadow-blue-200 relative overflow-hidden">
                     <div className="text-white transform transition-transform duration-300 group-hover:rotate-6 relative z-10">
-                      {React.cloneElement(category.icon, {
+                      {React.cloneElement(category.icon as React.ReactElement<{ className: string }>, {
                         className: "h-5 w-5",
                       })}
                     </div>

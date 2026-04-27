@@ -58,7 +58,7 @@ interface JobApplication {
   jobBudgetMin: number;
   jobBudgetMax: number;
   jobOwner: string;
-  status: "pending" | "accepted" | "rejected";
+  status: "pending" | "accepted" | "rejected" | "completed";
   appliedDate: string;
   ownerReview?: { rating: number; comment: string; isAnonymous: boolean }; // รีวิวที่อาจารย์ให้นิสิต
   studentReview?: { rating: number; comment: string; isAnonymous: boolean }; // รีวิวที่นิสิตให้อาจารย์
@@ -303,7 +303,17 @@ export default function ManageProjectsPage() {
   }
 
   // Helper component
-  const PaginatedGrid = ({ items, page, setPage, renderItem }) => {
+  const PaginatedGrid = <T,>({
+    items,
+    page,
+    setPage,
+    renderItem,
+  }: {
+    items: T[];
+    page: number;
+    setPage: React.Dispatch<React.SetStateAction<number>>;
+    renderItem: (item: T) => React.ReactNode;
+  }) => {
     const total = items.length;
     const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
     const paginated = items.slice(
@@ -433,9 +443,7 @@ export default function ManageProjectsPage() {
       toast.success("บันทึกรีวิวเรียบร้อยแล้ว!");
       setIsReviewModalOpen(false);
       fetchJobApplications();
-    } catch (err) {
-      toast.error("เกิดข้อผิดพลาดในการส่งรีวิว");
-
+    } catch (err: any) {
       console.error("Submit Review Error:", err);
       console.error("Response Data:", err.response?.data);
 
@@ -1240,8 +1248,8 @@ export default function ManageProjectsPage() {
                         <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 w-full">
                           <span className="text-[10px] text-gray-400 font-medium">
                             กำหนดส่ง{" "}
-                            {app.deliveryDate
-                              ? new Date(app.deliveryDate).toLocaleDateString(
+                            {app.jobDeadline
+                              ? new Date(app.jobDeadline).toLocaleDateString(
                                   "th-TH",
                                 )
                               : "-"}

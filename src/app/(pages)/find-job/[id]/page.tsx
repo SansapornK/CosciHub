@@ -742,7 +742,7 @@ const SidebarItem = ({
 }) => (
   <div className="flex items-center gap-4 text-gray-700">
     <div className={`${iconColor} shrink-0`}>
-      {React.cloneElement(icon as React.ReactElement, { size: 20 })}
+      {React.cloneElement(icon as React.ReactElement<{ size: number }>, { size: 20 })}
     </div>
     <span className="font-medium">{label}</span>
   </div>

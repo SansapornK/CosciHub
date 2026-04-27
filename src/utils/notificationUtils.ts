@@ -71,15 +71,17 @@ export async function createNotification(data: {
 
 // ─── Helper: ดึงข้อมูลที่ใช้บ่อย ─────────────────────────────────────────────
 async function getJobAndUsers(jobId: string, applicantId: string) {
-  const [job, applicant] = await Promise.all([
+  const [jobDoc, applicant] = await Promise.all([
     Job.findById(jobId).lean(),
     User.findById(applicantId).select('name').lean(),
   ]);
-  
-  if (!job || !applicant) return null;
+
+  if (!jobDoc || !applicant) return null;
+
+  const job = jobDoc as unknown as { _id: any; title: string; owner: string };
 
   // ดึงข้อมูล owner จาก User collection (job.owner เป็น String ชื่อ)
-  const owner = await User.findOne({ name: job.owner }).select('_id name').lean();
+  const owner = await User.findOne({ name: job.owner }).select('_id name').lean() as { _id: any; name: string } | null;
 
   if (!owner) return null;
 

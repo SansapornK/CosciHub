@@ -208,7 +208,7 @@ function Navbar() {
           )}
 
           <button onClick={toggleMenuOpen} className="sm:hidden focus:ring-2 focus:ring-primary-blue-500/50 hover:text-primary-blue-400 p-1 rounded-full hover:bg-gray-100">
-            <UserProfileImage imageUrl={userProfileUrl} name={userName} isMenuOpen={isMenuOpen} />
+            <UserProfileImage imageUrl={userProfileUrl} name={userName} />
           </button>
         </div>
       </nav>
