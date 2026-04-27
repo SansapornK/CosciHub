@@ -5,7 +5,7 @@ export const fadeInUp = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 1.0, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 1.0, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 
@@ -23,7 +23,7 @@ export const varFadeInUp = {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 

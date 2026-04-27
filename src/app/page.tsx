@@ -246,7 +246,7 @@ const KeywordLayer = ({
         transition={{
           delay: i * 0.07,
           duration: 0.5,
-          ease: [0.22, 1, 0.36, 1],
+          ease: [0.22, 1, 0.36, 1] as const,
         }}
         whileHover={{ scale: 1.12, rotate: 0 }}
         // className={`absolute px-4 py-2 rounded-full cursor-default select-none ${kw.size} ${kw.style}`}
@@ -507,7 +507,7 @@ function MobileFeatureSlider({ features }: { features: Feature[] }) {
           initial={{ opacity: 0, x: 60 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -60 }}
-          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] as const }}
           className="bg-gradient-to-b from-[#0C5BEA] to-[#3B76DE]/90 rounded-[2.5rem] p-8 flex flex-col items-center text-center gap-5 min-h-[320px]"
           onTouchStart={(e) => {
             touchStartX.current = e.touches[0].clientX;
@@ -643,7 +643,7 @@ export default function Home() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }}
                       className="pointer-events-none"
                     >
                       <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">

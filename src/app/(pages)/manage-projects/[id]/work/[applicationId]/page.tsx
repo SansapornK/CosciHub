@@ -51,6 +51,7 @@ interface ApplicationDetail {
     jobType: string;
     location: string;
     owner: string;
+    ownerId: string;
     ownerImage: string | null;
     deliveryDate: string;
   };
@@ -1337,7 +1338,7 @@ export default function WorkManagementPage() {
                         คำอธิบายงาน
                       </p>
                       <p className="text-[12px] font-medium leading-relaxed text-white/80 line-clamp-5">
-                        {workData.jobId?.shortDescription}
+                        {workData.jobId?.description}
                       </p>
                     </div>
                   </div>
