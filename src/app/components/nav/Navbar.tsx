@@ -152,7 +152,7 @@ function Navbar() {
           <img src="/logo/cosci-hub-logo.png" alt="logo" className="h-[40px]" />
         </Link>
 
-        <div className="flex items-center gap-4 sm:gap-8">
+        <div className="flex items-center gap-2 sm:gap-8">
           {/* Desktop Main Menu */}
           <div className="hidden sm:flex gap-8">
             {mainNavItems.map((item) => (
@@ -164,7 +164,7 @@ function Navbar() {
           </div>
 
           {status === 'authenticated' ? (
-            <div className="flex items-center gap-3 relative">
+            <div className="flex items-center gap-2 sm:gap-6 relative">
               <div className="relative" ref={notificationRef}>
                   <NotificationBell unreadCount={unreadCount}  onClick={() => {setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false);}} isOpen={isNotificationOpen}/>                
                   <NotificationPanel
@@ -183,7 +183,7 @@ function Navbar() {
                           />              
             </div>
               <div className="relative" ref={userMenuRef}>
-                <button onClick={() => {setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false);}} className="rounded-full focus:ring-2 focus:ring-primary-blue-500/50">
+                <button onClick={() => {setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false);}} className="hidden sm:block rounded-full focus:ring-2 focus:ring-primary-blue-500/50">
                   <UserProfileImage imageUrl={userProfileUrl} name={userName} />
                 </button>
 
@@ -207,8 +207,8 @@ function Navbar() {
             <Link href="/auth?state=login" className="btn-primary text-s py-2 px-4">เข้าสู่ระบบ</Link>
           )}
 
-          <button onClick={toggleMenuOpen} className="sm:hidden hover:text-primary-blue-400 p-1 rounded-full hover:bg-gray-100">
-            <BurgerIcon isMenuOpen={isMenuOpen} />
+          <button onClick={toggleMenuOpen} className="sm:hidden focus:ring-2 focus:ring-primary-blue-500/50 hover:text-primary-blue-400 p-1 rounded-full hover:bg-gray-100">
+            <UserProfileImage imageUrl={userProfileUrl} name={userName} isMenuOpen={isMenuOpen} />
           </button>
         </div>
       </nav>

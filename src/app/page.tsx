@@ -635,7 +635,7 @@ export default function Home() {
               setCurrentSlide={setCurrentSlideIndex}
             />
             <div className="absolute inset-0 z-30 pointer-events-none">
-              <div className="max-w-7xl mx-auto h-full flex items-end px-6 md:px-16 lg:px-24 pb-12 md:pb-20">
+              <div className="max-w-7xl mx-auto h-full flex items-end px-6 md:px-6 lg:px-6 pb-16 md:pb-20">
                 <div className="relative flex flex-col items-start text-start text-white max-w-2xl w-full">
                   <AnimatePresence mode="wait">
                     <motion.div
