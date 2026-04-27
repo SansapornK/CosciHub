@@ -3,7 +3,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -72,7 +72,7 @@ const InputField = ({
 );
 
 /* ===================== Page Component ===================== */
-export default function CreateJobPage() {
+function CreateJobPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -833,5 +833,17 @@ export default function CreateJobPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function CreateJobPage() {
+  return (
+    <Suspense fallback={
+      <div className="bg-gray-50/50 min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-gray-500">Loading...</div>
+      </div>
+    }>
+      <CreateJobPageContent />
+    </Suspense>
   );
 }
