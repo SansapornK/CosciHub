@@ -11,7 +11,6 @@ import {
   Users, MapPin, HelpCircle,
 } from 'lucide-react';
 import Loading from "@/app/components/common/Loading";
-import { skillCategories } from "../../create-jobs/page";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
 
 /* ── Static Data (เหมือนกับ create-jobs) ── */
@@ -62,7 +61,6 @@ export default function EditJobPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDrafting, setIsDrafting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activeCategory, setActiveCategory] = useState(Object.keys(skillCategories)[0]);
 
   // Modal state
   const [showPublishModal, setShowPublishModal] = useState(false);

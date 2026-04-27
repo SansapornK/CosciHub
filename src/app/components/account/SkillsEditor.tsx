@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { skillCategories } from '../auth/register/RegisterForm';
+import { skillCategories } from '@/app/constants/SkillCategories';
 
 interface SkillsEditorProps {
   selectedSkills: string[];
