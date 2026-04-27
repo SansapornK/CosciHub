@@ -141,12 +141,17 @@ export async function POST(req: NextRequest) {
         const bytes = await portfolio.arrayBuffer();
         const buffer = Buffer.from(bytes);
         const base64File = `data:${portfolio.type};base64,${buffer.toString('base64')}`;
-        
+
         // Upload to Cloudinary
-        const portfolioUrl = await uploadToCloudinary(base64File, userId, 'portfolio');
-        
-        // Update the user with the portfolio URL
-        user.portfolioUrl = portfolioUrl;
+        const portfolioUrl = await uploadToCloudinary(base64File, userId, 'resume');
+
+        // Add to resumeFiles array
+        user.resumeFiles.push({
+          name: portfolio.name,
+          url: portfolioUrl,
+          size: `${(portfolio.size / 1024).toFixed(2)} KB`,
+          uploadedAt: new Date(),
+        });
       }
 
       // Handle gallery images upload if provided

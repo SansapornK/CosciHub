@@ -1,5 +1,11 @@
 // models/Bookmark.ts
-import mongoose from "mongoose";
+import mongoose, { Document, Model } from "mongoose";
+
+export interface IBookmark extends Document {
+  jobId: mongoose.Types.ObjectId;
+  userEmail: string;
+  savedAt: Date;
+}
 
 const BookmarkSchema = new mongoose.Schema({
   jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job', required: true },
@@ -10,4 +16,6 @@ const BookmarkSchema = new mongoose.Schema({
 // ป้องกันการบันทึกซ้ำ
 BookmarkSchema.index({ jobId: 1, userEmail: 1 }, { unique: true });
 
-export default mongoose.models.Bookmark || mongoose.model("Bookmark", BookmarkSchema);
+const Bookmark: Model<IBookmark> = mongoose.models.Bookmark || mongoose.model<IBookmark>("Bookmark", BookmarkSchema);
+
+export default Bookmark;
