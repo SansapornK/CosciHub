@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
     '/auth',
     '/about-us',
     '/',
-    '/find-jobs',
+    '/find-job',
     '/images',
     '/forgot-password',
     '/reset-password',
