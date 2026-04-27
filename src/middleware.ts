@@ -16,8 +16,7 @@ export async function middleware(request: NextRequest) {
     '/auth',
     '/about-us',
     '/',
-    '/find-freelance',
-    '/project-board',
+    '/find-jobs',
     '/images', // เพิ่มเส้นทางรูปภาพให้เป็น public
   ];
 

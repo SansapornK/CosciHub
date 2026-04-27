@@ -90,7 +90,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     updateRegisterData({ skills: selectedSkills });
   };
 
-  const handleSaveJobs = (selectedJobs: string[]) => {
+  const handleSaveJobs = async (selectedJobs: string[]) => {
     updateRegisterData({ interestedJobs: selectedJobs });
   };
 
@@ -854,6 +854,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
                 updateData={updateRegisterData}
                 onOpenSkillsModal={() => setIsSkillsModalOpen(true)}
                 onOpenJobsModal={() => setIsJobsModalOpen(true)}
+                jobOptions={jobCategories}
               />
               // <StepMajorAndSkills
               //   data={registerData}
@@ -940,7 +941,6 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
       <JobsModal
         isOpen={isJobsModalOpen}
         initialSelected={registerData.interestedJobs || []}
-        jobOptions={jobCategories}
         onClose={() => setIsJobsModalOpen(false)}
         onSave={handleSaveJobs}
       />
