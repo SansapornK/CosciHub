@@ -22,20 +22,8 @@ import {
   HelpCircle,
 } from "lucide-react";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
+import { jobCategories } from "@/app/constants/JobCategories";
 
-
-// category = ประเภทงาน (เก็บใน Job.category)
-const jobCategories = [
-  "งานด้านวิชาการ/วิจัย/ผู้ช่วย",
-  "งานกิจกรรม/อีเวนต์",
-  "งานพัฒนาออกแบบเว็บไซต์/แอปพลิเคชั่น/ระบบต่างๆ",
-  "งานสื่อมัลติมีเดีย",
-  "งานประชาสัมพันธ์/สื่อสาร",
-  "งานบริการ/ธุรการ",
-  "งานสอนพิเศษ",
-  "งานกองถ่าย/Extra",
-  "อื่น ๆ"
-];
 
 // jobType = รูปแบบงาน (เก็บใน Job.jobType)
 const jobForms = [
@@ -847,3 +835,4 @@ export default function CreateJobPage() {
     </Suspense>
   );
 }
+
