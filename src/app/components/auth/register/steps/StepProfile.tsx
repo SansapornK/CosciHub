@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, MessageCircle, Plus, Trash2 } from 'lucide-react';
+import { Mail, Phone, MessageCircle, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { RegisterData } from '../RegisterForm';
 
 // Contact type options
@@ -244,10 +244,13 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
                   <div className="absolute left-3 top-5 -translate-y-2 pointer-events-none text-gray-400">
                     <IconComponent className="w-4 h-4" />
                   </div>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
                   <select
                     value={contact.type}
                     onChange={(e) => handleContactTypeChange(index, e.target.value)}
-                    className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[130px]"
+                    className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-10 pr-8 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[130px]"
                   >
                     {contactTypes.map((type) => (
                       <option key={type.value} value={type.value}>

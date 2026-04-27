@@ -12,7 +12,7 @@ import ScrollToTop from "./components/utils/ScrollToTop";
 
 export const metadata = {
   title: "COSCI Hub",
-  description: "ระบบจับคู่นักศึกษาและอาจารย์กับฟรีแลนซ์",
+  description: "แพลตฟอร์มหางานพิเศษสำหรับชาว COSCI",
 };
 
 interface RootLayoutProps {

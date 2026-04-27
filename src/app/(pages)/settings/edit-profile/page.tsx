@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Save, Trash2, Mail, Phone, MessageCircle } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, Mail, Phone, MessageCircle, ChevronDown } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "@/app/components/common/Loading";
@@ -322,10 +322,13 @@ export default function EditProfilePage() {
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                         <IconComponent className="w-4 h-4" />
                       </div>
+                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                          <ChevronDown className="w-4 h-4" />
+                       </div>
                       <select
                         value={contact.type}
                         onChange={(e) => handleContactTypeChange(index, e.target.value)}
-                        className="appearance-none  bg-gray-50 border border-gray-200 rounded-lg px-10 py-2.5 pr-5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[140px]"
+                        className="appearance-none  bg-gray-50 border border-gray-200 rounded-lg px-10 py-2.5 pr-5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[150px]"
                       >
                         {contactTypes.map((type) => (
                           <option key={type.value} value={type.value}>

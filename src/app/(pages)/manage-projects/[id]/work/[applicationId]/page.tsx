@@ -552,7 +552,7 @@ export default function WorkManagementPage() {
               </div>
             )}
 
-            {isFreelancer && workData.status !== "completed" && (
+            {isFreelancer && !["completed", "submitted"].includes(workData.status) && (
               <div className="px-8 pb-8 space-y-4">
                 {/* Read mode content */}
                 {!isEditingProgress && (
@@ -571,52 +571,53 @@ export default function WorkManagementPage() {
                       </div>
                     )}
 
-                    {workData.progressLogs &&
-                      workData.progressLogs.length > 1 && (
+                    {(() => {
+                      const meaningfulLogs =
+                        workData.progressLogs?.filter(
+                          (log) => !(log.progress === 0 && !log.note),
+                        ) ?? [];
+                      return meaningfulLogs.length > 0 ? (
                         <details className="group">
                           <summary className="cursor-pointer flex items-center gap-2 text-[11px] font-black text-gray-400 select-none list-none py-1">
                             <History size={12} />
-                            ประวัติการอัปเดต ({
-                              workData.progressLogs.length
-                            }{" "}
-                            ครั้ง)
+                            ประวัติการอัปเดต ({meaningfulLogs.length} ครั้ง)
                           </summary>
                           <div className="mt-3 space-y-2 max-h-52 overflow-y-auto">
-                            {[...workData.progressLogs]
-                              .reverse()
-                              .map((log, idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-start gap-3 py-3 border-b border-gray-50 last:border-0"
-                                >
-                                  <span className="text-[11px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg shrink-0 tabular-nums">
-                                    {log.progress}%
-                                  </span>
-                                  <div className="flex-1 min-w-0 overflow-hidden">
-                                    <p className="text-xs text-gray-600 break-words whitespace-pre-wrap leading-relaxed">
-                                      {log.note || (
-                                        <span className="text-gray-300 italic">
-                                          ไม่มีรายละเอียดเพิ่มเติม
-                                        </span>
-                                      )}
-                                    </p>
-                                    <p className="text-[10px] text-gray-300 mt-0.5">
-                                      {new Date(
-                                        log.createdAt,
-                                      ).toLocaleDateString("th-TH", {
+                            {[...meaningfulLogs].reverse().map((log, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-start gap-3 py-3 border-b border-gray-50 last:border-0"
+                              >
+                                <span className="text-[11px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg shrink-0 tabular-nums">
+                                  {log.progress}%
+                                </span>
+                                <div className="flex-1 min-w-0 overflow-hidden">
+                                  <p className="text-xs text-gray-600 break-words whitespace-pre-wrap leading-relaxed">
+                                    {log.note || (
+                                      <span className="text-gray-300 italic">
+                                        ไม่มีรายละเอียดเพิ่มเติม
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-[10px] text-gray-300 mt-0.5">
+                                    {new Date(log.createdAt).toLocaleDateString(
+                                      "th-TH",
+                                      {
                                         day: "2-digit",
                                         month: "short",
                                         year: "2-digit",
                                         hour: "2-digit",
                                         minute: "2-digit",
-                                      })}
-                                    </p>
-                                  </div>
+                                      },
+                                    )}
+                                  </p>
                                 </div>
-                              ))}
+                              </div>
+                            ))}
                           </div>
                         </details>
-                      )}
+                      ) : null;
+                    })()}
 
                     <button
                       onClick={() => setIsEditingProgress(true)}

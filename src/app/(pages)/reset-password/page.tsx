@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { Lock, Eye, EyeOff, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
@@ -180,12 +179,11 @@ function ResetPasswordContent() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
-          <Image
-            src="/logo/favicon.ico"
+{/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo/cosci-hub-favicon.png"
             alt="COSCI Hub Logo"
-            width={50}
-            height={50}
-            className="mx-auto mb-4"
+            className="h-[50px] w-auto mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
             ตั้งรหัสผ่านใหม่

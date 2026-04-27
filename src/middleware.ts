@@ -17,7 +17,9 @@ export async function middleware(request: NextRequest) {
     '/about-us',
     '/',
     '/find-jobs',
-    '/images', // เพิ่มเส้นทางรูปภาพให้เป็น public
+    '/images',
+    '/forgot-password',
+    '/reset-password',
   ];
 
   // Check if the current path is in the public routes

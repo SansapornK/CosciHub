@@ -3,7 +3,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import axios from "axios";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
@@ -66,12 +65,11 @@ export default function ForgotPasswordPage() {
     <div className="fixed inset-0 z-[200] bg-gray-50 flex items-center justify-center px-4 overflow-y-auto">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-4">
-          <Image
-            src="/logo/favicon.ico"
+{/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo/cosci-hub-favicon.png"
             alt="COSCI Hub Logo"
-            width={40}
-            height={40}
-            className="mx-auto mb-4"
+            className="h-[40px] w-auto mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold text-gray-800 mb-1">
             ลืมรหัสผ่าน?

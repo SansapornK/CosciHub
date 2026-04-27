@@ -5,7 +5,6 @@ import axios from "axios";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
 
 
@@ -71,8 +70,8 @@ function LoginForm({ onRegisterClick, callbackUrl }: LoginFormProps) {
       <div className="flex flex-col items-center mb-8">
 
         {/* โลโก้ COSCI Hub */}
-        <Image src="/logo/favicon.ico" alt="cosci hub logo" width={50} height={50} className="h-[50px] w-auto mb-5" priority/>
-        {/* <img src="/logo/favicon.ico" alt="cosci hub logo" className="h-[50px]" /> */}
+{/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo/cosci-hub-favicon.png" alt="cosci hub logo" className="h-[60px] w-auto mb-5" />
 
         <h1 className="text-2xl font-semibold text-gray-800">
           ยินดีต้อนรับสู่ COSCI Hub

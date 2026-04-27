@@ -145,7 +145,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-      <div className="max-w-lg md:max-w-2xl mx-auto px-4 pt-10 pb-6 flex flex-col gap-2">
+      <div className="max-w-xl md:max-w-7xl mx-auto px-4 pt-10 pb-6 flex flex-col gap-2">
         {/* ── Header ── */}
         <div>
           <h2 className="text-3xl font-black text-[#0C5BEA]">ตั้งค่า</h2>

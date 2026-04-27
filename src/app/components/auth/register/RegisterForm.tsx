@@ -754,16 +754,12 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     <div className="max-w-[520px] w-full bg-white flex flex-col items-center px-6 py-8">
       <div className="flex flex-col items-center mb-8">
         {/* โลโก้ COSCI Hub */}
-        <Image
-          src="/logo/favicon.ico"
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo/cosci-hub-favicon.png"
           alt="cosci hub logo"
-          width={50}
-          height={50}
-          className="h-[50px] w-auto mb-5"
-          priority
+          className="h-[60px] w-auto mb-5"
         />
-        {/* <img src="/logo/favicon.ico" alt="cosci hub logo" className="h-[50px]" /> */}
-
         <h1 className="text-2xl font-semibold text-gray-800">
           สร้างบัญชีผู้ใช้งาน
         </h1>
