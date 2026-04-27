@@ -4,7 +4,7 @@ import connectToDatabase from "@/libs/mongodb";
 import Application from "@/models/Application";
 import User from "@/models/User";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/libs/auth";
 
 export async function GET(req: Request) {
   try {

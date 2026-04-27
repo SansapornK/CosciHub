@@ -6,7 +6,7 @@ import User from '@/models/User';
 import mongoose from 'mongoose';
 import { markAllNotificationsAsRead } from '@/utils/notificationUtils';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/libs/auth';
 
 // ─── Helper: ดึง userId จาก session ──────────────────────────────────────────
 async function getUserIdFromSession(session: any) {

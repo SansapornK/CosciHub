@@ -1,7 +1,7 @@
 // src/app/api/auth/resend-verification/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../[...nextauth]/route";
+import { authOptions } from "@/libs/auth";
 import connectDB from "@/libs/mongodb";
 import User from "@/models/User";
 import AlumniVerification from "@/models/AlumniVerification";

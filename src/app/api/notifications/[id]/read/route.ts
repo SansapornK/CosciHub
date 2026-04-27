@@ -5,7 +5,7 @@ import Notification from '@/models/Notification';
 import User from '@/models/User';
 import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/libs/auth';
 
 export async function POST(
   req: NextRequest,

@@ -5,7 +5,7 @@ import Application from "@/models/Application";
 import Job from "@/models/Job";
 import User from "@/models/User";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/libs/auth";
 import mongoose, { Types } from "mongoose";
 import { notifyNewApplication } from "@/utils/notificationUtils";
 

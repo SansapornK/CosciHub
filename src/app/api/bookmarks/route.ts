@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/libs/mongodb"; 
 import Bookmark from "@/models/Bookmark";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/libs/auth";
 import Job from "@/models/Job";
 
 export async function GET() {
