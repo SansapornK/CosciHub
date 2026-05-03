@@ -643,11 +643,11 @@ function CreateJobPageContent() {
             </InputField>
 
             {/* วันสิ้นสุดรับสมัคร → Job.applicationDeadline */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8 overflow-hidden">
+              <div className="space-y-2 min-w-0">
                 <label
                   htmlFor="applicationDeadline"
-                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"
+                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 flex-wrap"
                 >
                   วันสิ้นสุดการรับสมัคร
                   <span className="text-red-400">*</span>
@@ -694,10 +694,10 @@ function CreateJobPageContent() {
               </div>
 
               {/* วันกำหนดส่งงาน/วันปฏิบัติงาน → Job.deliveryDate */}
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <label
                   htmlFor="deliveryDate"
-                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"
+                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 flex-wrap"
                 >
                   {formData.jobType === "online" ? "วันกำหนดส่งงาน" : "วันปฏิบัติงาน"}
                   <span className="text-red-400">*</span>

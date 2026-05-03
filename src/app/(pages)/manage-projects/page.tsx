@@ -300,7 +300,7 @@ export default function ManageProjectsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-10 h-screen px-4">
         <Loading size="large" color="primary" />
-        <p className="mt-4 text-gray-500 text-sm md:text-base">กำลังโหลดข้อมูลโปรเจกต์...</p>
+        <p className="mt-4 text-gray-500 text-base">กำลังโหลดข้อมูล...</p>
       </div>
     );
   }
@@ -308,7 +308,7 @@ export default function ManageProjectsPage() {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center mx-4">
-        <p className="text-red-600 text-sm md:text-base">{error}</p>
+        <p className="text-red-600 text-base">{error}</p>
         {status === "unauthenticated" && (
           <button
             onClick={() => (window.location.href = "/auth?state=login")}
@@ -541,12 +541,12 @@ export default function ManageProjectsPage() {
                 />
               </div>
 
-              <h3 className="text-xs md:text-sm font-bold text-white/80 tracking-wide z-10">
+              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">
                 งานทั้งหมดที่เคยทำ
               </h3>
 
               <div className="relative z-10 flex flex-col items-end">
-                <div className="flex items-baseline gap-2">
+                <div className="flex flex-col items-end md:flex-row md:items-baseline md:gap-2">
                   <span className="text-3xl md:text-6xl font-black tracking-tighter drop-shadow-lg">
                     {dashboardStats.totalCompleted}
                   </span>
@@ -554,7 +554,7 @@ export default function ManageProjectsPage() {
                     งาน
                   </span>
                 </div>
-                <p className="mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/60 uppercase">
+                <p className="hidden md:block mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/60 uppercase">
                   สำเร็จการทำงานแล้ว
                 </p>
               </div>
@@ -577,20 +577,20 @@ export default function ManageProjectsPage() {
                 />
               </div>
 
-              <h3 className="text-xs md:text-sm font-bold text-white/80 tracking-wide z-10">
+              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">
                 รายได้รวม
               </h3>
 
               <div className="relative z-10 flex flex-col items-end">
-                <div className="flex items-baseline gap-1 md:gap-2">
-                  <span className="text-xl md:text-5xl lg:text-6xl font-black tracking-tighter drop-shadow-lg">
+                <div className="flex flex-col items-end md:flex-row md:items-baseline md:gap-2">
+                  <span className="text-2xl md:text-5xl lg:text-6xl font-black tracking-tighter drop-shadow-lg">
                     {dashboardStats.totalEarnings.toLocaleString()}
                   </span>
                   <span className="text-xs md:text-sm font-bold text-white/60">
                     บาท
                   </span>
                 </div>
-                <p className="mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/40 uppercase text-right">
+                <p className="hidden md:block mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/40 uppercase text-right">
                   * คำนวณจากค่าตอบแทนเบื้องต้น
                 </p>
               </div>
@@ -609,7 +609,7 @@ export default function ManageProjectsPage() {
                 <Star className="w-32 h-32 md:w-40 md:h-40" strokeWidth={1.5} />
               </div>
 
-              <h3 className="text-xs md:text-sm font-bold text-white/80 tracking-wide z-10">
+              <h3 className="text-sm font-bold text-white/80 tracking-wide z-10">
                 รีวิวรวม
               </h3>
 
@@ -635,7 +635,7 @@ export default function ManageProjectsPage() {
                     />
                   ))}
                 </div>
-                <p className="mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/60 uppercase">
+                <p className="hidden md:block mt-1 md:mt-2 text-[9px] md:text-[10px] font-bold text-white/60 uppercase">
                   จากทั้งหมด {dashboardStats.reviewCount} รีวิว
                 </p>
               </div>
@@ -742,7 +742,7 @@ export default function ManageProjectsPage() {
                       <Briefcase size={24} className="md:hidden" />
                       <Briefcase size={32} className="hidden md:block" />
                     </div>
-                    <p className="font-bold text-gray-400 text-sm md:text-base">
+                    <p className="font-bold text-gray-400 text-base">
                       คุณยังไม่ได้สมัครงานพิเศษใดๆ
                     </p>
                     <Link
@@ -762,7 +762,7 @@ export default function ManageProjectsPage() {
                       <Briefcase size={24} className="md:hidden" />
                       <Briefcase size={32} className="hidden md:block" />
                     </div>
-                    <p className="font-bold text-gray-400 text-sm md:text-base">
+                    <p className="font-bold text-gray-400 text-base">
                       ไม่พบใบสมัครในสถานะ &ldquo;{filterLabels[appStatusFilter]}&rdquo;
                     </p>
                     <button
@@ -791,11 +791,11 @@ export default function ManageProjectsPage() {
                       <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
                         {/* Title + badge */}
                         <div className="flex items-start justify-between gap-2 md:gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-base">
                             {app.jobTitle}
                           </h3>
                           <span
-                            className={`text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg uppercase shrink-0 ${s.className}`}
+                            className={`text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg uppercase shrink-0 ${s.className}`}
                           >
                             {s.label}
                           </span>
@@ -828,7 +828,7 @@ export default function ManageProjectsPage() {
                                   e.stopPropagation();
                                   setConfirmApp(app);
                                 }}
-                                className="flex-[2] btn-primary text-xs md:text-sm text-center rounded-full py-2"
+                                className="flex-[2] btn-primary text-xs text-center rounded-full py-2"
                               >
                                 เริ่มงาน
                               </button>
@@ -838,7 +838,7 @@ export default function ManageProjectsPage() {
                                   e.stopPropagation();
                                   setWithdrawApp(app);
                                 }}
-                                className="flex-1 bg-white text-red-500 text-[10px] md:text-xs border border-red-400 hover:bg-red-50 px-2 py-2 rounded-full transition-colors"
+                                className="flex-1 bg-white text-red-500 text-xs border border-red-400 hover:bg-red-50 px-2 py-2 rounded-full transition-colors"
                               >
                                 ยกเลิก
                               </button>
@@ -847,7 +847,7 @@ export default function ManageProjectsPage() {
                             <div className="flex items-center justify-between pb-1 md:pb-2">
                               <Link
                                 href={`/find-job/${app.jobId}`}
-                                className="text-[10px] md:text-xs text-primary-blue-500 font-medium hover:underline"
+                                className="text-xs text-primary-blue-500 font-medium hover:underline"
                               >
                                 ดูรายละเอียดงาน →
                               </Link>
@@ -857,7 +857,7 @@ export default function ManageProjectsPage() {
                                   e.stopPropagation();
                                   setWithdrawApp(app);
                                 }}
-                                className="text-[10px] md:text-xs text-red-400 hover:underline transition-colors"
+                                className="text-xs text-red-400 hover:underline transition-colors"
                               >
                                 ยกเลิกใบสมัคร
                               </button>
@@ -865,7 +865,7 @@ export default function ManageProjectsPage() {
                           ) : (
                             <Link
                               href={`/find-job/${app.jobId}`}
-                              className="text-[10px] md:text-xs text-primary-blue-500 font-medium text-right hover:underline"
+                              className="text-xs text-primary-blue-500 font-medium text-right hover:underline"
                             >
                               ดูรายละเอียดงาน →
                             </Link>
@@ -902,7 +902,7 @@ export default function ManageProjectsPage() {
                   <Users size={24} className="md:hidden" />
                   <Users size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400 text-sm md:text-base">
+                <p className="font-bold text-gray-400 text-base">
                   ยังไม่มีนิสิตสมัครงานพิเศษของคุณ
                 </p>
               </div>
@@ -919,30 +919,30 @@ export default function ManageProjectsPage() {
                     <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
                       {/* Title + badge */}
                       <div className="flex items-start justify-between gap-2 md:gap-4">
-                        <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
+                        <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-base">
                           {job.title}
                         </h3>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           {job.acceptedCount >= job.capacity ? (
-                            <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-700 border-green-100">
+                            <span className="text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-700 border-green-100">
                               คัดเลือกครบแล้ว
                             </span>
                           ) : job.pendingCount > 0 ? (
-                            <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-yellow-50 text-yellow-700 border-yellow-100">
+                            <span className="text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-yellow-50 text-yellow-700 border-yellow-100">
                               รอพิจารณา {job.pendingCount}
                             </span>
                           ) : null}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between mt-auto pt-1 md:pt-2">
-                        <span className="text-[10px] md:text-xs text-gray-500">
+                      <div className="flex items-center justify-between mt-auto pt-3 md:pt-4 border-t border-gray-100 w-full ">
+                        <span className="text-xs text-gray-500">
                           ผู้สมัคร {job.totalCount} คน · รับแล้ว{" "}
                           {job.acceptedCount}/{job.capacity}
                         </span>
                         <Link
                           href={`/manage-projects/${job._id}/applicants`}
-                          className="text-[10px] md:text-xs text-primary-blue-500 font-medium group-hover:underline"
+                          className="text-xs text-primary-blue-500 font-medium group-hover:underline"
                         >
                           ดูผู้สมัคร →
                         </Link>
@@ -988,7 +988,7 @@ export default function ManageProjectsPage() {
                   <Briefcase size={24} className="md:hidden" />
                   <Briefcase size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400 text-sm md:text-base">
+                <p className="font-bold text-gray-400 text-base">
                   ยังไม่มีงานที่กำลังดำเนินการ
                 </p>
               </div>
@@ -1024,17 +1024,17 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
                         <div className="flex items-start justify-between gap-2 md:gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-base">
                             {app.jobTitle}
                           </h3>
                           <span
-                            className={`text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase shrink-0 ${s.color}`}
+                            className={`text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase shrink-0 ${s.color}`}
                           >
                             {s.label}
                           </span>
                         </div>
                         <div>
-                          <div className="flex justify-between text-[10px] md:text-xs text-gray-500 mb-1 md:mb-1.5">
+                          <div className="flex justify-between text-[10px] md:text-xs text-gray-500 mb-1.5">
                             <span>ความคืบหน้า</span>
                             <span className="font-medium text-gray-700">
                               {app.progress}%
@@ -1048,16 +1048,16 @@ export default function ManageProjectsPage() {
                           </div>
                         </div>
                         {/* Mobile: กำหนดส่ง + link on same line */}
-                        <div className="flex items-center justify-between md:hidden">
-                          <p className="text-[10px] text-gray-400">
-                            กำหนดส่ง:{" "}
+                        <div className="flex items-center justify-between md:hidden  mb-1 mt-1">
+                          <p className="text-xs text-gray-400">
+                            กำหนดส่ง{" "}
                             {app.jobDeadline
                               ? new Date(app.jobDeadline).toLocaleDateString("th-TH")
                               : "-"}
                           </p>
                           <Link
                             href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                            className="text-[10px] text-primary-blue-500 font-medium hover:underline"
+                            className="text-xs text-primary-blue-500 font-medium hover:underline"
                           >
                             {app.status === "submitted"
                               ? "ดูรายละเอียด →"
@@ -1066,14 +1066,14 @@ export default function ManageProjectsPage() {
                         </div>
                         {/* Desktop: original layout */}
                         <p className="hidden md:block text-xs text-gray-400">
-                          กำหนดส่ง:{" "}
+                          กำหนดส่ง{" "}
                           {app.jobDeadline
                             ? new Date(app.jobDeadline).toLocaleDateString("th-TH")
                             : "-"}
                         </p>
                         <Link
                           href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                          className="hidden md:block btn-primary text-sm text-center py-2 rounded-full w-full mt-auto"
+                          className="hidden md:block btn-primary text-xs text-center rounded-full w-full"
                         >
                           {app.status === "submitted"
                             ? "ดูรายละเอียดงาน"
@@ -1105,7 +1105,7 @@ export default function ManageProjectsPage() {
                   <Briefcase size={24} className="md:hidden" />
                   <Briefcase size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400 text-sm md:text-base">
+                <p className="font-bold text-gray-400 text-base">
                   ยังไม่มีงานที่กำลังดำเนินการในขณะนี้
                 </p>
               </div>
@@ -1156,12 +1156,12 @@ export default function ManageProjectsPage() {
                       className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
                     >
                       <div className="p-4 md:p-6 flex-1">
-                        <div className="flex justify-between items-start gap-2 md:gap-4 mb-3 md:mb-5">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
+                        <div className="flex justify-between items-start gap-4 mb-3">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-base">
                             {job.title}
                           </h3>
                           <span
-                            className={`text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase shrink-0 ${currentStyle}`}
+                            className={`text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase shrink-0 ${currentStyle}`}
                           >
                             {job.aggregateBadge.label}
                           </span>
@@ -1178,14 +1178,14 @@ export default function ManageProjectsPage() {
                             style={{ width: `${job.avgProgress}%` }}
                           />
                         </div>
-                        <div className="flex items-center justify-between py-1.5 md:py-2">
-                          <div className="flex items-center gap-1 md:gap-1.5">
+                        <div className="flex items-center justify-between py-2">
+                          <div className="flex items-center gap-1.5">
                             <div className="flex">
                               {job.workers.slice(0, 5).map((w, i) => (
                                 <div
                                   key={w._id}
                                   title={w.applicantName}
-                                  className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden flex items-center justify-center text-[8px] md:text-[10px] font-medium text-gray-600 flex-shrink-0"
+                                  className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden flex items-center justify-center text-[10px] font-medium text-gray-600 flex-shrink-0"
                                   style={{
                                     marginLeft: i > 0 ? "-5px" : "0",
                                     zIndex: 5 - i,
@@ -1203,11 +1203,11 @@ export default function ManageProjectsPage() {
                                 </div>
                               ))}
                             </div>
-                            <span className="text-[10px] md:text-xs text-gray-500">
+                            <span className="text-xs text-gray-500">
                               {job.workers.length} คน
                             </span>
                           </div>
-                          <span className="text-[10px] md:text-xs text-gray-400">
+                          <span className="text-xs text-gray-400">
                             กำหนดส่ง{" "}
                             {job.deliveryDate
                               ? new Date(job.deliveryDate).toLocaleDateString("th-TH")
@@ -1219,7 +1219,7 @@ export default function ManageProjectsPage() {
                             {breakdownItems.map((item) => (
                               <span
                                 key={item.label}
-                                className={`text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded font-medium ${item.cls}`}
+                                className={`text-[9px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded font-medium ${item.cls}`}
                               >
                                 {item.count} {item.label}
                               </span>
@@ -1228,7 +1228,7 @@ export default function ManageProjectsPage() {
                         )}
                         <Link
                           href={`/manage-projects/${job._id}/overview`}
-                          className="btn-primary block text-xs md:text-sm text-center py-2 rounded-full w-full mt-2 md:mt-3"
+                          className="btn-primary block text-sm text-center py-2 rounded-full w-full mt-2 md:mt-3"
                         >
                           ดูรายละเอียดงาน
                         </Link>
@@ -1262,7 +1262,7 @@ export default function ManageProjectsPage() {
                   <Briefcase size={24} className="md:hidden" />
                   <Briefcase size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400 text-sm md:text-base">
+                <p className="font-bold text-gray-400 text-base">
                   ยังไม่มีงานที่เสร็จสิ้น
                 </p>
               </div>
@@ -1273,7 +1273,6 @@ export default function ManageProjectsPage() {
                 setPage={setPage3}
                 renderItem={(app) => {
                   const hasStudentReviewed = !!app.studentReview;
-                  const hasOwnerReviewed = !!app.ownerReview;
 
                   return (
                     <div
@@ -1282,21 +1281,17 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
                         <div className="flex items-start justify-between gap-2 md:gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2 text-sm md:text-base">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2 text-base">
                             {app.jobTitle}
                           </h3>
-                          <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
+                          <span className="text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
                             เสร็จสิ้น
                           </span>
                         </div>
 
-                        <p className="text-[10px] md:text-xs text-gray-400">
-                          {app.jobCategory || "งานพิเศษ"}
-                        </p>
-
-                        <div className="flex items-center justify-between mt-auto pt-3 md:pt-4 border-t border-gray-50 w-full">
-                          <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">
-                            กำหนดส่ง {" "}
+                        <div className="flex items-center justify-between mt-auto pt-3 md:pt-4 border-t border-gray-100 w-full">
+                          <span className="text-xs text-gray-400">
+                            กำหนดส่ง{" "}
                             {app.jobDeadline
                               ? new Date(app.jobDeadline).toLocaleDateString(
                                   "th-TH",
@@ -1307,14 +1302,14 @@ export default function ManageProjectsPage() {
                           {hasStudentReviewed ? (
                             <Link
                               href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                              className="text-[10px] md:text-xs font-bold text-primary-blue-500 hover:underline"
+                              className="text-xs font-medium text-primary-blue-500 hover:underline"
                             >
                               ดูรายละเอียด →
                             </Link>
                           ) : (
                             <button
                               onClick={() => openReviewModal(app)}
-                              className="text-[10px] md:text-xs font-bold text-orange-500 animate-pulse hover:underline flex items-center gap-1"
+                              className="text-xs font-medium text-orange-500 animate-pulse hover:underline flex items-center gap-1"
                             >
                               <Star size={10} className="md:hidden" fill="currentColor" />
                               <Star size={12} className="hidden md:block" fill="currentColor" />{" "}
@@ -1348,7 +1343,7 @@ export default function ManageProjectsPage() {
                   <Briefcase size={24} className="md:hidden" />
                   <Briefcase size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400 text-sm md:text-base">
+                <p className="font-bold text-gray-400 text-base">
                   ยังไม่มีงานที่เสร็จสิ้น
                 </p>
               </div>
@@ -1370,20 +1365,16 @@ export default function ManageProjectsPage() {
                     >
                       <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
                         <div className="flex items-start justify-between gap-2 md:gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-base">
                             {job.title}
                           </h3>
-                          <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
+                          <span className="text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
                             เสร็จสิ้น
                           </span>
                         </div>
 
-                        <p className="text-[10px] md:text-xs text-gray-400">
-                          {job.category || "งานพิเศษ"}
-                        </p>
-
-                        <div className="flex items-center justify-between mt-auto pt-3 md:pt-4 border-t border-gray-50 w-full">
-                          <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">
+                        <div className="flex items-center justify-between mt-auto pt-3 md:pt-4 border-t border-gray-100 w-full">
+                          <span className="text-xs text-gray-400">
                             กำหนดส่ง{" "}
                             {job.deliveryDate
                               ? new Date(job.deliveryDate).toLocaleDateString(
@@ -1394,7 +1385,7 @@ export default function ManageProjectsPage() {
 
                           <Link
                             href={`/manage-projects/${job.jobId || job._id}/overview`}
-                            className={`text-[10px] md:text-xs font-bold transition-all hover:underline flex items-center gap-1 ${
+                            className={`text-xs font-medium transition-all hover:underline flex items-center gap-1 ${
                               isAllReviewed
                                 ? "text-primary-blue-500"
                                 : "text-orange-500 animate-pulse"
@@ -1510,7 +1501,7 @@ export default function ManageProjectsPage() {
                 <button
                   onClick={handleSubmitReview}
                   disabled={isSubmittingReview}
-                  className="w-full py-3 md:py-4 bg-[#0C5BEA] text-white font-black text-sm md:text-base rounded-xl md:rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                  className="w-full py-3 md:py-4 bg-[#0C5BEA] text-white font-black text-base rounded-xl md:rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
                 >
                   {isSubmittingReview ? "กำลังบันทึก..." : "ส่งรีวิวและบันทึก"}
                 </button>

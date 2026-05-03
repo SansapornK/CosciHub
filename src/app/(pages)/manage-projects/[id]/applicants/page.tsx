@@ -457,9 +457,11 @@ export default function ApplicantsPage() {
       {/* Stats row - Filter buttons */}
       {(() => {
         const workingStatuses = ["in_progress", "submitted", "revision", "completed"];
-        const workingCount = applicants.filter((a) =>
-          workingStatuses.includes(a.status)
-        ).length;
+
+        // คำนวณ count ทั้งหมดจาก applicants array โดยตรง
+        const actualPendingCount = applicants.filter((a) => a.status === "pending").length;
+        const actualAcceptedCount = applicants.filter((a) => a.status === "accepted").length;
+        const workingCount = applicants.filter((a) => workingStatuses.includes(a.status)).length;
         const rejectedCount = applicants.filter((a) => a.status === "rejected").length;
 
         const filters = [
@@ -471,13 +473,13 @@ export default function ApplicantsPage() {
           },
           {
             key: "pending",
-            label: `รอพิจารณา ${pendingCount} คน`,
+            label: `รอพิจารณา ${actualPendingCount} คน`,
             baseClass: "bg-yellow-100 text-yellow-700",
             activeClass: "ring-2 ring-yellow-400 ring-offset-1",
           },
           {
             key: "accepted",
-            label: `ผ่านการคัดเลือก ${acceptedCount} คน`,
+            label: `ผ่านการคัดเลือก ${actualAcceptedCount} คน`,
             baseClass: "bg-green-100 text-green-700",
             activeClass: "ring-2 ring-green-400 ring-offset-1",
           },
