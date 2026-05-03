@@ -6,12 +6,26 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import axios from "axios";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Loading from "../../../../components/common/Loading";
 import { toast } from "react-hot-toast";
 import EmployerWithdrawModal from "../../../../components/modals/EmployerWithdrawModal";
 import StudentContactModal from "../../../../components/modals/StudentContactModal";
 import ConfirmationModal from "../../../../components/modals/ConfirmationModal";
+
+// ─── useIsMobile Hook ─────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+}
 
 // ─── Interfaces ───────────────────────────────────
 interface Applicant {
@@ -238,6 +252,7 @@ export default function ApplicantsPage() {
   const router = useRouter();
   const params = useParams();
   const jobId = params.id as string; // ← ใช้เป็น jobId
+  const isMobile = useIsMobile();
 
   const [job, setJob] = useState<JobInfo | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
@@ -260,12 +275,21 @@ export default function ApplicantsPage() {
     "all" | "pending" | "accepted" | "rejected" | "working"
   >("all");
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = isMobile ? 3 : 9; // Mobile: 3, Desktop: 9 (3x3)
+
   // ─── Redirect ─────────────────────────────────
   useEffect(() => {
     if (authStatus === "unauthenticated") router.push("/auth?state=login");
     if (authStatus === "authenticated" && session?.user?.role === "student")
       router.push("/");
   }, [authStatus, session]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
 
   // ─── Fetch ────────────────────────────────────
   useEffect(() => {
@@ -370,7 +394,7 @@ export default function ApplicantsPage() {
   const remaining = capacity - acceptedCount;
 
   return (
-    <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
+    <div className="flex flex-col gap-6 pb-10 px-4 md:px-0 max-w-6xl mx-auto w-full">
       <div className="mt-6 mb-1">
         <Link
           href="/manage-projects"
@@ -472,18 +496,20 @@ export default function ApplicantsPage() {
         ] as const;
 
         return (
-          <div className="flex gap-2 flex-wrap">
-            {filters.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => setStatusFilter(item.key)}
-                className={`text-xs px-3 py-1.5 rounded-full transition-all cursor-pointer hover:opacity-80 ${item.baseClass} ${
-                  statusFilter === item.key ? item.activeClass : ""
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          <div className="overflow-x-auto md:overflow-visible scrollbar-hide -mx-1 px-1">
+            <div className="flex gap-2 md:flex-wrap w-max md:w-auto py-1">
+              {filters.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setStatusFilter(item.key)}
+                  className={`text-xs px-3 py-1.5 rounded-full transition-all cursor-pointer hover:opacity-80 whitespace-nowrap flex-shrink-0 md:flex-shrink ${item.baseClass} ${
+                    statusFilter === item.key ? item.activeClass : ""
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         );
       })()}
@@ -505,6 +531,28 @@ export default function ApplicantsPage() {
           rejected: "ไม่ผ่านการคัดเลือก",
           working: "กำลังทำงาน",
         };
+
+        // Sort applicants
+        const sortedApplicants = [...filteredApplicants].sort((a, b) => {
+          const order: Record<string, number> = {
+            pending: 0,
+            accepted: 1,
+            rejected: 2,
+            in_progress: 3,
+            submitted: 4,
+            revision: 5,
+            completed: 6,
+          };
+          return (order[a.status] ?? 99) - (order[b.status] ?? 99);
+        });
+
+        // Pagination calculations
+        const totalPages = Math.ceil(sortedApplicants.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const paginatedApplicants = sortedApplicants.slice(
+          startIndex,
+          startIndex + itemsPerPage
+        );
 
         if (applicants.length === 0) {
           return (
@@ -531,22 +579,9 @@ export default function ApplicantsPage() {
         }
 
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {/* เรียง pending ก่อน → accepted → rejected → working */}
-            {[...filteredApplicants]
-              .sort((a, b) => {
-                const order: Record<string, number> = {
-                  pending: 0,
-                  accepted: 1,
-                  rejected: 2,
-                  in_progress: 3,
-                  submitted: 4,
-                  revision: 5,
-                  completed: 6,
-                };
-                return (order[a.status] ?? 99) - (order[b.status] ?? 99);
-              })
-              .map((applicant) => (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {paginatedApplicants.map((applicant) => (
                 <ApplicantCard
                   key={applicant._id}
                   applicant={applicant}
@@ -557,7 +592,82 @@ export default function ApplicantsPage() {
                   isLoading={actionLoading}
                 />
               ))}
-          </div>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft size={20} className="text-gray-600" />
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // Show first, last, current, and adjacent pages
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      Math.abs(page - currentPage) <= 1;
+
+                    if (!showPage && page !== 2 && page !== totalPages - 1) {
+                      return null;
+                    }
+
+                    if (page === 2 && currentPage > 4) {
+                      return (
+                        <span key="ellipsis-start" className="px-2 text-gray-400">
+                          ...
+                        </span>
+                      );
+                    }
+
+                    if (page === totalPages - 1 && currentPage < totalPages - 3) {
+                      return (
+                        <span key="ellipsis-end" className="px-2 text-gray-400">
+                          ...
+                        </span>
+                      );
+                    }
+
+                    if (!showPage) return null;
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
+                          currentPage === page
+                            ? "bg-primary-blue-500 text-white"
+                            : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight size={20} className="text-gray-600" />
+                </button>
+              </div>
+            )}
+
+            {/* Page Info */}
+            {totalPages > 1 && (
+              <p className="text-center text-sm text-gray-500">
+                แสดง {startIndex + 1}-{Math.min(startIndex + itemsPerPage, sortedApplicants.length)} จาก {sortedApplicants.length} คน
+              </p>
+            )}
+          </>
         );
       })()}
 

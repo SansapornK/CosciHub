@@ -22,14 +22,14 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="th">
-      <body>
+      <body className="min-h-screen flex flex-col">
         <AuthProvider>
           <UserProvider>
             <PusherProvider>
               <ScrollToTop />
               <Toaster position="top-center" />
               <Navbar />
-              <div className="mt-20 w-full">
+              <div className="mt-20 w-full flex-1">
                 {children}
               </div>
               <Footer/>

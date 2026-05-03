@@ -27,6 +27,7 @@ interface JobCardProps {
   actionButton?: React.ReactNode;
   fromPageName?: string;
   isMobile?: boolean;
+  hasTopOverlay?: boolean; // เพิ่มพื้นที่ด้านบนสำหรับ status badge overlay
 }
 
 const TruncatedWithTooltip = ({
@@ -62,6 +63,7 @@ const JobCardMobile: React.FC<JobCardProps> = ({
   isBookmarked,
   onToggleBookmark,
   fromPageName = "ย้อนกลับ",
+  hasTopOverlay = false,
 }) => {
   const compensation = data.maxCompensation
     ? `฿${data.minCompensation} – ${data.maxCompensation}`
@@ -72,7 +74,7 @@ const JobCardMobile: React.FC<JobCardProps> = ({
       whileTap={{ scale: 0.98 }}
       className="bg-white/80 backdrop-blur-sm shadow-sm border border-white rounded-[20px] overflow-hidden"
     >
-      <div className="flex flex-col p-4 gap-2.5">
+      <div className={`flex flex-col px-4 pb-4 gap-2.5 ${hasTopOverlay ? "pt-12" : "pt-4"}`}>
         {/* ── Row 1: Icon + Title + Bookmark ── */}
         <div className="flex items-start gap-3">
           <div className="w-[46px] h-[46px] rounded-[14px] bg-indigo-50 flex items-center justify-center shrink-0 text-indigo-500">

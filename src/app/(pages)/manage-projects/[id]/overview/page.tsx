@@ -169,8 +169,8 @@ export default function JobOverviewPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
-      <div className="mt-6 mb-1">
+    <div className="flex flex-col gap-4 md:gap-6 pb-10 max-w-6xl mx-auto w-full px-4 md:px-0">
+      <div className="mt-4 md:mt-6 mb-1">
         <Link
           href="/manage-projects"
           className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 w-fit"
@@ -180,29 +180,28 @@ export default function JobOverviewPage() {
       </div>
 
       {/* Header */}
-      <section className="bg-primary-blue-500 rounded-2xl p-6 text-white">
+      <section className="bg-primary-blue-500 rounded-2xl p-4 md:p-6 text-white">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-white/60 text-s font-medium uppercase tracking-wide mb-1">
+            <p className="text-white/60 text-xs md:text-s font-medium uppercase tracking-wide mb-1">
               ภาพรวมงาน
             </p>
-            <h1 className="text-xl font-semibold leading-snug">{job.title}</h1>
+            <h1 className="text-xl md:text-xl font-semibold leading-snug line-clamp-1">{job.title}</h1>
           </div>
-          {/* {breakdownItems.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-                {breakdownItems.map((item) => (
-                <span key={item.label} className={`text-xs px-2.5 py-1 rounded-full font-medium ${item.cls}`}>
-                    {item.count} {item.label}
-                </span>
-                ))}
-            </div>
-            )} */}
         </div>
-        <div className="flex flex-wrap gap-4 mt-5 pt-4 border-t border-white/20">
+        <div className="grid grid-cols-2 md:flex md:flex-row md:flex-wrap gap-y-2 gap-x-4 md:gap-4 mt-4 md:mt-5 pt-4 border-t border-white/20">
+          {/* Row 1 Left - จำนวนคน */}
           <div className="flex items-center gap-2 text-white/80 text-sm">
             <Users size={14} />
             <span>{job.workers.length} คน</span>
           </div>
+
+          {/* Row 1 Right - ความคืบหน้าเฉลี่ย (text only on mobile) */}
+          <div className="flex items-center justify-end text-white/80 text-sm md:hidden">
+            ความคืบหน้าเฉลี่ย
+          </div>
+
+          {/* Row 2 Left - ส่งงาน */}
           {job.deliveryDate && (
             <div className="flex items-center gap-2 text-white/80 text-sm">
               <CalendarDays size={14} />
@@ -216,27 +215,38 @@ export default function JobOverviewPage() {
               </span>
             </div>
           )}
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-white/80 text-sm">ความคืบหน้าเฉลี่ย</span>
-            <div className="flex items-center gap-2 flex-1 justify-end">
-              <div className="w-24 bg-white/20 rounded-full h-2 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${job.avgProgress}%`, background: "white" }}
-                />
-              </div>
-              <span className="text-white/80 text-sm">{job.avgProgress}%</span>
+
+          {/* Row 2 Right - Progress bar (mobile) */}
+          <div className="flex items-center gap-2 justify-end md:hidden">
+            <div className="w-20 bg-white/20 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${job.avgProgress}%`, background: "white" }}
+              />
             </div>
+            <span className="text-white/80 text-sm">{job.avgProgress}%</span>
+          </div>
+
+          {/* Desktop - ความคืบหน้าเฉลี่ย with progress bar */}
+          <div className="hidden md:flex items-center gap-2 ml-auto">
+            <span className="text-white/80 text-sm">ความคืบหน้าเฉลี่ย</span>
+            <div className="w-24 bg-white/20 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${job.avgProgress}%`, background: "white" }}
+              />
+            </div>
+            <span className="text-white/80 text-sm">{job.avgProgress}%</span>
           </div>
         </div>
       </section>
 
       {/* Workers list */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-        <p className="text-s font-black text-gray-500 uppercase tracking-wide flex items-center gap-2 mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 md:p-5 shadow-sm">
+        <p className="text-xs md:text-s font-black text-gray-500 uppercase tracking-wide flex items-center gap-2 mb-4">
           <Users size={14} /> รายชื่อผู้ปฏิบัติงาน
         </p>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3 md:gap-2">
           {job.workers.map((worker) => {
             const wStatus =
               statusLabel[worker.status] ?? statusLabel.in_progress;
@@ -247,10 +257,11 @@ export default function JobOverviewPage() {
             return (
               <div
                 key={worker._id}
-                className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all"
+                className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-transparent transition-all gap-2"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary-blue-500 font-bold text-sm shrink-0 overflow-hidden">
+                {/* Left: Avatar + Name + Progress + Status */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-12 h-12 md:w-12 md:h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center text-primary-blue-500 font-bold text-sm shrink-0 overflow-hidden">
                     {worker.profileImageUrl ? (
                       <img
                         src={worker.profileImageUrl}
@@ -261,46 +272,54 @@ export default function JobOverviewPage() {
                       worker.applicantName?.charAt(0) || "?"
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[17px] font-medium text-black truncate">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] md:text-[17px] font-medium text-black truncate">
                       {worker.applicantName}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <div className="w-20 bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                      <div className="w-16 md:w-20 bg-gray-200 h-1.5 rounded-full overflow-hidden">
                         <div
                           className="bg-primary-blue-500 h-full rounded-full"
                           style={{ width: `${worker.progress}%` }}
                         />
                       </div>
-                      <span className="text-sm text-gray-400">
+                      <span className="text-xs md:text-sm text-gray-400">
                         {worker.progress}%
                       </span>
+                      {/* Desktop: Status badge inline */}
                       <span
-                        className={`text-sm px-2 py-0.5 rounded-full ${wStatus.cls}`}
+                        className={`hidden md:inline text-sm px-2 py-0.5 rounded-full ${wStatus.cls}`}
                       >
                         {wStatus.text}
                       </span>
                     </div>
+                    {/* Mobile: Status badge below progress */}
+                    <span
+                      className={`md:hidden inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${wStatus.cls}`}
+                    >
+                      {wStatus.text}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Right: Buttons stacked on mobile, row on desktop */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-1.5 md:gap-2 shrink-0 w-[90px] md:w-auto">
                   {isDone && !hasOwnerReviewed ? (
                     <button
                       onClick={() => openReviewModal(worker)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 text-white rounded-xl font-bold text-xs hover:bg-yellow-500 shadow-lg shadow-yellow-100 transition-all active:scale-95"
+                      className="w-full md:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 bg-yellow-400 text-white rounded-lg text-xs md:text-s hover:bg-yellow-500 shadow-sm transition-all active:scale-95"
                     >
-                      <Star size={14} fill="currentColor" /> ให้คะแนนนิสิต
+                      <Star size={12} fill="currentColor" /> ให้คะแนน
                     </button>
                   ) : hasOwnerReviewed ? (
-                    <div className="flex items-center gap-1.5 px-4 py-2 bg-green-50 text-green-600 rounded-xl border border-green-100 text-xs font-bold">
-                      <CheckCircle size={14} /> รีวิวเรียบร้อย
+                    <div className="w-full md:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 rounded-lg border border-green-100 text-xs md:text-s">
+                      <CheckCircle size={12} /> รีวิวแล้ว
                     </div>
                   ) : null}
 
                   <Link
                     href={`/manage-projects/${jobId}/work/${worker._id}`}
-                    className="ml-2 px-3 py-1.5 bg-white text-primary-blue-500 text-s rounded-lg border border-gray-200 shadow-sm hover:bg-primary-blue-500 hover:text-white hover:border-primary-blue-500 transition-all whitespace-nowrap"
+                    className="w-full md:w-auto flex items-center justify-center px-3 py-1.5 bg-white text-primary-blue-500 text-xs md:text-s rounded-lg border border-gray-200 shadow-sm hover:bg-primary-blue-500 hover:text-white hover:border-primary-blue-500 transition-all whitespace-nowrap"
                   >
                     ติดตามงาน
                   </Link>
@@ -313,7 +332,7 @@ export default function JobOverviewPage() {
       {/* --- Review Modal (AnimatePresence) --- */}
       <AnimatePresence>
         {isReviewModalOpen && selectedWorker && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -325,19 +344,20 @@ export default function JobOverviewPage() {
 
             {/* Modal Content */}
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 50 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl text-center"
+              exit={{ scale: 0.95, opacity: 0, y: 50 }}
+              className="relative bg-white w-full md:max-w-md rounded-t-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl text-center max-h-[90vh] overflow-y-auto"
             >
-              <div className="w-16 h-16 bg-yellow-50 text-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Star size={32} fill="currentColor" />
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-yellow-50 text-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
+                <Star size={24} fill="currentColor" className="md:hidden" />
+                <Star size={32} fill="currentColor" className="hidden md:block" />
               </div>
 
-              <h3 className="text-xl font-black text-gray-900 mb-2">
+              <h3 className="text-lg md:text-xl font-black text-gray-900 mb-2">
                 ให้คะแนนนิสิต
               </h3>
-              <p className="text-xs text-gray-400 mb-8 font-medium">
+              <p className="text-xs text-gray-400 mb-6 md:mb-8 font-medium">
                 คุณกำลังรีวิว:{" "}
                 <span className="text-blue-600 font-bold">
                   {selectedWorker.applicantName}
@@ -345,7 +365,7 @@ export default function JobOverviewPage() {
               </p>
 
               {/* Star Rating */}
-              <div className="flex justify-center gap-3 mb-8">
+              <div className="flex justify-center gap-2 md:gap-3 mb-6 md:mb-8">
                 {[1, 2, 3, 4, 5].map((num) => (
                   <button
                     key={num}
@@ -353,9 +373,16 @@ export default function JobOverviewPage() {
                     className={`transition-all duration-200 ${rating >= num ? "text-yellow-400 scale-110" : "text-gray-200"}`}
                   >
                     <Star
+                      size={28}
+                      fill={rating >= num ? "currentColor" : "none"}
+                      strokeWidth={2.5}
+                      className="md:hidden"
+                    />
+                    <Star
                       size={36}
                       fill={rating >= num ? "currentColor" : "none"}
                       strokeWidth={2.5}
+                      className="hidden md:block"
                     />
                   </button>
                 ))}
@@ -366,11 +393,11 @@ export default function JobOverviewPage() {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="เขียนความประทับใจที่มีต่อนิสิตคนนี้..."
-                className="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm mb-6 transition-all"
+                className="w-full p-4 md:p-5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm mb-4 md:mb-6 transition-all"
               />
 
               {/* Anonymous Toggle */}
-              <div className="flex items-center justify-between px-5 py-4 bg-gray-50 rounded-2xl mb-8 border border-gray-100">
+              <div className="flex items-center justify-between px-4 md:px-5 py-3 md:py-4 bg-gray-50 rounded-2xl mb-6 md:mb-8 border border-gray-100">
                 <div className="text-left">
                   <p className="text-xs font-bold text-gray-700">
                     ส่งแบบไม่ระบุตัวตน
@@ -381,7 +408,7 @@ export default function JobOverviewPage() {
                 </div>
                 <button
                   onClick={() => setIsAnonymous(!isAnonymous)}
-                  className={`w-11 h-6 rounded-full transition-colors relative ${isAnonymous ? "bg-blue-600" : "bg-gray-300"}`}
+                  className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${isAnonymous ? "bg-blue-600" : "bg-gray-300"}`}
                 >
                   <motion.div
                     animate={{ x: isAnonymous ? 22 : 2 }}
@@ -395,7 +422,7 @@ export default function JobOverviewPage() {
                 <button
                   onClick={handleSubmitReview}
                   disabled={isSubmittingReview}
-                  className="w-full py-4 bg-[#0C5BEA] text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                  className="w-full py-3.5 md:py-4 bg-[#0C5BEA] text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
                 >
                   {isSubmittingReview ? "กำลังบันทึก..." : "ส่งรีวิวและบันทึก"}
                 </button>

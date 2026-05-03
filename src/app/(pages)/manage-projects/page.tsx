@@ -176,7 +176,26 @@ export default function ManageProjectsPage() {
   const [page1, setPage1] = useState(0); // Row 1
   const [page2, setPage2] = useState(0); // Row 2
   const [page3, setPage3] = useState(0); //Row 3
-  const ITEMS_PER_PAGE = 3;
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen for responsive pagination
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      if (mobile !== isMobile) {
+        setIsMobile(mobile);
+        // Reset pages when switching between mobile/desktop to avoid out-of-bounds
+        setPage1(0);
+        setPage2(0);
+        setPage3(0);
+      }
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [isMobile]);
+
+  const ITEMS_PER_PAGE = isMobile ? 1 : 3;
 
   // Filter สถานะใบสมัคร (ฝั่งนิสิต)
   const [appStatusFilter, setAppStatusFilter] = useState<
@@ -279,21 +298,21 @@ export default function ManageProjectsPage() {
 
   if (jobAppLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 h-screen">
+      <div className="flex flex-col items-center justify-center py-10 h-screen px-4">
         <Loading size="large" color="primary" />
-        <p className="mt-4 text-gray-500">กำลังโหลดข้อมูลโปรเจกต์...</p>
+        <p className="mt-4 text-gray-500 text-sm md:text-base">กำลังโหลดข้อมูลโปรเจกต์...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-        <p className="text-red-600">{error}</p>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center mx-4">
+        <p className="text-red-600 text-sm md:text-base">{error}</p>
         {status === "unauthenticated" && (
           <button
             onClick={() => (window.location.href = "/auth?state=login")}
-            className="mt-4 px-4 py-2 bg-primary-blue-500 text-white rounded-lg hover:bg-primary-blue-600"
+            className="mt-4 px-4 py-2 bg-primary-blue-500 text-white rounded-lg hover:bg-primary-blue-600 text-sm"
           >
             เข้าสู่ระบบ
           </button>
@@ -323,39 +342,40 @@ export default function ManageProjectsPage() {
 
     return (
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-6">
           {paginated.map(renderItem)}
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="flex items-center justify-center gap-2 md:gap-3 mt-4 md:mt-6">
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="p-2 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="p-1.5 md:p-2 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="md:w-4 md:h-4"
               >
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
 
-            <div className="flex gap-1.5">
+            <div className="flex gap-1 md:gap-1.5">
               {Array.from({ length: totalPages }).map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setPage(i)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    i === page ? "bg-primary-blue-500 w-4" : "bg-gray-300"
+                  className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all ${
+                    i === page ? "bg-primary-blue-500 w-3 md:w-4" : "bg-gray-300"
                   }`}
                 />
               ))}
@@ -364,18 +384,19 @@ export default function ManageProjectsPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
-              className="p-2 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              className="p-1.5 md:p-2 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="md:w-4 md:h-4"
               >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -472,23 +493,23 @@ export default function ManageProjectsPage() {
     };
 
   return (
-    <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto w-full">
+    <div className="flex flex-col gap-4 md:gap-6 pb-10 px-4 md:px-0 max-w-7xl mx-auto w-full">
       {isFreelancer ? (
-        <div className="flex justify-between items-center mt-8">
-          <h2 className="text-3xl font-black text-[#0C5BEA] flex items-center gap-3">
+        <div className="flex justify-between items-center mt-4 md:mt-8">
+          <h2 className="text-xl md:text-3xl font-black text-[#0C5BEA] flex items-center gap-2 md:gap-3">
             งานของฉัน
           </h2>
         </div>
       ) : (
-        <div className="flex justify-between items-center mt-8">
-          <h2 className="text-3xl font-black text-[#0C5BEA] flex items-center gap-3">
+        <div className="flex justify-between items-center mt-4 md:mt-8">
+          <h2 className="text-xl md:text-3xl font-black text-[#0C5BEA] flex items-center gap-2 md:gap-3">
             ติดตามงาน
           </h2>
           <Link
             href="/manage-projects/my-jobs"
-            className="px-6 py-2.5 rounded-full text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100 flex items-center gap-2"
+            className="px-4 md:px-6 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100 flex items-center gap-1.5 md:gap-2"
           >
-            <BriefcaseBusiness className="w-4 h-4" />
+            <BriefcaseBusiness className="w-3.5 h-3.5 md:w-4 md:h-4" />
             งานของฉัน
           </Link>
         </div>
@@ -496,13 +517,13 @@ export default function ManageProjectsPage() {
 
       {/* --- Dashboard Summary Section --- */}
       {isFreelancer && (
-        <div className="w-full max-w-7xl mx-auto mb-10 px-4 md:px-0">
+        <div className="w-full max-w-7xl mx-auto mb-5 md:mb-10">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6"
+            className="grid grid-cols-3 gap-2 md:gap-6"
           >
             {/* 1. งานทั้งหมด */}
             <motion.div
@@ -526,7 +547,7 @@ export default function ManageProjectsPage() {
 
               <div className="relative z-10 flex flex-col items-end">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl md:text-6xl font-black tracking-tighter drop-shadow-lg">
+                  <span className="text-3xl md:text-6xl font-black tracking-tighter drop-shadow-lg">
                     {dashboardStats.totalCompleted}
                   </span>
                   <span className="text-xs md:text-sm font-bold text-white/60">
@@ -562,7 +583,7 @@ export default function ManageProjectsPage() {
 
               <div className="relative z-10 flex flex-col items-end">
                 <div className="flex items-baseline gap-1 md:gap-2">
-                  <span className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter drop-shadow-lg">
+                  <span className="text-xl md:text-5xl lg:text-6xl font-black tracking-tighter drop-shadow-lg">
                     {dashboardStats.totalEarnings.toLocaleString()}
                   </span>
                   <span className="text-xs md:text-sm font-bold text-white/60">
@@ -593,7 +614,7 @@ export default function ManageProjectsPage() {
               </h3>
 
               <div className="relative z-10 flex flex-col items-end">
-                <span className="text-4xl md:text-6xl font-black tracking-tighter text-white drop-shadow-lg">
+                <span className="text-3xl md:text-6xl font-black tracking-tighter text-white drop-shadow-lg">
                   {dashboardStats.avgRating}
                 </span>
                 <div className="flex gap-0.5 mt-1 md:mt-2">
@@ -627,13 +648,13 @@ export default function ManageProjectsPage() {
       <div className="w-full">
         {isFreelancer ? (
           // ── ฝั่งนิสิต: งานที่สมัครไว้ ──────────────────────────────────────
-          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-              <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-indigo-100">
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 border border-gray-100">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
+              <h2 className="text-m md:text-l font-black text-gray-900 flex items-center gap-2 md:gap-3 flex-shrink-0">
+                <div className="p-2 md:p-2.5 bg-blue-600 rounded-lg md:rounded-xl text-white shadow-lg shadow-indigo-100">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
+                    className="h-4 w-4 md:h-5 md:w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -659,30 +680,32 @@ export default function ManageProjectsPage() {
               </h2>
 
               {/* Filter Badges */}
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    { key: "all", label: "ทั้งหมด" },
-                    { key: "pending", label: "รอพิจารณา" },
-                    { key: "accepted", label: "ผ่านการคัดเลือก" },
-                    { key: "rejected", label: "ไม่ผ่านการคัดเลือก" },
-                  ] as const
-                ).map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => {
-                      setAppStatusFilter(item.key);
-                      setPage1(0);
-                    }}
-                    className={`text-xs px-3 py-1.5 rounded-full  border transition-all ${
-                      appStatusFilter === item.key
-                        ? "bg-primary-blue-400 text-white border-primary-blue-400"
-                        : "bg-white text-primary-blue-400 border-primary-blue-400 hover:bg-primary-blue-50"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+              <div className="w-full sm:w-auto overflow-x-auto md:overflow-visible scrollbar-hide">
+                <div className="flex gap-2 md:flex-wrap pb-1 md:pb-0 w-max md:w-auto">
+                  {(
+                    [
+                      { key: "all", label: "ทั้งหมด" },
+                      { key: "pending", label: "รอพิจารณา" },
+                      { key: "accepted", label: "ผ่านการคัดเลือก" },
+                      { key: "rejected", label: "ไม่ผ่านการคัดเลือก" },
+                    ] as const
+                  ).map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setAppStatusFilter(item.key);
+                        setPage1(0);
+                      }}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all whitespace-nowrap flex-shrink-0 md:flex-shrink ${
+                        appStatusFilter === item.key
+                          ? "bg-primary-blue-400 text-white border-primary-blue-400"
+                          : "bg-white text-primary-blue-400 border-primary-blue-400 hover:bg-primary-blue-50"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -714,16 +737,17 @@ export default function ManageProjectsPage() {
 
               if (jobApplications.length === 0) {
                 return (
-                  <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                      <Briefcase size={32} />
+                  <div className="bg-white rounded-xl md:rounded-[2rem] p-8 md:p-12 text-center border border-dashed border-gray-200">
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-gray-300">
+                      <Briefcase size={24} className="md:hidden" />
+                      <Briefcase size={32} className="hidden md:block" />
                     </div>
-                    <p className="font-bold text-gray-400">
+                    <p className="font-bold text-gray-400 text-sm md:text-base">
                       คุณยังไม่ได้สมัครงานพิเศษใดๆ
                     </p>
                     <Link
                       href="/find-job"
-                      className="text-primary-blue-500 text-sm hover:underline mt-2 inline-block"
+                      className="text-primary-blue-500 text-xs md:text-sm hover:underline mt-2 inline-block"
                     >
                       ค้นหางานพิเศษ →
                     </Link>
@@ -733,16 +757,17 @@ export default function ManageProjectsPage() {
 
               if (filteredApps.length === 0) {
                 return (
-                  <div className="bg-white rounded-[2rem] p-11 text-center border border-dashed border-gray-200">
-                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                      <Briefcase size={32} />
+                  <div className="bg-white rounded-xl md:rounded-[2rem] p-8 md:p-11 text-center border border-dashed border-gray-200">
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-gray-300">
+                      <Briefcase size={24} className="md:hidden" />
+                      <Briefcase size={32} className="hidden md:block" />
                     </div>
-                    <p className="font-bold text-gray-400">
+                    <p className="font-bold text-gray-400 text-sm md:text-base">
                       ไม่พบใบสมัครในสถานะ &ldquo;{filterLabels[appStatusFilter]}&rdquo;
                     </p>
                     <button
                       onClick={() => setAppStatusFilter("all")}
-                      className="text-primary-blue-500 text-sm hover:underline mt-2 inline-block"
+                      className="text-primary-blue-500 text-xs md:text-sm hover:underline mt-2 inline-block"
                     >
                       ดูใบสมัครทั้งหมด →
                     </button>
@@ -761,31 +786,31 @@ export default function ManageProjectsPage() {
                   return (
                     <div
                       key={app._id}
-                      className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
+                      className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
                     >
-                      <div className="p-6 flex-1 flex flex-col gap-3">
+                      <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
                         {/* Title + badge */}
-                        <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
+                        <div className="flex items-start justify-between gap-2 md:gap-4">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
                             {app.jobTitle}
                           </h3>
                           <span
-                            className={`text-xs px-2.5 py-1 rounded-lg uppercase shrink-0 ${s.className}`}
+                            className={`text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg uppercase shrink-0 ${s.className}`}
                           >
                             {s.label}
                           </span>
                         </div>
 
                         {/* Budget + Date */}
-                        <div className="flex items-center justify-between mt-auto pt-2">
-                          <p className="text-xs text-gray-500">
+                        <div className="flex items-center justify-between mt-auto pt-1 md:pt-2">
+                          <p className="text-[10px] md:text-xs text-gray-500">
                             {app.jobBudgetMin.toLocaleString()}
                             {app.jobBudgetMax
                               ? ` – ${app.jobBudgetMax.toLocaleString()}`
                               : ""}{" "}
                             บาท
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-[10px] md:text-xs text-gray-400">
                             สมัครเมื่อ{" "}
                             {new Date(app.appliedDate).toLocaleDateString(
                               "th-TH",
@@ -793,9 +818,8 @@ export default function ManageProjectsPage() {
                           </p>
                         </div>
 
-                        {/* ปุ่ม */}
                         {/* ปุ่ม — กำหนด min-h ให้คงที่ทุก status */}
-                        <div className="min-h-[40px] flex flex-col justify-end mt-auto">
+                        <div className="min-h-[36px] md:min-h-[40px] flex flex-col justify-end mt-auto">
                           {app.status === "accepted" ? (
                             <div className="flex gap-2 items-center">
                               <button
@@ -804,7 +828,7 @@ export default function ManageProjectsPage() {
                                   e.stopPropagation();
                                   setConfirmApp(app);
                                 }}
-                                className="flex-[2] btn-primary text-sm text-center rounded-full"
+                                className="flex-[2] btn-primary text-xs md:text-sm text-center rounded-full py-2"
                               >
                                 เริ่มงาน
                               </button>
@@ -814,16 +838,16 @@ export default function ManageProjectsPage() {
                                   e.stopPropagation();
                                   setWithdrawApp(app);
                                 }}
-                                className="flex-1 bg-white text-red-500 text-xs border border-red-400 hover:bg-red-50 px-2 py-2 rounded-full transition-colors"
+                                className="flex-1 bg-white text-red-500 text-[10px] md:text-xs border border-red-400 hover:bg-red-50 px-2 py-2 rounded-full transition-colors"
                               >
-                                ยกเลิกใบสมัคร
+                                ยกเลิก
                               </button>
                             </div>
                           ) : app.status === "pending" ? (
-                            <div className="flex items-center justify-between pb-2">
+                            <div className="flex items-center justify-between pb-1 md:pb-2">
                               <Link
                                 href={`/find-job/${app.jobId}`}
-                                className="text-xs text-primary-blue-500 font-medium hover:underline"
+                                className="text-[10px] md:text-xs text-primary-blue-500 font-medium hover:underline"
                               >
                                 ดูรายละเอียดงาน →
                               </Link>
@@ -833,7 +857,7 @@ export default function ManageProjectsPage() {
                                   e.stopPropagation();
                                   setWithdrawApp(app);
                                 }}
-                                className="text-xs text-red-400 hover:underline transition-colors"
+                                className="text-[10px] md:text-xs text-red-400 hover:underline transition-colors"
                               >
                                 ยกเลิกใบสมัคร
                               </button>
@@ -841,7 +865,7 @@ export default function ManageProjectsPage() {
                           ) : (
                             <Link
                               href={`/find-job/${app.jobId}`}
-                              className="text-xs text-primary-blue-500 font-medium text-right hover:underline"
+                              className="text-[10px] md:text-xs text-primary-blue-500 font-medium text-right hover:underline"
                             >
                               ดูรายละเอียดงาน →
                             </Link>
@@ -857,11 +881,12 @@ export default function ManageProjectsPage() {
           </div>
         ) : (
           // ── ฝั่งเจ้าของ: งานที่มีคนมาสมัคร ───────────────────────────────────
-          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-purple-100">
-                  <Users size={20} />
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 border border-gray-100">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+              <h2 className="text-m md:text-l font-black text-gray-900 flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-2.5 bg-blue-600 rounded-lg md:rounded-xl text-white shadow-lg shadow-purple-100">
+                  <Users size={16} className="md:hidden" />
+                  <Users size={20} className="hidden md:block" />
                 </div>
                 ผู้สมัครงานพิเศษของฉัน ({ownerJobs.length})
               </h2>
@@ -872,11 +897,12 @@ export default function ManageProjectsPage() {
                 <Loading size="small" color="primary" />
               </div>
             ) : ownerJobs.length === 0 ? (
-              <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                  <Users size={32} />
+              <div className="bg-white rounded-xl md:rounded-[2rem] p-8 md:p-12 text-center border border-dashed border-gray-200">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-gray-300">
+                  <Users size={24} className="md:hidden" />
+                  <Users size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400">
+                <p className="font-bold text-gray-400 text-sm md:text-base">
                   ยังไม่มีนิสิตสมัครงานพิเศษของคุณ
                 </p>
               </div>
@@ -888,35 +914,35 @@ export default function ManageProjectsPage() {
                 renderItem={(job) => (
                   <div
                     key={job._id}
-                    className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
+                    className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
                   >
-                    <div className="p-6 flex-1 flex flex-col gap-3">
+                    <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
                       {/* Title + badge */}
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
+                      <div className="flex items-start justify-between gap-2 md:gap-4">
+                        <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
                           {job.title}
                         </h3>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           {job.acceptedCount >= job.capacity ? (
-                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-700 border-green-100">
+                            <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-700 border-green-100">
                               คัดเลือกครบแล้ว
                             </span>
                           ) : job.pendingCount > 0 ? (
-                            <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-yellow-50 text-yellow-700 border-yellow-100">
+                            <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-yellow-50 text-yellow-700 border-yellow-100">
                               รอพิจารณา {job.pendingCount}
                             </span>
                           ) : null}
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between mt-auto pt-2">
-                        <span className="text-xs text-gray-500">
-                          ผู้สมัครทั้งหมด {job.totalCount} คน · รับแล้ว{" "}
+                      <div className="flex items-center justify-between mt-auto pt-1 md:pt-2">
+                        <span className="text-[10px] md:text-xs text-gray-500">
+                          ผู้สมัคร {job.totalCount} คน · รับแล้ว{" "}
                           {job.acceptedCount}/{job.capacity}
                         </span>
                         <Link
                           href={`/manage-projects/${job._id}/applicants`}
-                          className="text-xs text-primary-blue-500 font-medium group-hover:underline"
+                          className="text-[10px] md:text-xs text-primary-blue-500 font-medium group-hover:underline"
                         >
                           ดูผู้สมัคร →
                         </Link>
@@ -933,13 +959,13 @@ export default function ManageProjectsPage() {
       <div className="w-full">
         {isFreelancer ? (
           // ── ฝั่งนิสิต ──────────────────────────────────────────────────────────
-          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 border border-gray-100">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+              <h2 className="text-m md:text-l font-black text-gray-900 flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-2.5 bg-blue-600 rounded-lg md:rounded-xl text-white shadow-lg shadow-blue-100">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
+                    className="h-4 w-4 md:h-5 md:w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -957,11 +983,12 @@ export default function ManageProjectsPage() {
             </div>
 
             {activeApplications.length === 0 ? (
-              <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                  <Briefcase size={32} />
+              <div className="bg-white rounded-xl md:rounded-[2rem] p-8 md:p-12 text-center border border-dashed border-gray-200">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-gray-300">
+                  <Briefcase size={24} className="md:hidden" />
+                  <Briefcase size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400">
+                <p className="font-bold text-gray-400 text-sm md:text-base">
                   ยังไม่มีงานที่กำลังดำเนินการ
                 </p>
               </div>
@@ -993,34 +1020,52 @@ export default function ManageProjectsPage() {
                   return (
                     <div
                       key={app._id}
-                      className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
+                      className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
                     >
-                      <div className="p-6 flex-1 flex flex-col gap-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
+                      <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
+                        <div className="flex items-start justify-between gap-2 md:gap-4">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
                             {app.jobTitle}
                           </h3>
                           <span
-                            className={`text-xs px-2.5 py-1 rounded-lg border uppercase shrink-0 ${s.color}`}
+                            className={`text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase shrink-0 ${s.color}`}
                           >
                             {s.label}
                           </span>
                         </div>
                         <div>
-                          <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+                          <div className="flex justify-between text-[10px] md:text-xs text-gray-500 mb-1 md:mb-1.5">
                             <span>ความคืบหน้า</span>
                             <span className="font-medium text-gray-700">
                               {app.progress}%
                             </span>
                           </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                          <div className="w-full bg-gray-100 rounded-full h-1 md:h-1.5 overflow-hidden">
                             <div
-                              className="bg-primary-blue-500 h-1.5 rounded-full transition-all duration-500"
+                              className="bg-primary-blue-500 h-1 md:h-1.5 rounded-full transition-all duration-500"
                               style={{ width: `${app.progress}%` }}
                             />
                           </div>
                         </div>
-                        <p className="text-xs text-gray-400">
+                        {/* Mobile: กำหนดส่ง + link on same line */}
+                        <div className="flex items-center justify-between md:hidden">
+                          <p className="text-[10px] text-gray-400">
+                            กำหนดส่ง:{" "}
+                            {app.jobDeadline
+                              ? new Date(app.jobDeadline).toLocaleDateString("th-TH")
+                              : "-"}
+                          </p>
+                          <Link
+                            href={`/manage-projects/${app.jobId}/work/${app._id}`}
+                            className="text-[10px] text-primary-blue-500 font-medium hover:underline"
+                          >
+                            {app.status === "submitted"
+                              ? "ดูรายละเอียด →"
+                              : "ส่งงาน →"}
+                          </Link>
+                        </div>
+                        {/* Desktop: original layout */}
+                        <p className="hidden md:block text-xs text-gray-400">
                           กำหนดส่ง:{" "}
                           {app.jobDeadline
                             ? new Date(app.jobDeadline).toLocaleDateString("th-TH")
@@ -1028,7 +1073,7 @@ export default function ManageProjectsPage() {
                         </p>
                         <Link
                           href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                          className="btn-primary block text-sm text-center py-2 rounded-full w-full mt-auto"
+                          className="hidden md:block btn-primary text-sm text-center py-2 rounded-full w-full mt-auto"
                         >
                           {app.status === "submitted"
                             ? "ดูรายละเอียดงาน"
@@ -1043,22 +1088,24 @@ export default function ManageProjectsPage() {
           </div>
         ) : (
           /* ฝั่งเจ้าของงาน */
-          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
-                  <Clock size={20} />
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 border border-gray-100">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+              <h2 className="text-m md:text-l font-black text-gray-900 flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-2.5 bg-blue-600 rounded-lg md:rounded-xl text-white shadow-lg shadow-blue-100">
+                  <Clock size={16} className="md:hidden" />
+                  <Clock size={20} className="hidden md:block" />
                 </div>
                 งานที่กำลังดำเนินการ ({activeOwnerJobs.length})
               </h2>
             </div>
 
             {activeOwnerJobs.length === 0 ? (
-              <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                  <Briefcase size={32} />
+              <div className="bg-white rounded-xl md:rounded-[2rem] p-8 md:p-12 text-center border border-dashed border-gray-200">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-gray-300">
+                  <Briefcase size={24} className="md:hidden" />
+                  <Briefcase size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400">
+                <p className="font-bold text-gray-400 text-sm md:text-base">
                   ยังไม่มีงานที่กำลังดำเนินการในขณะนี้
                 </p>
               </div>
@@ -1106,41 +1153,41 @@ export default function ManageProjectsPage() {
                   return (
                     <div
                       key={job._id}
-                      className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
+                      className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
                     >
-                      <div className="p-6 flex-1">
-                        <div className="flex justify-between items-start gap-4 mb-5">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
+                      <div className="p-4 md:p-6 flex-1">
+                        <div className="flex justify-between items-start gap-2 md:gap-4 mb-3 md:mb-5">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
                             {job.title}
                           </h3>
                           <span
-                            className={`text-xs px-2.5 py-1 rounded-lg border uppercase shrink-0 ${currentStyle}`}
+                            className={`text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase shrink-0 ${currentStyle}`}
                           >
                             {job.aggregateBadge.label}
                           </span>
                         </div>
-                        <div className="flex justify-between text-xs text-gray-500 mb-2">
+                        <div className="flex justify-between text-[10px] md:text-xs text-gray-500 mb-1.5 md:mb-2">
                           <span>ความคืบหน้าเฉลี่ย</span>
                           <span className="font-medium text-gray-700">
                             {job.avgProgress}%
                           </span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-gray-100 rounded-full h-1 md:h-1.5 overflow-hidden">
                           <div
-                            className="bg-primary-blue-500 h-1.5 rounded-full transition-all duration-500"
+                            className="bg-primary-blue-500 h-1 md:h-1.5 rounded-full transition-all duration-500"
                             style={{ width: `${job.avgProgress}%` }}
                           />
                         </div>
-                        <div className="flex items-center justify-between py-2">
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex items-center justify-between py-1.5 md:py-2">
+                          <div className="flex items-center gap-1 md:gap-1.5">
                             <div className="flex">
                               {job.workers.slice(0, 5).map((w, i) => (
                                 <div
                                   key={w._id}
                                   title={w.applicantName}
-                                  className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden flex items-center justify-center text-[10px] font-medium text-gray-600 flex-shrink-0"
+                                  className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-gray-200 border-2 border-white overflow-hidden flex items-center justify-center text-[8px] md:text-[10px] font-medium text-gray-600 flex-shrink-0"
                                   style={{
-                                    marginLeft: i > 0 ? "-6px" : "0",
+                                    marginLeft: i > 0 ? "-5px" : "0",
                                     zIndex: 5 - i,
                                   }}
                                 >
@@ -1156,11 +1203,11 @@ export default function ManageProjectsPage() {
                                 </div>
                               ))}
                             </div>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-[10px] md:text-xs text-gray-500">
                               {job.workers.length} คน
                             </span>
                           </div>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-[10px] md:text-xs text-gray-400">
                             กำหนดส่ง{" "}
                             {job.deliveryDate
                               ? new Date(job.deliveryDate).toLocaleDateString("th-TH")
@@ -1168,11 +1215,11 @@ export default function ManageProjectsPage() {
                           </span>
                         </div>
                         {breakdownItems.length > 0 && (
-                          <div className="flex flex-wrap gap-1 pt-2 border-t border-gray-100">
+                          <div className="flex flex-wrap gap-1 pt-1.5 md:pt-2 border-t border-gray-100">
                             {breakdownItems.map((item) => (
                               <span
                                 key={item.label}
-                                className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${item.cls}`}
+                                className={`text-[8px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded font-medium ${item.cls}`}
                               >
                                 {item.count} {item.label}
                               </span>
@@ -1181,7 +1228,7 @@ export default function ManageProjectsPage() {
                         )}
                         <Link
                           href={`/manage-projects/${job._id}/overview`}
-                          className="btn-primary block text-sm text-center py-2 rounded-full w-full mt-3"
+                          className="btn-primary block text-xs md:text-sm text-center py-2 rounded-full w-full mt-2 md:mt-3"
                         >
                           ดูรายละเอียดงาน
                         </Link>
@@ -1198,22 +1245,24 @@ export default function ManageProjectsPage() {
       <div className="w-full">
         {isFreelancer ? (
           // ── ฝั่งนิสิต (Student) ──────────────────────────────────────────────────────────
-          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-green-100">
-                  <CheckCircle size={20} />
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 border border-gray-100">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+              <h2 className="text-m md:text-l font-black text-gray-900 flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-2.5 bg-blue-600 rounded-lg md:rounded-xl text-white shadow-lg shadow-green-100">
+                  <CheckCircle size={16} className="md:hidden" />
+                  <CheckCircle size={20} className="hidden md:block" />
                 </div>
                 งานที่เสร็จสิ้น ({completedApplications.length})
               </h2>
             </div>
 
             {completedApplications.length === 0 ? (
-              <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                  <Briefcase size={32} />
+              <div className="bg-white rounded-xl md:rounded-[2rem] p-8 md:p-12 text-center border border-dashed border-gray-200">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-gray-300">
+                  <Briefcase size={24} className="md:hidden" />
+                  <Briefcase size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400">
+                <p className="font-bold text-gray-400 text-sm md:text-base">
                   ยังไม่มีงานที่เสร็จสิ้น
                 </p>
               </div>
@@ -1229,25 +1278,25 @@ export default function ManageProjectsPage() {
                   return (
                     <div
                       key={app._id}
-                      className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
+                      className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
                     >
-                      <div className="p-6 flex-1 flex flex-col gap-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2">
+                      <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
+                        <div className="flex items-start justify-between gap-2 md:gap-4">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-2 text-sm md:text-base">
                             {app.jobTitle}
                           </h3>
-                          <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
+                          <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
                             เสร็จสิ้น
                           </span>
                         </div>
 
-                        <p className="text-xs text-gray-400">
+                        <p className="text-[10px] md:text-xs text-gray-400">
                           {app.jobCategory || "งานพิเศษ"}
                         </p>
 
-                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 w-full">
-                          <span className="text-[10px] text-gray-400 font-medium">
-                            กำหนดส่ง{" "}
+                        <div className="flex items-center justify-between mt-auto pt-3 md:pt-4 border-t border-gray-50 w-full">
+                          <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">
+                            กำหนดส่ง {" "}
                             {app.jobDeadline
                               ? new Date(app.jobDeadline).toLocaleDateString(
                                   "th-TH",
@@ -1258,16 +1307,17 @@ export default function ManageProjectsPage() {
                           {hasStudentReviewed ? (
                             <Link
                               href={`/manage-projects/${app.jobId}/work/${app._id}`}
-                              className="text-xs font-bold text-primary-blue-500 hover:underline"
+                              className="text-[10px] md:text-xs font-bold text-primary-blue-500 hover:underline"
                             >
                               ดูรายละเอียด →
                             </Link>
                           ) : (
                             <button
                               onClick={() => openReviewModal(app)}
-                              className="text-xs font-bold text-orange-500 animate-pulse hover:underline flex items-center gap-1"
+                              className="text-[10px] md:text-xs font-bold text-orange-500 animate-pulse hover:underline flex items-center gap-1"
                             >
-                              <Star size={12} fill="currentColor" />{" "}
+                              <Star size={10} className="md:hidden" fill="currentColor" />
+                              <Star size={12} className="hidden md:block" fill="currentColor" />{" "}
                               รีวิวผู้ว่าจ้างเลย! →
                             </button>
                           )}
@@ -1281,22 +1331,24 @@ export default function ManageProjectsPage() {
           </div>
         ) : (
           // ── ฝั่งเจ้าของงาน (Owner) ──────────────────────────────────────────────────────────
-          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-l font-black text-gray-900 flex items-center gap-3">
-                <div className="p-2.5 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
-                  <CheckCircle size={20} />
+          <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 border border-gray-100">
+            <div className="flex justify-between items-center mb-6 md:mb-8">
+              <h2 className="text-m md:text-l font-black text-gray-900 flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-2.5 bg-blue-600 rounded-lg md:rounded-xl text-white shadow-lg shadow-blue-100">
+                  <CheckCircle size={16} className="md:hidden" />
+                  <CheckCircle size={20} className="hidden md:block" />
                 </div>
                 งานที่เสร็จสิ้น ({completedOwnerJobs.length})
               </h2>
             </div>
 
             {completedOwnerJobs.length === 0 ? (
-              <div className="bg-white rounded-[2rem] p-12 text-center border border-dashed border-gray-200">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                  <Briefcase size={32} />
+              <div className="bg-white rounded-xl md:rounded-[2rem] p-8 md:p-12 text-center border border-dashed border-gray-200">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 text-gray-300">
+                  <Briefcase size={24} className="md:hidden" />
+                  <Briefcase size={32} className="hidden md:block" />
                 </div>
-                <p className="font-bold text-gray-400">
+                <p className="font-bold text-gray-400 text-sm md:text-base">
                   ยังไม่มีงานที่เสร็จสิ้น
                 </p>
               </div>
@@ -1314,24 +1366,24 @@ export default function ManageProjectsPage() {
                   return (
                     <div
                       key={job._id}
-                      className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
+                      className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
                     >
-                      <div className="p-6 flex-1 flex flex-col gap-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1">
+                      <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
+                        <div className="flex items-start justify-between gap-2 md:gap-4">
+                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-sm md:text-base">
                             {job.title}
                           </h3>
-                          <span className="text-xs px-2.5 py-1 rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
+                          <span className="text-[10px] md:text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg border uppercase bg-green-50 text-green-600 border-green-100 shrink-0">
                             เสร็จสิ้น
                           </span>
                         </div>
 
-                        <p className="text-xs text-gray-400">
+                        <p className="text-[10px] md:text-xs text-gray-400">
                           {job.category || "งานพิเศษ"}
                         </p>
 
-                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 w-full">
-                          <span className="text-[10px] text-gray-400 font-medium">
+                        <div className="flex items-center justify-between mt-auto pt-3 md:pt-4 border-t border-gray-50 w-full">
+                          <span className="text-[9px] md:text-[10px] text-gray-400 font-medium">
                             กำหนดส่ง{" "}
                             {job.deliveryDate
                               ? new Date(job.deliveryDate).toLocaleDateString(
@@ -1342,7 +1394,7 @@ export default function ManageProjectsPage() {
 
                           <Link
                             href={`/manage-projects/${job.jobId || job._id}/overview`}
-                            className={`text-xs font-bold transition-all hover:underline flex items-center gap-1 ${
+                            className={`text-[10px] md:text-xs font-bold transition-all hover:underline flex items-center gap-1 ${
                               isAllReviewed
                                 ? "text-primary-blue-500"
                                 : "text-orange-500 animate-pulse"
@@ -1352,7 +1404,8 @@ export default function ManageProjectsPage() {
                               "ดูรายละเอียด →"
                             ) : (
                               <span className="flex items-center gap-1">
-                                <Star size={12} fill="currentColor" />{" "}
+                                <Star size={10} className="md:hidden" fill="currentColor" />
+                                <Star size={12} className="hidden md:block" fill="currentColor" />{" "}
                                 รีวิวนิสิตเลย! →
                               </span>
                             )}
@@ -1370,7 +1423,7 @@ export default function ManageProjectsPage() {
 
       <AnimatePresence>
         {isReviewModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -1385,21 +1438,22 @@ export default function ManageProjectsPage() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl text-center"
+              className="relative bg-white w-full max-w-md rounded-2xl md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl text-center max-h-[90vh] overflow-y-auto"
             >
-              <div className="w-16 h-16 bg-yellow-50 text-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Star size={32} fill="currentColor" />
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-yellow-50 text-yellow-500 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
+                <Star size={24} className="md:hidden" fill="currentColor" />
+                <Star size={32} className="hidden md:block" fill="currentColor" />
               </div>
 
-              <h3 className="text-xl font-black text-gray-900 mb-2">
+              <h3 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">
                 ให้คะแนนความประทับใจ
               </h3>
-              <p className="text-xs text-gray-400 mb-8 font-medium">
+              <p className="text-[10px] md:text-xs text-gray-400 mb-6 md:mb-8 font-medium line-clamp-1">
                 โปรเจกต์: {selectedApp?.jobTitle || selectedApp?.title}
               </p>
 
               {/* Star Rating */}
-              <div className="flex justify-center gap-3 mb-8">
+              <div className="flex justify-center gap-2 md:gap-3 mb-6 md:mb-8">
                 {[1, 2, 3, 4, 5].map((num) => (
                   <button
                     key={num}
@@ -1407,7 +1461,14 @@ export default function ManageProjectsPage() {
                     className={`transition-all duration-200 ${rating >= num ? "text-yellow-400 scale-110" : "text-gray-200"}`}
                   >
                     <Star
+                      size={28}
+                      className="md:hidden"
+                      fill={rating >= num ? "currentColor" : "none"}
+                      strokeWidth={2.5}
+                    />
+                    <Star
                       size={36}
+                      className="hidden md:block"
                       fill={rating >= num ? "currentColor" : "none"}
                       strokeWidth={2.5}
                     />
@@ -1420,42 +1481,42 @@ export default function ManageProjectsPage() {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="เขียนความประทับใจ หรือข้อเสนอแนะ..."
-                className="w-full p-5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-sm mb-6 transition-all"
+                className="w-full p-4 md:p-5 bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-xs md:text-sm mb-4 md:mb-6 transition-all"
               />
 
               {/* Anonymous Toggle */}
-              <div className="flex items-center justify-between px-5 py-4 bg-gray-50 rounded-2xl mb-8 border border-gray-100">
+              <div className="flex items-center justify-between px-4 md:px-5 py-3 md:py-4 bg-gray-50 rounded-xl md:rounded-2xl mb-6 md:mb-8 border border-gray-100">
                 <div className="text-left">
-                  <p className="text-xs font-bold text-gray-700">
+                  <p className="text-[10px] md:text-xs font-bold text-gray-700">
                     ส่งแบบไม่ระบุตัวตน
                   </p>
-                  <p className="text-[10px] text-gray-400">
+                  <p className="text-[9px] md:text-[10px] text-gray-400">
                     ตัวตนของคุณจะไม่ปรากฏในหน้าโปรไฟล์ของอีกฝ่าย
                   </p>
                 </div>
                 <button
                   onClick={() => setIsAnonymous(!isAnonymous)}
-                  className={`w-11 h-6 rounded-full transition-colors relative ${isAnonymous ? "bg-blue-600" : "bg-gray-300"}`}
+                  className={`w-10 h-5 md:w-11 md:h-6 rounded-full transition-colors relative flex-shrink-0 ${isAnonymous ? "bg-blue-600" : "bg-gray-300"}`}
                 >
                   <motion.div
-                    animate={{ x: isAnonymous ? 22 : 2 }}
+                    animate={{ x: isAnonymous ? 20 : 2 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                    className="absolute top-0.5 md:top-1 w-4 h-4 bg-white rounded-full shadow-sm"
                   />
                 </button>
               </div>
 
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 md:gap-3">
                 <button
                   onClick={handleSubmitReview}
                   disabled={isSubmittingReview}
-                  className="w-full py-4 bg-[#0C5BEA] text-white font-black rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                  className="w-full py-3 md:py-4 bg-[#0C5BEA] text-white font-black text-sm md:text-base rounded-xl md:rounded-2xl shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
                 >
                   {isSubmittingReview ? "กำลังบันทึก..." : "ส่งรีวิวและบันทึก"}
                 </button>
                 <button
                   onClick={() => setIsReviewModalOpen(false)}
-                  className="text-xs font-bold text-gray-400 hover:text-gray-600 transition-all py-2"
+                  className="text-[10px] md:text-xs font-bold text-gray-400 hover:text-gray-600 transition-all py-2"
                 >
                   ปิดหน้าต่างนี้
                 </button>
