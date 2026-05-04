@@ -711,7 +711,7 @@ export default function MyJobsPage() {
                 return (
                   <div key={job._id} className="relative">
                     {/* Status Badge */}
-                    <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
+                    <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
                       <StatusBadge status={job.status} isExpired={expired} />
                     </div>
 
