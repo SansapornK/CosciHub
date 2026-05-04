@@ -26,6 +26,8 @@ import {
   ChartPie,
   Trash,
   Wallet,
+  ChevronDown,
+  Upload,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "@/app/components/buttons/BackButton";
@@ -100,6 +102,9 @@ export default function WorkManagementPage() {
   const [existingFiles, setExistingFiles] = useState<
     { fileName: string; fileUrl: string; fileSize: number }[]
   >([]);
+
+  // Mobile accordion state for job details
+  const [isJobDetailsOpen, setIsJobDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (authStatus === "authenticated" && applicationId) {
@@ -320,96 +325,764 @@ export default function WorkManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/30 pb-20 selection:bg-blue-100 selection:text-blue-600">
-      {/* ── Header Area ── */}
-      <motion.section
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white border-b border-gray-100 pt-12 pb-8 px-6 md:px-12 sticky top-0 z-30 backdrop-blur-md bg-white/80"
-      >
-        <div className="max-w-6xl mx-auto">
+      {/* ══════════════════════════════════════════════════════════════════════════
+          MOBILE LAYOUT (< md:768px)
+          ══════════════════════════════════════════════════════════════════════════ */}
+      <div className="md:hidden">
+        {/* ── 1. Header / Job Title Section ── */}
+        <motion.section
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border-b border-gray-100 pt-8 pb-5 px-4 "
+        >
           <BackButton />
+          <div className="mt-4">
+            <p className="text-xs text-gray-400 font-medium mb-1">
+              {workData.jobId?.category || "ทั่วไป"}
+            </p>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-tight">
+              {workData.jobId?.title}
+            </h1>
+          </div>
+        </motion.section>
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-6">
-            <div className="flex-1">
-              <motion.h1
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-3xl md:text-4xl font-black text-gray-900 mb-2 tracking-tight"
-              >
-                {workData.jobId?.title}
-              </motion.h1>
-              <div className="flex flex-wrap items-center gap-3">
-                {/* <span className="bg-gray-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest shadow-lg shadow-gray-200">
-                  {workData.jobId?.category || "ทั่วไป"}
-                </span> */}
-                <span className="bg-gray-100 text-gray-600 text-[12px] px-2.5 py-1 font-medium rounded-full uppercase">
-                  {workData.jobId?.category || "ทั่วไป"}
-                </span>
+          {/* ── 2. Owner Card ── */}
+          <Link
+            href={`/account/${isFreelancer ? workData.jobId?.ownerId : workData.applicantId?._id}`}
+            className="block"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white   shadow-sm p-4 flex items-center gap-3"
+            >
+              {(() => {
+                const imgSrc = isFreelancer
+                  ? workData.jobId?.ownerImage
+                  : workData.applicantId?.profileImageUrl;
+                const fallbackName = isFreelancer
+                  ? workData.jobId?.owner
+                  : workData.applicantId?.name;
 
-                {/* <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border-2 ${statusLabel[workData.status]?.class.replace('bg-', 'border-').replace('text-', 'text-')}`}>
-                  {statusLabel[workData.status]?.text}
-                </span> */}
+                return imgSrc ? (
+                  <img
+                    src={imgSrc}
+                    alt={fallbackName}
+                    className="w-10 h-10 rounded-full object-cover shrink-0 ring-2 ring-gray-50"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-black text-lg shrink-0">
+                    {fallbackName?.[0]?.toUpperCase()}
+                  </div>
+                );
+              })()}
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-gray-400 font-medium">
+                  {isFreelancer ? "ผู้ว่าจ้าง / เจ้าของงาน" : "นิสิตผู้ปฏิบัติงาน"}
+                </p>
+                <p className="text-sm font-bold text-gray-800 truncate">
+                  {isFreelancer ? workData.jobId?.owner : workData.applicantId?.name}
+                </p>
+              </div>
+              <ExternalLink size={16} className="text-gray-300 shrink-0" />
+            </motion.div>
+          </Link>
+
+        <main className="px-4 py-4 space-y-4">
+          {/* ── 3. Status + Deadline Row ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-2 gap-3"
+          >
+            {/* Status Cell */}
+            <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 rounded-lg bg-purple-50">
+                  <ChartPie size={14} className="text-purple-600" />
+                </div>
+                <p className="text-[11px] text-gray-400 font-medium">สถานะงาน :</p>
+              </div>
+              <p className={`text-sm font-bold ${
+                workData.status === "in_progress" ? "text-blue-600" :
+                workData.status === "submitted" ? "text-purple-600" :
+                workData.status === "revision" ? "text-orange-600" :
+                workData.status === "completed" ? "text-green-600" :
+                "text-gray-600"
+              }`}>
+                {statusLabel[workData.status]?.text}
+              </p>
+            </div>
+
+            {/* Deadline Cell */}
+            <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 relative">
+              {workData.jobId?.deliveryDate && (() => {
+                const deadline = new Date(workData.jobId.deliveryDate);
+                const today = new Date();
+                const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                const isUrgent = daysLeft <= 3;
+                const isPast = daysLeft < 0;
+
+                return (
+                  <>
+                    <span className={`absolute -top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      isPast ? "bg-red-100 text-red-600" :
+                      isUrgent ? "bg-red-100 text-red-600" :
+                      "bg-blue-100 text-blue-500"
+                    }`}>
+                      {isPast ? `เลยกำหนด ${Math.abs(daysLeft)} วัน` :
+                       daysLeft === 0 ? "วันนี้" :
+                       `อีก ${daysLeft} วัน`}
+                    </span>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`p-1.5 rounded-lg ${isPast ? "bg-red-50" : isUrgent ? "bg-orange-50" : "bg-gray-50"}`}>
+                        <Clock size={14} className={isPast ? "text-red-500" : isUrgent ? "text-orange-500" : "text-gray-400"} />
+                      </div>
+                      <p className="text-[11px] text-gray-400 font-medium">ส่งงานภายใน :</p>
+                    </div>
+                    <p className={`text-sm font-bold ${isPast ? "text-red-600" : isUrgent ? "text-orange-600" : "text-gray-800"}`}>
+                      {deadline.toLocaleDateString("th-TH", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "2-digit",
+                      })}
+                    </p>
+                  </>
+                );
+              })()}
+              {!workData.jobId?.deliveryDate && (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 rounded-lg bg-gray-50">
+                      <Clock size={14} className="text-gray-400" />
+                    </div>
+                    <p className="text-[11px] text-gray-400 font-medium">ส่งงานภายใน :</p>
+                  </div>
+                  <p className="text-sm font-bold text-gray-400">ไม่ระบุ</p>
+                </>
+              )}
+            </div>
+          </motion.div>
+
+          {/* ── 4. Job Details Accordion ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden"
+          >
+            <button
+              onClick={() => setIsJobDetailsOpen(!isJobDetailsOpen)}
+              className="w-full p-4 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-50 rounded-xl text-blue-600">
+                  <FileText size={18} />
+                </div>
+                <span className="text-base font-bold text-gray-900">รายละเอียดงาน</span>
+              </div>
+              <ChevronDown
+                size={20}
+                className={`text-gray-400 transition-transform duration-200 ${isJobDetailsOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            <AnimatePresence>
+              {isJobDetailsOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 pb-4">
+                    <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">
+                      {workData.jobId?.description || "ไม่มีรายละเอียดเพิ่มเติม"}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* ── 5. Budget + Info Card ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-3xl p-5 text-white relative overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #0C5BEA 0%, #1D4ED8 100%)" }}
+          >
+            <div className="absolute -bottom-8 -right-8 opacity-10">
+              <Briefcase size={140} />
+            </div>
+            <div className="relative z-10 grid grid-cols-2 gap-4">
+              {/* Left Column - Budget */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Wallet size={16} className="text-white/80" />
+                  <span className="text-xs font-bold text-white/60">งบประมาณ</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xl font-black text-white">
+                    ฿{workData.jobId?.budgetMin?.toLocaleString()}
+                  </span>
+                  {workData.jobId?.budgetMax && (
+                    <span className="text-sm font-bold text-white/40">
+                      - ฿{workData.jobId?.budgetMax?.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column - Location & Description */}
+              <div className="space-y-3">
+                {/* Location */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <MapPin size={12} className="text-white/60" />
+                    <p className="text-[10px] font-bold text-white/60">สถานที่ปฏิบัติงาน</p>
+                  </div>
+                  <p className="text-sm font-bold text-white">
+                    {workData.jobId?.location || "ออนไลน์"}
+                  </p>
+                </div>
+                {/* Description */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Info size={12} className="text-white/60" />
+                    <p className="text-[10px] font-bold text-white/60">คำอธิบายงาน</p>
+                  </div>
+                  <p className="text-xs font-medium text-white/80 line-clamp-2">
+                    {workData.jobId?.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ── 6. Progress Section ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Clock size={18} className="text-blue-600" />
+                <span className="text-base font-bold text-gray-900">ความคืบหน้างาน</span>
+              </div>
+              <span className="text-2xl font-black text-blue-600 tabular-nums">
+                {newProgress}<span className="text-sm text-gray-300">%</span>
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            {!isEditingProgress ? (
+              <div className="relative h-2.5 bg-gray-100 rounded-full overflow-hidden mb-4">
+                <motion.div
+                  className="absolute inset-y-0 left-0 rounded-full"
+                  style={{
+                    background: newProgress === 100
+                      ? "linear-gradient(90deg, #16a34a, #4ade80)"
+                      : "linear-gradient(90deg, #2563eb, #60a5fa)",
+                  }}
+                  animate={{ width: `${newProgress}%` }}
+                  transition={{ type: "spring", stiffness: 300, damping: 35 }}
+                />
+              </div>
+            ) : (
+              <div className="mb-4 space-y-2">
+                <div className="relative h-2.5 flex items-center bg-gray-100 rounded-full">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 rounded-full"
+                    style={{
+                      background: newProgress === 100
+                        ? "linear-gradient(90deg, #16a34a, #4ade80)"
+                        : "linear-gradient(90deg, #2563eb, #60a5fa)",
+                    }}
+                    animate={{ width: `${newProgress}%` }}
+                    transition={{ type: "spring", stiffness: 400, damping: 40 }}
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="25"
+                    value={newProgress}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (val >= (workData?.progress || 0)) setNewProgress(val);
+                      else toast.error("ไม่สามารถลดความคืบหน้างานลงได้", { id: "progress-error" });
+                    }}
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer z-10 h-full"
+                  />
+                  <motion.div
+                    className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-[3px] border-blue-600 rounded-full shadow-lg pointer-events-none"
+                    animate={{ left: `calc(${newProgress}% - 10px)` }}
+                    transition={{ type: "spring", stiffness: 400, damping: 40 }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] font-medium text-gray-300 px-0.5">
+                  {[0, 25, 50, 75, 100].map((v) => (
+                    <span key={v} className={newProgress >= v ? "text-blue-500" : ""}>{v}%</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Edit Mode Content */}
+            {isFreelancer && !["completed", "submitted"].includes(workData.status) && (
+              <>
+                {!isEditingProgress ? (
+                  <>
+                    {workData.progressNote && (
+                      <div className="flex gap-2 p-3 rounded-xl bg-gray-50 border border-gray-100 mb-3">
+                        <div className="w-1 self-stretch bg-blue-500 rounded-full shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold text-blue-500 mb-0.5">รายละเอียดการอัปเดตล่าสุด</p>
+                          <p className="text-xs text-gray-700 break-words">{workData.progressNote}</p>
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setIsEditingProgress(true)}
+                      className="w-full py-3 bg-white border border-gray-200 text-gray-600 font-medium rounded-xl hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 text-sm"
+                    >
+                      <Pencil size={14} />
+                      อัปเดต
+                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                        เลื่อนเพื่ออัปเดต
+                      </span>
+                      <button
+                        onClick={() => {
+                          setIsEditingProgress(false);
+                          setNewProgress(workData?.progress || 0);
+                          setProgressNote("");
+                        }}
+                        className="text-[10px] font-bold text-gray-400 hover:text-red-500 flex items-center gap-1"
+                      >
+                        <X size={12} /> ยกเลิก
+                      </button>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 flex items-center gap-1 mb-1">
+                        <MessageSquare size={10} /> รายละเอียดการอัปเดต
+                      </label>
+                      <textarea
+                        rows={2}
+                        placeholder="สถานะงานปัจจุบัน..."
+                        value={progressNote}
+                        onChange={(e) => setProgressNote(e.target.value)}
+                        maxLength={200}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-700 placeholder-gray-300 resize-none outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleUpdateWork("updateProgress")}
+                      className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-sm"
+                    >
+                      <CheckCircle2 size={16} />
+                      บันทึก {newProgress}%
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </motion.div>
+
+          {/* ── 7. Submit Work Section ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4"
+          >
+            {/* Header */}
+            <div className="flex items-center flex-wrap gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <FileText size={18} className="text-purple-600" />
+                <span className="text-base font-bold text-gray-900">ส่งงาน</span>
+              </div>
+              <div className="flex items-center gap-2 ml-auto">
+                {(workData.jobId?.jobType?.toLowerCase().includes("ออนไลน์") ||
+                  workData.jobId?.jobType?.toLowerCase().includes("online")) && (
+                  <span className="text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-md">จำเป็น</span>
+                )}
+                <span className="text-[10px] font-medium text-gray-400">สูงสุด 10MB</span>
               </div>
             </div>
 
-            <Link
-              href={`/account/${isFreelancer ? workData.jobId?.ownerId : workData.applicantId?._id}`}
-              // target="_blank"
-              className="block w-full md:w-auto"
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-white p-3 md:p-4 rounded-[1.5rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-4 transition-all hover:border-blue-200 hover:shadow-md group"
-              >
-                {/* Avatar */}
-                {(() => {
-                  const imgSrc = isFreelancer
-                    ? workData.jobId?.ownerImage
-                    : workData.applicantId?.profileImageUrl;
-
-                  const fallbackName = isFreelancer
-                    ? workData.jobId?.owner
-                    : workData.applicantId?.name;
-
-                  return imgSrc ? (
-                    <img
-                      src={imgSrc}
-                      alt={fallbackName}
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover shrink-0 ring-2 ring-gray-50 group-hover:ring-blue-100 transition-all"
+            {isFreelancer &&
+            (["in_progress", "revision", "accepted"].includes(workData.status) || isEditingSubmission) ? (
+              <div className="space-y-4">
+                {/* Link Input */}
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">แนบลิงก์ผลงาน (Drive, Figma, Github)</p>
+                  <div className="relative">
+                    <ExternalLink size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-sm focus:ring-2 outline-none transition-all ${
+                        linkError ? "border-red-300 focus:ring-red-500" : "border-gray-100 focus:ring-blue-500"
+                      }`}
+                      value={workLink}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setWorkLink(val);
+                        if (val && !isValidUrl(val)) {
+                          setLinkError("กรุณาใส่ลิงก์ที่ถูกต้อง");
+                        } else {
+                          setLinkError("");
+                        }
+                      }}
                     />
-                  ) : (
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-black text-lg md:text-xl shrink-0 group-hover:bg-blue-100 transition-colors">
-                      {fallbackName?.[0]?.toUpperCase()}
-                    </div>
-                  );
-                })()}
-
-                <div className="min-w-0 flex-1 md:flex-none">
-                  <p className="text-[10px] md:text-[12px] text-gray-400 font-medium mb-0.5">
-                    {isFreelancer ? "ผู้ว่าจ้าง" : "นิสิตผู้ปฏิบัติงาน"}
-                  </p>
-                  <span className="text-xs md:text-sm font-black text-gray-800 truncate max-w-[150px] md:max-w-none group-hover:text-[#0C5BEA] transition-colors block">
-                    {isFreelancer
-                      ? workData.jobId?.owner
-                      : workData.applicantId?.name}
-                  </span>
+                  </div>
+                  {linkError && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle size={10} /> {linkError}
+                    </p>
+                  )}
                 </div>
 
-                <ExternalLink
-                  size={14}
-                  className="text-gray-300 group-hover:text-blue-500 transition-colors ml-auto md:ml-2"
-                />
-              </motion.div>
-            </Link>
-          </div>
-        </div>
-      </motion.section>
+                {/* Divider */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-xs font-bold text-gray-300">หรือ</span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
 
-      <main className="max-w-6xl mx-auto p-6 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {/* Existing Files */}
+                <AnimatePresence>
+                  {existingFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-gray-400">ไฟล์ที่ส่งแล้ว</p>
+                      {existingFiles.map((file, idx) => (
+                        <motion.div
+                          key={`existing-${idx}`}
+                          className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <FileText className="text-blue-500 shrink-0" size={16} />
+                            <div className="truncate">
+                              <p className="text-xs font-bold text-blue-700 truncate">{file.fileName}</p>
+                              <p className="text-[10px] text-blue-400">{(file.fileSize / (1024 * 1024)).toFixed(2)} MB</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setExistingFiles((prev) => prev.filter((_, i) => i !== idx))}
+                            className="p-1 text-blue-300 hover:text-red-500"
+                          >
+                            <X size={14} />
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </AnimatePresence>
+
+                {/* File Upload Dropzone */}
+                <div
+                  className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+                    selectedFiles.length > 0 ? "border-blue-500 bg-blue-50/30" : "border-gray-200"
+                  }`}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    disabled={loading || existingFiles.length + selectedFiles.length >= 3}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      const MAX_SIZE = 10 * 1024 * 1024;
+                      const currentTotal = existingFiles.length + selectedFiles.length;
+                      if (currentTotal + files.length > 3) {
+                        toast.error("อัปโหลดได้สูงสุด 3 ไฟล์");
+                        e.target.value = "";
+                        return;
+                      }
+                      const validFiles = files.filter((file) => {
+                        if (file.size > MAX_SIZE) {
+                          toast.error(`ไฟล์ ${file.name} ใหญ่เกิน 10MB`);
+                          return false;
+                        }
+                        return true;
+                      });
+                      setSelectedFiles((prev) => [...prev, ...validFiles]);
+                      e.target.value = "";
+                    }}
+                  />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className={`p-3 rounded-full ${
+                      existingFiles.length + selectedFiles.length >= 3 ? "bg-gray-50 text-gray-300" : "bg-gray-100 text-gray-400"
+                    }`}>
+                      <Upload size={20} />
+                    </div>
+                    <p className="text-sm text-gray-500">คลิกเพื่อเพิ่มไฟล์งาน</p>
+                    <p className="text-[10px] text-gray-400 font-bold">
+                      {existingFiles.length + selectedFiles.length}/3 ไฟล์
+                    </p>
+                  </div>
+                </div>
+
+                {/* Selected Files */}
+                <AnimatePresence>
+                  {selectedFiles.length > 0 && (
+                    <motion.div layout className="space-y-2">
+                      {selectedFiles.map((file, idx) => (
+                        <motion.div
+                          key={`${file.name}-${idx}`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="p-3 bg-white border border-gray-100 rounded-xl"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <FileText className="text-blue-500 shrink-0" size={16} />
+                              <div className="truncate">
+                                <p className="text-xs font-bold text-gray-700 truncate">{file.name}</p>
+                                <p className="text-[10px] text-gray-400">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                              </div>
+                            </div>
+                            {!loading && (
+                              <button
+                                onClick={() => setSelectedFiles((prev) => prev.filter((_, i) => i !== idx))}
+                                className="p-1 hover:bg-red-50 text-red-500 rounded-full"
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
+                          </div>
+                          {loading && uploadProgress[file.name] !== undefined && (
+                            <div className="mt-2 space-y-1">
+                              <div className="flex justify-between text-[10px] font-bold text-blue-600">
+                                <span>{uploadProgress[file.name] === 100 ? "เสร็จสมบูรณ์" : "กำลังอัปโหลด..."}</span>
+                                <span>{uploadProgress[file.name]}%</span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${uploadProgress[file.name]}%` }}
+                                  className="h-full bg-blue-600 rounded-full"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Submit Button */}
+                <button
+                  onClick={() => {
+                    if (workLink && !isValidUrl(workLink)) {
+                      setLinkError("กรุณาใส่ลิงก์ที่ถูกต้อง");
+                      return;
+                    }
+                    handleUpdateWork("submit");
+                  }}
+                  disabled={!!linkError}
+                  className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send size={16} />
+                  ส่งงาน
+                </button>
+              </div>
+            ) : (
+              /* Display submitted work */
+              <div className="space-y-3">
+                {workData.workLink && (
+                  <a
+                    href={workData.workLink}
+                    target="_blank"
+                    className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100"
+                  >
+                    <span className="font-bold text-blue-700 truncate mr-3 text-sm">{workData.workLink}</span>
+                    <span className="text-[10px] font-bold text-blue-600 shrink-0">เปิด →</span>
+                  </a>
+                )}
+                {workData.attachments && workData.attachments.length > 0 && (
+                  <div className="space-y-2">
+                    {workData.attachments.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <FileText className="text-purple-500" size={16} />
+                          <div className="truncate">
+                            <p className="text-xs font-bold text-gray-800 truncate">{file.fileName}</p>
+                            <p className="text-[10px] text-gray-400">{(file.fileSize / (1024 * 1024)).toFixed(2)} MB</p>
+                          </div>
+                        </div>
+                        <a
+                          href={file.fileUrl.replace("/upload/", "/upload/fl_attachment/")}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-purple-600"
+                        >
+                          ดาวน์โหลด
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!workData.workLink && (!workData.attachments || workData.attachments.length === 0) && (
+                  <div className="p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center text-gray-400 italic text-sm">
+                    ไม่มีการแนบไฟล์/ลิงก์
+                  </div>
+                )}
+                {isFreelancer && workData.status === "submitted" && !isEditingSubmission && (
+                  <button
+                    onClick={() => setIsEditingSubmission(true)}
+                    className="w-full py-2.5 bg-blue-50 text-blue-600 font-bold rounded-xl border border-blue-100 flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Pencil size={14} />
+                    แก้ไขงาน
+                  </button>
+                )}
+              </div>
+            )}
+          </motion.div>
+
+          {/* ── 8. Feedback Section ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <MessageSquare size={18} className="text-indigo-600" />
+                <span className="text-base font-bold text-gray-900">การตรวจรับงาน</span>
+              </div>
+              <span className="text-[10px] font-bold text-blue-600">ข้อความจากผู้ว่าจ้าง</span>
+            </div>
+
+            {!isFreelancer && workData.status === "submitted" ? (
+              <div className="space-y-3">
+                <textarea
+                  rows={3}
+                  placeholder="ระบุข้อความถึงนิสิต..."
+                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                  value={ownerFeedback}
+                  onChange={(e) => setOwnerFeedback(e.target.value)}
+                />
+                <button
+                  onClick={() => handleUpdateWork("approve")}
+                  className="w-full py-3 bg-green-600 text-white font-bold rounded-xl flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 size={16} /> อนุมัติและจบงาน
+                </button>
+                <button
+                  onClick={() => handleUpdateWork("requestRevision")}
+                  className="w-full py-3 bg-white border-2 border-orange-100 text-orange-600 font-bold rounded-xl flex items-center justify-center gap-2"
+                >
+                  <AlertCircle size={16} /> สั่งแก้ไขงาน
+                </button>
+              </div>
+            ) : (
+              <div className={`p-4 rounded-xl ${workData.feedback ? "bg-indigo-50/40 border border-indigo-100" : "bg-gray-50 border border-gray-200"}`}>
+                <p className={`text-sm leading-relaxed ${workData.feedback ? "text-indigo-900" : "text-gray-400 italic"}`}>
+                  {workData.feedback || "ยังไม่มีข้อความตอบกลับจากผู้ว่าจ้าง"}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </main>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════════════
+          DESKTOP LAYOUT (>= md:768px) - Preserve existing layout
+          ══════════════════════════════════════════════════════════════════════════ */}
+      <div className="hidden md:block">
+        {/* ── Header Area ── */}
+        <motion.section
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border-b border-gray-100 pt-12 pb-8 px-6 md:px-12 sticky top-0 z-30 backdrop-blur-md bg-white/80"
+        >
+          <div className="max-w-6xl mx-auto">
+            <BackButton />
+
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-6">
+              <div className="flex-1">
+                <motion.h1
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-3xl md:text-4xl font-black text-gray-900 mb-2 tracking-tight"
+                >
+                  {workData.jobId?.title}
+                </motion.h1>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="bg-gray-100 text-gray-600 text-[12px] px-2.5 py-1 font-medium rounded-full uppercase">
+                    {workData.jobId?.category || "ทั่วไป"}
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                href={`/account/${isFreelancer ? workData.jobId?.ownerId : workData.applicantId?._id}`}
+                className="block w-full md:w-auto"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-white p-3 md:p-4 rounded-[1.5rem] border border-gray-100 shadow-sm flex items-center gap-3 md:gap-4 transition-all hover:border-blue-200 hover:shadow-md group"
+                >
+                  {(() => {
+                    const imgSrc = isFreelancer
+                      ? workData.jobId?.ownerImage
+                      : workData.applicantId?.profileImageUrl;
+
+                    const fallbackName = isFreelancer
+                      ? workData.jobId?.owner
+                      : workData.applicantId?.name;
+
+                    return imgSrc ? (
+                      <img
+                        src={imgSrc}
+                        alt={fallbackName}
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover shrink-0 ring-2 ring-gray-50 group-hover:ring-blue-100 transition-all"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-black text-lg md:text-xl shrink-0 group-hover:bg-blue-100 transition-colors">
+                        {fallbackName?.[0]?.toUpperCase()}
+                      </div>
+                    );
+                  })()}
+
+                  <div className="min-w-0 flex-1 md:flex-none">
+                    <p className="text-[10px] md:text-[12px] text-gray-400 font-medium mb-0.5">
+                      {isFreelancer ? "ผู้ว่าจ้าง" : "นิสิตผู้ปฏิบัติงาน"}
+                    </p>
+                    <span className="text-xs md:text-sm font-black text-gray-800 truncate max-w-[150px] md:max-w-none group-hover:text-[#0C5BEA] transition-colors block">
+                      {isFreelancer
+                        ? workData.jobId?.owner
+                        : workData.applicantId?.name}
+                    </span>
+                  </div>
+
+                  <ExternalLink
+                    size={14}
+                    className="text-gray-300 group-hover:text-blue-500 transition-colors ml-auto md:ml-2"
+                  />
+                </motion.div>
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+
+        <main className="max-w-6xl mx-auto p-6 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* ── Left Column ── */}
         <div className="lg:col-span-2 space-y-10">
           <section className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-gray-100 relative overflow-hidden">
@@ -1190,7 +1863,7 @@ export default function WorkManagementPage() {
                           ? "bg-red-100 text-red-600"
                           : isUrgent
                             ? "bg-orange-100 text-orange-600"
-                            : "bg-gray-100 text-gray-500"
+                            : "bg-blue-100 text-blue-500"
                       }`}
                     >
                       {isPast
@@ -1342,6 +2015,9 @@ export default function WorkManagementPage() {
           </motion.section>
         </div>
       </main>
+      </div>
+      {/* ── End Desktop Layout ── */}
+
       {workData.status === "completed" && (
         <motion.div
           initial={{ x: 100, opacity: 0 }}
