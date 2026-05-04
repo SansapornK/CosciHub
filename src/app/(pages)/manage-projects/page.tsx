@@ -531,7 +531,7 @@ export default function ManageProjectsPage() {
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
               className="rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[160px] md:min-h-[200px] flex flex-col justify-between items-end"
               style={{
-                background: "linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)",
+                background: "linear-gradient(135deg, #0C5BEA 0%, #7170D8 100%)",
               }}
             >
               <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 group-hover:rotate-12 transition-all duration-700">

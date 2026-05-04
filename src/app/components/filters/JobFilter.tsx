@@ -177,7 +177,7 @@ useEffect(() => {
   return (
     <div className="relative z-40">
       <div className="p-2 flex justify-between items-center gap-2 md:gap-3">
-        <h2 className="text-base md:text-xl font-semibold text-gray-800 p-1 md:p-2 whitespace-nowrap truncate max-w-[160px] md:max-w-none">
+        <h2 className="text-base md:text-xl font-semibold text-gray-800 p-1 md:p-2 whitespace-nowrap truncate max-w-[300px] md:max-w-none">
           <AnimatePresence mode="wait">
             <motion.span
               key={selectedMajor}

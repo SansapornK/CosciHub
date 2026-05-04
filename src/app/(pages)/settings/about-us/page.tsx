@@ -4,6 +4,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowLeft, Info, Code, Heart } from "lucide-react";
+import BackButton from "@/app/components/buttons/BackButton";
 
 export default function AboutUsPage() {
   // สร้าง Array ข้อมูลทีมเพื่อให้โค้ดสะอาดและจัดการง่าย
@@ -44,18 +45,18 @@ export default function AboutUsPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-7 pt-6">
+    <div className="max-w-6xl mx-auto p-4 md:p-4 pt-3">
       {/* Header */}
-      <div className="flex items-center mb-5">
-        <Link
-          href="/settings"
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6 text-gray-600" />
-        </Link>
-        <h2 className="text-lg md:text-2xl font-bold text-gray-800">
-          เกี่ยวกับเรา
-        </h2>
+      <div className="sticky z-40 backdrop-blur-xl" style={{ top: "75px" }}>
+        <div className="flex items-center justify-between px-3 h-14">
+          {/* Back button — pill style */}
+          <BackButton />
+
+          {/* Page title — center */}
+          <p className="absolute left-1/2 -translate-x-1/2 text-sm md:text-lg font-bold text-gray-800 max-w-[250px] truncate">
+            เกี่ยวกับเรา
+          </p>
+        </div>
       </div>
 
       {/* Content Area */}

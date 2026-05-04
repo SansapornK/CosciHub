@@ -9,6 +9,7 @@ import { ArrowLeft, Eye, EyeOff, Save } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "@/app/components/common/Loading";
+import BackButton from "@/app/components/buttons/BackButton";
 
 export default function ChangePasswordPage() {
   const { status } = useSession();
@@ -72,10 +73,7 @@ export default function ChangePasswordPage() {
       return false;
     if (formData.newPassword.length < 8) return false;
     if (formData.newPassword !== formData.confirmPassword) return false;
-    if (
-      validation.newPassword.error ||
-      validation.confirmPassword.error
-    )
+    if (validation.newPassword.error || validation.confirmPassword.error)
       return false;
     return true;
   };
@@ -131,16 +129,18 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-7 pt-6">
+    <div className="max-w-6xl mx-auto p-4 md:p-4 pt-3">
       {/* Header */}
-      <div className="flex items-center mb-5">
-        <Link
-          href="/settings"
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6 text-gray-600" />
-        </Link>
-        <h2 className="text-lg md:text-2xl font-bold text-gray-800">เปลี่ยนรหัสผ่าน</h2>
+      <div className="sticky z-40 backdrop-blur-xl" style={{ top: "75px" }}>
+        <div className="flex items-center justify-between px-3 h-14">
+          {/* Back button — pill style */}
+          <BackButton />
+
+          {/* Page title — center */}
+          <p className="absolute left-1/2 -translate-x-1/2 text-sm md:text-lg font-bold text-gray-800 max-w-[250px] truncate">
+            เปลี่ยนรหัสผ่าน
+          </p>
+        </div>
       </div>
 
       {/* Form */}

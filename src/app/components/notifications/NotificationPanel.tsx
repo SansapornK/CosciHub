@@ -206,17 +206,16 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
   return (
     <>
-      {/* Backdrop: มีผลเฉพาะ Mobile เพื่อให้ปิดง่ายและโฟกัสที่เนื้อหา */}
       <div 
         className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-[60] sm:hidden" 
         onClick={onClose} 
       />
 
       <div className={`
-        /* 📱 Mobile Layout: เต็มจอ */
+        //* 📱 Mobile Layout: เต็มจอ *//
         fixed inset-0 h-screen w-screen z-[70] flex flex-col bg-white
         
-        /* 💻 Desktop Layout (sm:): กลับไปเป็น Dropdown เหมือนเดิม */
+        //* 💻 Desktop Layout (sm:): กลับไปเป็น Dropdown เหมือนเดิม *//
         sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 
         sm:w-96 sm:h-auto sm:max-h-[80vh] sm:rounded-xl 
         sm:border sm:border-gray-200 sm:shadow-2xl sm:z-50

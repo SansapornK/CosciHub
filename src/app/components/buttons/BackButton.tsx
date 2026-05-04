@@ -1,9 +1,10 @@
 // components/BackButton.tsx
 "use client";
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
-export default function BackButton() {
+function BackButtonContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromName = searchParams.get("fromName") || "ย้อนกลับ";
@@ -20,5 +21,24 @@ export default function BackButton() {
         {fromName}
       </span>
     </button>
+  );
+}
+
+export default function BackButton() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded-lg bg-[#0C5BEA]/10 flex items-center justify-center">
+            <ChevronLeft className="w-3.5 h-3.5 text-[#0C5BEA]" />
+          </div>
+          <span className="text-sm md:text-base font-semibold text-gray-600 max-w-[160px] truncate">
+            ย้อนกลับ
+          </span>
+        </div>
+      }
+    >
+      <BackButtonContent />
+    </Suspense>
   );
 }

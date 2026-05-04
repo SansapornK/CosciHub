@@ -5,16 +5,41 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Save, Trash2, Mail, Phone, MessageCircle, ChevronDown } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Save,
+  Trash2,
+  Mail,
+  Phone,
+  MessageCircle,
+  ChevronDown,
+} from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loading from "@/app/components/common/Loading";
+import BackButton from "@/app/components/buttons/BackButton";
 
 // Contact type options
 const contactTypes = [
-  { value: "email", label: "อีเมล", icon: Mail, placeholder: "example@email.com" },
-  { value: "line", label: "Line ID", icon: MessageCircle, placeholder: "@lineid หรือ 0812345678" },
-  { value: "phone", label: "เบอร์โทรศัพท์", icon: Phone, placeholder: "081-234-5678" },
+  {
+    value: "email",
+    label: "อีเมล",
+    icon: Mail,
+    placeholder: "example@email.com",
+  },
+  {
+    value: "line",
+    label: "Line ID",
+    icon: MessageCircle,
+    placeholder: "@lineid หรือ 0812345678",
+  },
+  {
+    value: "phone",
+    label: "เบอร์โทรศัพท์",
+    icon: Phone,
+    placeholder: "081-234-5678",
+  },
 ];
 
 interface ContactItem {
@@ -30,7 +55,8 @@ interface ProfileData {
 
 // Convert ContactItem to string for saving
 const contactItemToString = (item: ContactItem): string => {
-  const typeLabel = contactTypes.find(t => t.value === item.type)?.label || item.type;
+  const typeLabel =
+    contactTypes.find((t) => t.value === item.type)?.label || item.type;
   return `${typeLabel}: ${item.value}`;
 };
 
@@ -44,7 +70,10 @@ const parseContactString = (contact: string): ContactItem => {
     return { type: "line", value: contact.substring("Line ID:".length).trim() };
   }
   if (contact.startsWith("เบอร์โทรศัพท์:")) {
-    return { type: "phone", value: contact.substring("เบอร์โทรศัพท์:".length).trim() };
+    return {
+      type: "phone",
+      value: contact.substring("เบอร์โทรศัพท์:".length).trim(),
+    };
   }
   // Default: return as email type
   return { type: "email", value: contact };
@@ -77,7 +106,9 @@ export default function EditProfilePage() {
         // Parse existing contact info from DB
         const parsedContactInfo: ContactItem[] =
           data.contactInfo && data.contactInfo.length > 0
-            ? data.contactInfo.map((contact: string) => parseContactString(contact))
+            ? data.contactInfo.map((contact: string) =>
+                parseContactString(contact),
+              )
             : [{ type: "email", value: "" }];
 
         setProfileData({
@@ -127,7 +158,7 @@ export default function EditProfilePage() {
   // Handle name change
   const handleNameChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: "firstName" | "lastName"
+    field: "firstName" | "lastName",
   ) => {
     const { value } = e.target;
     if (validateName(value, field)) {
@@ -160,11 +191,14 @@ export default function EditProfilePage() {
   // Remove contact info field
   const removeContactInfo = (index: number) => {
     const newContactInfo = profileData.contactInfo.filter(
-      (_, i) => i !== index
+      (_, i) => i !== index,
     );
     setProfileData((prev) => ({
       ...prev,
-      contactInfo: newContactInfo.length > 0 ? newContactInfo : [{ type: "email", value: "" }],
+      contactInfo:
+        newContactInfo.length > 0
+          ? newContactInfo
+          : [{ type: "email", value: "" }],
     }));
   };
 
@@ -176,7 +210,7 @@ export default function EditProfilePage() {
 
     // At least one contact info with value required
     const validContactInfo = profileData.contactInfo.filter(
-      (info) => info.value.trim() !== ""
+      (info) => info.value.trim() !== "",
     );
     if (validContactInfo.length === 0) return false;
 
@@ -230,16 +264,18 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-7 pt-6">
+    <div className="max-w-6xl mx-auto p-4 md:p-4 pt-3">
       {/* Header */}
-      <div className="flex items-center mb-5">
-        <Link
-          href="/settings"
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6 text-gray-600" />
-        </Link>
-        <h2 className="text-lg md:text-2xl font-bold text-gray-800">แก้ไขข้อมูลส่วนตัว</h2>
+      <div className="sticky z-40 backdrop-blur-xl" style={{ top: "75px" }}>
+        <div className="flex items-center justify-between px-3 h-14">
+          {/* Back button — pill style */}
+          <BackButton />
+
+          {/* Page title — center */}
+          <p className="absolute left-1/2 -translate-x-1/2 text-sm md:text-lg font-bold text-gray-800 max-w-[250px] truncate">
+            แก้ไขข้อมูลส่วนตัว
+          </p>
+        </div>
       </div>
 
       {/* Form */}
@@ -312,7 +348,9 @@ export default function EditProfilePage() {
 
             <div className="flex flex-col gap-3">
               {profileData.contactInfo.map((contact, index) => {
-                const selectedType = contactTypes.find(t => t.value === contact.type) || contactTypes[0];
+                const selectedType =
+                  contactTypes.find((t) => t.value === contact.type) ||
+                  contactTypes[0];
                 const IconComponent = selectedType.icon;
 
                 return (
@@ -322,12 +360,14 @@ export default function EditProfilePage() {
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                         <IconComponent className="w-4 h-4" />
                       </div>
-                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                          <ChevronDown className="w-4 h-4" />
-                       </div>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
                       <select
                         value={contact.type}
-                        onChange={(e) => handleContactTypeChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleContactTypeChange(index, e.target.value)
+                        }
                         className="appearance-none  bg-gray-50 border border-gray-200 rounded-lg px-10 py-2.5 pr-5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-blue-200 focus:border-primary-blue-400 cursor-pointer min-w-[150px]"
                       >
                         {contactTypes.map((type) => (
@@ -344,7 +384,9 @@ export default function EditProfilePage() {
                       className="input flex-1"
                       placeholder={selectedType.placeholder}
                       value={contact.value}
-                      onChange={(e) => handleContactValueChange(index, e.target.value)}
+                      onChange={(e) =>
+                        handleContactValueChange(index, e.target.value)
+                      }
                     />
 
                     {/* Remove Button */}
