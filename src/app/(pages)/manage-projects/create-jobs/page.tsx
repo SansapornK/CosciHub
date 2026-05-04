@@ -84,7 +84,7 @@ function CreateJobPageContent() {
     qualifications: "",
     jobType: "online", // รูปแบบงาน → Job.jobType
     location: "", // สถานที่ (optional)
-    deliveryDate: "", // วันครบกำหนดส่งงาน (optional)
+    deliveryDate: "", // วันกำหนดส่งงาน 
     budgetMin: "" as number | "", // → Job.budgetMin
     budgetMax: "" as number | "", // → Job.budgetMax
     capacity: "" as number | "", // → Job.capacity
@@ -184,16 +184,19 @@ function CreateJobPageContent() {
       newErrors.applicationDeadline = "วันสิ้นสุดรับสมัครต้องไม่เป็นวันในอดีต";
     }
 
-    // ตรวจสอบวันครบกำหนดส่งงาน (ถ้ามี)
-    if (formData.deliveryDate) {
+    // ตรวจสอบวันกำหนดส่งงาน/วันปฏิบัติงาน (required)
+    const deliveryDateLabel = formData.jobType === "online" ? "วันกำหนดส่งงาน" : "วันปฏิบัติงาน";
+    if (!formData.deliveryDate) {
+      newErrors.deliveryDate = `กรุณาระบุ${deliveryDateLabel}`;
+    } else {
       if (formData.deliveryDate < today) {
-        newErrors.deliveryDate = "วันครบกำหนดส่งงานต้องไม่เป็นวันในอดีต";
+        newErrors.deliveryDate = `${deliveryDateLabel}ต้องไม่เป็นวันในอดีต`;
       }
       if (
         formData.applicationDeadline &&
         formData.deliveryDate < formData.applicationDeadline
       ) {
-        newErrors.deliveryDate = "วันครบกำหนดส่งงานต้องไม่ก่อนวันสิ้นสุดรับสมัคร";
+        newErrors.deliveryDate = `${deliveryDateLabel}ต้องไม่ก่อนวันสิ้นสุดรับสมัคร`;
       }
     }
 
@@ -292,34 +295,31 @@ function CreateJobPageContent() {
 
       <div className="max-w-6xl mx-auto p-4 md:p-7 pt-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-10 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-3xl font-extrabold text-[#0C5BEA] tracking-tight">
-                  {duplicateId ? "ทำสำเนาประกาศงาน" : "ลงประกาศงาน"}
-                </h1>
-                {isLoadingDuplicate && (
-                  <p className="text-sm text-gray-400">กำลังโหลดข้อมูล...</p>
-                )}
-              </div>
-            </div>
+        <div className="flex items-center justify-between gap-4 mb-6 md:mb-10 pb-4 border-b border-gray-100">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-[#0C5BEA] tracking-tight">
+              {duplicateId ? "ทำสำเนาประกาศงาน" : "ลงประกาศงาน"}
+            </h1>
+            {isLoadingDuplicate && (
+              <p className="text-sm text-gray-400">กำลังโหลดข้อมูล...</p>
+            )}
           </div>
           <Link
             href="/manage-projects/my-jobs"
-            className="px-6 py-2.5 rounded-full text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100 flex items-center gap-2"
+            className="px-4 md:px-6 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100 flex items-center gap-1.5 md:gap-2 shrink-0"
           >
-            <BriefcaseBusiness className="w-4 h-4" />
-            งานของฉัน
+            <BriefcaseBusiness className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">งานของฉัน</span>
+            <span className="sm:hidden">งานของฉัน</span>
           </Link>
         </div>
 
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4 md:space-y-8">
           {/* ───── Section 1: รายละเอียดงาน ───── */}
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-8">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-              <Pencil className="w-6 h-6 text-blue-500" />
-              <h2 className="text-xl font-bold text-gray-900">รายละเอียดงาน</h2>
+          <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2rem] shadow-sm border border-gray-100 space-y-5 md:space-y-8">
+            <div className="flex items-center gap-3 pb-3 md:pb-4 border-b border-gray-100">
+              <Pencil className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">รายละเอียดงาน</h2>
             </div>
 
             {/* ชื่องาน */}
@@ -350,7 +350,7 @@ function CreateJobPageContent() {
               </div>
             </InputField>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-4 md:gap-y-5">
               {/* ประเภทงาน → Job.category */}
               <InputField label="ประเภทงาน" id="category" required>
                 <div className="relative">
@@ -535,15 +535,15 @@ function CreateJobPageContent() {
           </div>
 
           {/* ───── Section 2: ค่าตอบแทนและกำหนดการ ───── */}
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-8">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-              <DollarSign className="w-6 h-6 text-emerald-500" />
-              <h2 className="text-xl font-bold text-gray-900">
+          <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2rem] shadow-sm border border-gray-100 space-y-5 md:space-y-8">
+            <div className="flex items-center gap-3 pb-3 md:pb-4 border-b border-gray-100">
+              <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">
                 ค่าตอบแทน &amp; กำหนดการ
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8">
               {/* ค่าตอบแทน Min */}
               <InputField
                 label="ค่าตอบแทนเริ่มต้น (บาท)"
@@ -643,22 +643,22 @@ function CreateJobPageContent() {
             </InputField>
 
             {/* วันสิ้นสุดรับสมัคร → Job.applicationDeadline */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8 overflow-hidden">
+              <div className="space-y-2 min-w-0">
                 <label
                   htmlFor="applicationDeadline"
-                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"
+                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 flex-wrap"
                 >
                   วันสิ้นสุดการรับสมัคร
                   <span className="text-red-400">*</span>
-                  <span className="relative group">
+                  <button type="button" className="relative group focus:outline-none">
                     <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
-                    <span className="absolute  -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-xs text-center rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
+                    <span className="absolute left-0 sm:left-1/2 sm:-translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-xs text-left sm:text-center rounded-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity w-56 sm:w-auto sm:whitespace-nowrap z-20 pointer-events-none">
                       - คุณสามารถปิดรับสมัครก่อนกำหนดได้
                       <br />
                       - หากเลยวันสิ้นสุดการรับสมัคร งานของคุณจะถูกปิดรับสมัครโดยอัตโนมัติ
                     </span>
-                  </span>
+                  </button>
                 </label>
                 <div className="relative">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -693,17 +693,29 @@ function CreateJobPageContent() {
                 )}
               </div>
 
-              {/* วันครบกำหนดส่งงาน → Job.deliveryDate (optional) */}
-              <InputField
-                label="วันครบกำหนดส่งงาน (ถ้ามี)"
-                id="deliveryDate"
-                error={errors.deliveryDate}
-              >
+              {/* วันกำหนดส่งงาน/วันปฏิบัติงาน → Job.deliveryDate */}
+              <div className="space-y-2 min-w-0">
+                <label
+                  htmlFor="deliveryDate"
+                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 flex-wrap"
+                >
+                  {formData.jobType === "online" ? "วันกำหนดส่งงาน" : "วันปฏิบัติงาน"}
+                  <span className="text-red-400">*</span>
+                  <button type="button" className="relative group focus:outline-none">
+                    <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
+                    <span className="absolute left-0 sm:left-1/2 sm:-translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-xs text-left sm:text-center rounded-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity w-56 sm:w-auto sm:whitespace-nowrap z-20 pointer-events-none">
+                      {formData.jobType === "online"
+                        ? "เป็นเพียงกำหนดการเบื้องต้น นิสิตและผู้ว่าจ้างสามารถตกลงวันส่งงานอีกครั้งได้ภายหลัง"
+                        : "เป็นเพียงกำหนดการเบื้องต้น นิสิตและผู้ว่าจ้างสามารถตกลงวันปฏิบัติงานอีกครั้งได้ภายหลัง"}
+                    </span>
+                  </button>
+                </label>
                 <div className="relative">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     id="deliveryDate"
                     type="date"
+                    required
                     min={formData.applicationDeadline || getTodayDate()}
                     className={`w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
                       errors.deliveryDate ? "border-red-300" : "border-gray-200"
@@ -719,23 +731,28 @@ function CreateJobPageContent() {
                     }}
                   />
                 </div>
-              </InputField>
+                {errors.deliveryDate && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.deliveryDate}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
           {/* ───── Submit/Draft Button ───── */}
-          <div className="flex justify-end gap-3 pb-8">
+          <div className="flex md:justify-end gap-2 md:gap-3 pb-8">
             {/* ปุ่มบันทึกร่าง */}
             <button
               type="button"
               disabled={isDrafting || isSubmitting || !formData.title}
               onClick={() => handleSubmit("draft")}
-              className="px-8 py-4 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold rounded-2xl transition-all border-2 border-gray-200 hover:border-gray-300 flex items-center gap-3 text-base"
+              className="flex-1 md:flex-none py-3 md:py-4 md:px-8 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold rounded-xl md:rounded-2xl transition-all border-2 border-gray-200 hover:border-gray-300 flex items-center justify-center gap-1.5 md:gap-3 text-sm md:text-base"
             >
               {isDrafting ? (
                 <>
                   <svg
-                    className="animate-spin h-5 w-5"
+                    className="animate-spin h-4 w-4 md:h-5 md:w-5"
                     viewBox="0 0 24 24"
                     fill="none"
                   >
@@ -753,12 +770,12 @@ function CreateJobPageContent() {
                       d="M4 12a8 8 0 018-8v8H4z"
                     />
                   </svg>
-                  กำลังบันทึก...
+กำลังบันทึก...
                 </>
               ) : (
                 <>
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4 md:w-5 md:h-5"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={2}
@@ -785,12 +802,12 @@ function CreateJobPageContent() {
               type="button"
               disabled={isSubmitting || isDrafting}
               onClick={handlePublishClick}
-              className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-100 active:scale-95 flex items-center gap-3 text-base"
+              className="flex-1 md:flex-none py-3 md:py-4 md:px-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded-xl md:rounded-2xl transition-all shadow-lg shadow-blue-100 active:scale-95 flex items-center justify-center gap-1.5 md:gap-3 text-sm md:text-base"
             >
               {isSubmitting ? (
                 <>
                   <svg
-                    className="animate-spin h-5 w-5"
+                    className="animate-spin h-4 w-4 md:h-5 md:w-5"
                     viewBox="0 0 24 24"
                     fill="none"
                   >
@@ -808,11 +825,11 @@ function CreateJobPageContent() {
                       d="M4 12a8 8 0 018-8v8H4z"
                     />
                   </svg>
-                  กำลังลงประกาศ...
+กำลังลงประกาศ...
                 </>
               ) : (
                 <>
-                  <SquarePlus className="w-5 h-5" />
+                  <SquarePlus className="w-4 h-4 md:w-5 md:h-5" />
                   ลงประกาศงาน
                 </>
               )}

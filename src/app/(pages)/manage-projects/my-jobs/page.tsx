@@ -13,6 +13,7 @@ import {
   Pencil,
   Copy,
   XCircle,
+  MoreVertical,
 } from "lucide-react";
 import Loading from "@/app/components/common/Loading";
 import JobCard from "@/app/components/cards/JobCard";
@@ -94,6 +95,9 @@ export default function MyJobsPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "draft" | "published" | "in_progress" | "completed" | "closed"
   >("all");
+
+  // State สำหรับ mobile action menu
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<string | null>(null);
 
   // Guard: student ไม่มีสิทธิ์
   useEffect(() => {
@@ -273,7 +277,272 @@ export default function MyJobsPage() {
         isLoading={isProcessing}
       />
 
-      <div className="max-w-6xl mx-auto p-4 md:p-7 pt-6">
+      {/* ==================== MOBILE VERSION ==================== */}
+      <div className="md:hidden">
+        {/* Mobile Header */}
+        <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.back()}
+                className="p-1 rounded-full text-gray-500 active:bg-gray-100"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-xl font-bold text-[#0C5BEA] tracking-tight mt-2">งานของฉัน</h1>
+                <p className="text-xs text-gray-400 mb-1">ประกาศงานทั้งหมดที่คุณลงไว้</p>
+              </div>
+            </div>
+
+            {/* ปุ่มลงประกาศงานใหม่ */}
+            <Link
+              href="/manage-projects/create-jobs"
+              className="flex items-center gap-1.5 px-3 py-3 bg-blue-600 text-white text-xs font-medium rounded-full shadow-sm"
+            >
+              <SquarePlus className="w-3.5 h-3.5" />
+              ลงประกาศงานใหม่
+            </Link>
+          </div>
+
+          {/* Mobile Filter - Horizontal Scroll */}
+          {jobs.length > 0 && (
+            <div className="px-4 pb-3 overflow-x-auto scrollbar-hide mb-1">
+              <div className="flex gap-2 min-w-max">
+                {(() => {
+                  const draftCount = jobs.filter((j) => j.status === "draft").length;
+                  const publishedCount = jobs.filter(
+                    (j) => j.status === "published" && !isJobExpired(j.applicationDeadline)
+                  ).length;
+                  const inProgressCount = jobs.filter(
+                    (j) => j.status === "in_progress" || j.status === "awaiting"
+                  ).length;
+                  const completedCount = jobs.filter((j) => j.status === "completed").length;
+                  const closedCount = jobs.filter(
+                    (j) =>
+                      j.status === "closed" ||
+                      (j.status === "published" && isJobExpired(j.applicationDeadline))
+                  ).length;
+
+                  const filters = [
+                    { key: "all", label: "ทั้งหมด", count: jobs.length },
+                    { key: "draft", label: "ฉบับร่าง", count: draftCount },
+                    { key: "published", label: "เปิดรับ", count: publishedCount },
+                    { key: "in_progress", label: "ดำเนินการ", count: inProgressCount },
+                    { key: "completed", label: "เสร็จสิ้น", count: completedCount },
+                    { key: "closed", label: "ปิดรับ", count: closedCount },
+                  ] as const;
+
+                  return filters.map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => setStatusFilter(item.key)}
+                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                        statusFilter === item.key
+                          ? "bg-primary-blue-400 text-white border-primary-blue-400"
+                          : "bg-white text-primary-blue-400 border-primary-blue-400 hover:bg-primary-blue-50"
+                      }`}
+                    >
+                      {item.label} ({item.count})
+                    </button>
+                  ));
+                })()}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Content */}
+        <div className="px-4 py-4">
+          {/* Error */}
+          {error && <div className="text-center py-12 text-red-500 text-sm">{error}</div>}
+
+          {/* Empty State */}
+          {!error && jobs.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                <BriefcaseBusiness className="w-8 h-8 text-blue-300" />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-gray-700">ยังไม่มีประกาศงาน</p>
+                <p className="text-sm text-gray-400 mt-1">เริ่มลงประกาศงานแรกของคุณได้เลย</p>
+              </div>
+              <Link
+                href="/manage-projects/create-jobs"
+                className="mt-2 px-5 py-2.5 bg-blue-500 text-white text-sm font-semibold rounded-full"
+              >
+                ลงประกาศงานใหม่
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile Job List */}
+          {jobs.length > 0 && (
+            <div className="space-y-3">
+              {(() => {
+                const filteredJobs = jobs.filter((job) => {
+                  const expired = isJobExpired(job.applicationDeadline);
+
+                  if (statusFilter === "all") return true;
+                  if (statusFilter === "draft") return job.status === "draft";
+                  if (statusFilter === "published")
+                    return job.status === "published" && !expired;
+                  if (statusFilter === "in_progress")
+                    return job.status === "in_progress" || job.status === "awaiting";
+                  if (statusFilter === "completed") return job.status === "completed";
+                  if (statusFilter === "closed")
+                    return (
+                      job.status === "closed" ||
+                      (job.status === "published" && expired)
+                    );
+                  return true;
+                });
+
+                const filterLabels = {
+                  all: "ทั้งหมด",
+                  draft: "ฉบับร่าง",
+                  published: "เปิดรับสมัคร",
+                  in_progress: "กำลังดำเนินการ",
+                  completed: "เสร็จสิ้น",
+                  closed: "ปิดรับสมัคร",
+                };
+
+                if (filteredJobs.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <BriefcaseBusiness className="w-6 h-6 text-gray-300" />
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        ไม่พบประกาศงานในสถานะ &ldquo;{filterLabels[statusFilter]}&rdquo;
+                      </p>
+                      <button
+                        onClick={() => setStatusFilter("all")}
+                        className="text-blue-500 text-sm"
+                      >
+                        ดูประกาศงานทั้งหมด
+                      </button>
+                    </div>
+                  );
+                }
+
+                return filteredJobs.map((job) => {
+                  const expired = isJobExpired(job.applicationDeadline);
+                  const showEdit =
+                    job.status === "draft" ||
+                    (job.status === "published" && !expired);
+                  const showCloseJob = job.status === "published" && !expired;
+                  const showDuplicate =
+                    (job.status === "published" && expired) ||
+                    job.status === "in_progress" ||
+                    job.status === "awaiting" ||
+                    job.status === "completed" ||
+                    job.status === "closed";
+
+                  return (
+                    <div key={job._id} className="relative">
+                      {/* Status Badge - มุมบนซ้ายในการ์ด */}
+                      <div className="absolute top-2.5 left-3 z-10">
+                        <StatusBadge status={job.status} isExpired={expired} />
+                      </div>
+
+                      {/* More Actions Button */}
+                      <button
+                        onClick={() => setMobileMenuOpen(mobileMenuOpen === job._id ? null : job._id)}
+                        className="absolute top-2.5 right-3 z-10 p-1.5 rounded-lg bg-white/80 text-gray-500 active:bg-gray-100"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+
+                      {/* Mobile Action Menu */}
+                      {mobileMenuOpen === job._id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-20"
+                            onClick={() => setMobileMenuOpen(null)}
+                          />
+                          <div className="absolute top-10 right-3 z-30 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[140px]">
+                            {showEdit && (
+                              <Link
+                                href={`/manage-projects/edit-job/${job._id}`}
+                                className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                                onClick={() => setMobileMenuOpen(null)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                                แก้ไข
+                              </Link>
+                            )}
+                            {showCloseJob && (
+                              <button
+                                onClick={() => {
+                                  setMobileMenuOpen(null);
+                                  openCloseJobModal(job);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 w-full"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                ปิดรับสมัคร
+                              </button>
+                            )}
+                            {showDuplicate && (
+                              <button
+                                onClick={() => {
+                                  setMobileMenuOpen(null);
+                                  handleDuplicate(job._id);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 w-full"
+                              >
+                                <Copy className="w-4 h-4" />
+                                ทำสำเนา
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setMobileMenuOpen(null);
+                                openDeleteModal(job);
+                              }}
+                              className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 w-full"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              ลบ
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      <JobCard
+                        isMobile={true}
+                        isLoggedIn={true}
+                        hasTopOverlay={true}
+                        fromPageName="งานของฉัน"
+                        data={{
+                          id: job._id,
+                          icon: getCategoryIcon(job.category),
+                          title: job.title,
+                          type: job.category,
+                          postedBy: job.owner,
+                          details: job.shortDescription,
+                          minCompensation: job.budgetMin.toLocaleString(),
+                          maxCompensation: job.budgetMax
+                            ? job.budgetMax.toLocaleString()
+                            : null,
+                          currency: "บาท",
+                          timeAgo: calculateTimeAgo(job.postedDate),
+                          isVisible: true,
+                        }}
+                      />
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* ==================== DESKTOP VERSION ==================== */}
+      <div className="hidden md:block max-w-6xl mx-auto p-4 md:p-7 pt-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
           <div className="flex items-center gap-4">
@@ -298,7 +567,7 @@ export default function MyJobsPage() {
           {/* ปุ่มลงประกาศงานใหม่ */}
           <Link
             href="/manage-projects/create-jobs"
-            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-full transition-all shadow-md shadow-blue-100"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-full transition-all shadow-sm"
           >
             <SquarePlus className="w-4 h-4" />
             ลงประกาศงานใหม่
@@ -440,20 +709,11 @@ export default function MyJobsPage() {
                   job.status === "closed";
 
                 return (
-                  <div key={job._id} className="relative group">
+                  <div key={job._id} className="relative">
                     {/* Status Badge */}
-                    <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+                    <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
                       <StatusBadge status={job.status} isExpired={expired} />
                     </div>
-
-                    {/* ปุ่มลบ (แสดงทุกงาน) */}
-                    <button
-                      onClick={() => openDeleteModal(job)}
-                      className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-white/80 text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-                      title="ลบประกาศงาน"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
 
                     <JobCard
                       // fromPageName="งานของฉัน"
@@ -485,39 +745,72 @@ export default function MyJobsPage() {
                             </button>
                           </Link>
 
-                          {/* CTA รอง: แก้ไข */}
-                          {showEdit && (
-                            <Link href={`/manage-projects/edit-job/${job._id}`}>
-                              <button
-                                className="flex items-center gap-1.5 px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                title="แก้ไขประกาศงาน"
-                              >
-                                <Pencil className="w-4 h-5" />
-                              </button>
-                            </Link>
-                          )}
-
-                          {/* CTA รอง: ปิดรับสมัคร */}
-                          {showCloseJob && (
+                          {/* More Actions Button */}
+                          <div className="relative">
                             <button
-                              onClick={() => openCloseJobModal(job)}
-                              className="flex items-center gap-1.5 px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-600 hover:bg-red-50 transition-colors"
-                              title="ปิดรับสมัคร"
+                              onClick={() => setMobileMenuOpen(mobileMenuOpen === `desktop-${job._id}` ? null : `desktop-${job._id}`)}
+                              className="flex items-center justify-center px-3 py-3 rounded-lg border-2 border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                              title="ตัวเลือกเพิ่มเติม"
                             >
-                              <XCircle className="w-4 h-4" />
+                              <MoreVertical className="w-5 h-5" />
                             </button>
-                          )}
 
-                          {/* CTA รอง: Duplicate */}
-                          {showDuplicate && (
-                            <button
-                              onClick={() => handleDuplicate(job._id)}
-                              className="flex items-center gap-1.5 px-4 py-3 rounded-lg border-2 border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                              title="ทำสำเนาประกาศงาน"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </button>
-                          )}
+                            {/* Desktop Action Menu */}
+                            {mobileMenuOpen === `desktop-${job._id}` && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-20"
+                                  onClick={() => setMobileMenuOpen(null)}
+                                />
+                                <div className="absolute bottom-full right-0 mb-2 z-30 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[160px]">
+                                  {showEdit && (
+                                    <Link
+                                      href={`/manage-projects/edit-job/${job._id}`}
+                                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                                      onClick={() => setMobileMenuOpen(null)}
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                      แก้ไข
+                                    </Link>
+                                  )}
+                                  {showCloseJob && (
+                                    <button
+                                      onClick={() => {
+                                        setMobileMenuOpen(null);
+                                        openCloseJobModal(job);
+                                      }}
+                                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 w-full"
+                                    >
+                                      <XCircle className="w-4 h-4" />
+                                      ปิดรับสมัคร
+                                    </button>
+                                  )}
+                                  {showDuplicate && (
+                                    <button
+                                      onClick={() => {
+                                        setMobileMenuOpen(null);
+                                        handleDuplicate(job._id);
+                                      }}
+                                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 w-full"
+                                    >
+                                      <Copy className="w-4 h-4" />
+                                      ทำสำเนา
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => {
+                                      setMobileMenuOpen(null);
+                                      openDeleteModal(job);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 w-full"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    ลบ
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       }
                     />
