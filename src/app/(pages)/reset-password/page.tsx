@@ -127,9 +127,9 @@ function ResetPasswordContent() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className={`p-8 text-center ${config.bgColor}`}>
-            <div className="flex justify-center mb-4">{config.icon}</div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">{config.title}</h1>
+          <div className={`p-6 md:p-8 text-center ${config.bgColor}`}>
+            <div className="flex justify-center mb-4 [&>svg]:w-12 [&>svg]:h-12 md:[&>svg]:w-16 md:[&>svg]:h-16">{config.icon}</div>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">{config.title}</h1>
             <p className="text-gray-600">{config.description}</p>
           </div>
           <div className="p-6 bg-white text-center">
@@ -155,11 +155,11 @@ function ResetPasswordContent() {
   if (isSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-500" />
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8 text-center">
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-green-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
             รีเซ็ตรหัสผ่านสำเร็จ
           </h1>
           <p className="text-gray-600 mb-6">
@@ -177,15 +177,15 @@ function ResetPasswordContent() {
   // Reset password form
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
-        <div className="text-center mb-8">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
+        <div className="text-center mb-6 md:mb-8">
 {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo/cosci-hub-favicon.png"
             alt="COSCI Hub Logo"
-            className="h-[50px] w-auto mx-auto mb-4"
+            className="h-[40px] md:h-[50px] w-auto mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
             ตั้งรหัสผ่านใหม่
           </h1>
           <p className="text-gray-600">

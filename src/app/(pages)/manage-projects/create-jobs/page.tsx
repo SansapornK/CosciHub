@@ -12,7 +12,6 @@ import Link from "next/link";
 import {
   SquarePlus,
   Pencil,
-  ChevronLeft,
   ChevronDown,
   DollarSign,
   CalendarDays,
@@ -22,6 +21,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
+import InfoModal from "@/app/components/modals/InfoModal";
 import { jobCategories } from "@/app/constants/JobCategories";
 
 
@@ -74,6 +74,7 @@ function CreateJobPageContent() {
 
   // Modal state
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [helpPopup, setHelpPopup] = useState<'deadline' | 'delivery' | null>(null);
 
   /* ---------- Form State — ชื่อ field ตรงกับ Job Model ทุก field ---------- */
   const [formData, setFormData] = useState({
@@ -279,6 +280,24 @@ function CreateJobPageContent() {
   /* ===================== JSX ===================== */
   return (
     <div className="bg-gray-50/50 min-h-screen">
+
+      {/* Help Info Modals */}
+      <InfoModal
+        isOpen={helpPopup === 'deadline'}
+        title="วันสิ้นสุดการรับสมัคร"
+        onClose={() => setHelpPopup(null)}
+      >
+        <p>• คุณสามารถปิดรับสมัครก่อนกำหนดได้</p>
+        <p>• หากเลยวันสิ้นสุดการรับสมัคร งานของคุณจะถูกปิดรับสมัครโดยอัตโนมัติ</p>
+      </InfoModal>
+
+      <InfoModal
+        isOpen={helpPopup === 'delivery'}
+        title={formData.jobType === "online" ? "วันกำหนดส่งงาน" : "วันปฏิบัติงาน"}
+        onClose={() => setHelpPopup(null)}
+      >
+        <p>• เป็นเพียงกำหนดการเบื้องต้น นิสิตและผู้ว่าจ้างสามารถตกลง{formData.jobType === "online" ? "วันส่งงาน" : "วันปฏิบัติงาน"}อีกครั้งได้ภายหลัง</p>
+      </InfoModal>
 
       {/* Confirmation Modal */}
       <ConfirmationModal
@@ -651,27 +670,24 @@ function CreateJobPageContent() {
                 >
                   วันสิ้นสุดการรับสมัคร
                   <span className="text-red-400">*</span>
-                  <button type="button" className="relative group focus:outline-none">
-                    <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
-                    <span className="absolute left-0 sm:left-1/2 sm:-translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-xs text-left sm:text-center rounded-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity w-56 sm:w-auto sm:whitespace-nowrap z-20 pointer-events-none">
-                      - คุณสามารถปิดรับสมัครก่อนกำหนดได้
-                      <br />
-                      - หากเลยวันสิ้นสุดการรับสมัคร งานของคุณจะถูกปิดรับสมัครโดยอัตโนมัติ
-                    </span>
+                  <button
+                    type="button"
+                    onClick={() => setHelpPopup('deadline')}
+                    className="focus:outline-none"
+                  >
+                    <HelpCircle className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
                   </button>
                 </label>
-                <div className="relative">
+                <div className="relative w-full">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     id="applicationDeadline"
                     type="date"
                     required
                     min={getTodayDate()}
-                    className={`w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
-                      errors.applicationDeadline
-                        ? "border-red-300"
-                        : "border-gray-200"
-                    }`}
+                    className={`w-full max-w-full box-border pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
+                    errors.applicationDeadline ? "border-red-300" : "border-gray-200"
+                  }`}
                     value={formData.applicationDeadline}
                     onChange={(e) => {
                       setFormData({
@@ -694,30 +710,29 @@ function CreateJobPageContent() {
               </div>
 
               {/* วันกำหนดส่งงาน/วันปฏิบัติงาน → Job.deliveryDate */}
-              <div className="space-y-2 min-w-0">
+              <div className="space-y-2 min-w-0 min-h-0">
                 <label
                   htmlFor="deliveryDate"
                   className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 flex-wrap"
                 >
                   {formData.jobType === "online" ? "วันกำหนดส่งงาน" : "วันปฏิบัติงาน"}
                   <span className="text-red-400">*</span>
-                  <button type="button" className="relative group focus:outline-none">
-                    <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
-                    <span className="absolute left-0 sm:left-1/2 sm:-translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-xs text-left sm:text-center rounded-lg opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity w-56 sm:w-auto sm:whitespace-nowrap z-20 pointer-events-none">
-                      {formData.jobType === "online"
-                        ? "เป็นเพียงกำหนดการเบื้องต้น นิสิตและผู้ว่าจ้างสามารถตกลงวันส่งงานอีกครั้งได้ภายหลัง"
-                        : "เป็นเพียงกำหนดการเบื้องต้น นิสิตและผู้ว่าจ้างสามารถตกลงวันปฏิบัติงานอีกครั้งได้ภายหลัง"}
-                    </span>
+                  <button
+                    type="button"
+                    onClick={() => setHelpPopup('delivery')}
+                    className="focus:outline-none"
+                  >
+                    <HelpCircle className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
                   </button>
                 </label>
-                <div className="relative">
+                <div className="relative w-full">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     id="deliveryDate"
                     type="date"
                     required
                     min={formData.applicationDeadline || getTodayDate()}
-                    className={`w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
+                    className={`w-full max-w-full box-border pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
                       errors.deliveryDate ? "border-red-300" : "border-gray-200"
                     }`}
                     value={formData.deliveryDate}

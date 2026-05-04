@@ -56,30 +56,30 @@ function LoginForm({ onRegisterClick, callbackUrl }: LoginFormProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen min-w-screen bg-white p-4 relative">
-      
-      <div className="absolute top-6 left-6">
-        <Link 
-          href="/" 
+    <div className="flex flex-col items-center justify-center min-h-screen min-w-screen bg-white p-4 max-sm:px-4 max-sm:py-8 relative">
+
+      <div className="absolute top-6 left-6 max-sm:top-4 max-sm:left-4">
+        <Link
+          href="/"
           className="flex items-center text-gray-400 hover:text-primary-blue-500 transition-colors text-sm font-medium group">
           <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
-            กลับหน้าหลัก
+          <span className="max-sm:hidden">กลับหน้าหลัก</span>
+          <span className="hidden max-sm:inline">กลับ</span>
         </Link>
       </div>
 
-      <div className="flex flex-col items-center mb-8">
+      <div className="flex flex-col items-center mb-8 max-sm:mb-6 max-sm:mt-8">
 
         {/* โลโก้ COSCI Hub */}
-{/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo/cosci-hub-favicon.png" alt="cosci hub logo" className="h-[60px] w-auto mb-5" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo/cosci-hub-favicon.png" alt="cosci hub logo" className="h-[60px] max-sm:h-[50px] w-auto mb-5 max-sm:mb-4" />
 
-        <h1 className="text-2xl font-semibold text-gray-800">
+        <h1 className="text-2xl max-sm:text-xl font-semibold text-gray-800 max-sm:text-center">
           ยินดีต้อนรับสู่ COSCI Hub
         </h1>
       </div>
 
-      {/* <div className="w-full max-w-sm bg-white p-8 rounded-lg shadow-md"> */}
-        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-6 max-sm:gap-5 max-sm:w-full max-sm:max-w-[320px]" onSubmit={handleSubmit}>
           {/* Email Field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -87,10 +87,9 @@ function LoginForm({ onRegisterClick, callbackUrl }: LoginFormProps) {
             </label>
             <div className="relative">
               <input
-                
                 id="email"
                 type="email"
-                className="w-full pr-4 py-2 pl-10 bg-secondary-gray border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pr-4 py-2 max-sm:py-3 pl-10 bg-secondary-gray border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 max-sm:text-base"
                 placeholder="กรอกอีเมลของคุณ"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -112,7 +111,7 @@ function LoginForm({ onRegisterClick, callbackUrl }: LoginFormProps) {
               <input
                 id="password"
                 type="password"
-                className="w-full pr-4 py-2 pl-10 bg-secondary-gray border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pr-4 py-2 max-sm:py-3 pl-10 bg-secondary-gray border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 max-sm:text-base"
                 placeholder="กรอกรหัสผ่าน"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -142,7 +141,7 @@ function LoginForm({ onRegisterClick, callbackUrl }: LoginFormProps) {
           {/* Login Button */}
           <button
             type="submit"
-            className={`w-full bg-blue-600 text-white py-2 px-50 rounded-md hover:bg-blue-700 transition duration-300 flex items-center justify-center ${
+            className={`w-full bg-blue-600 text-white py-2 max-sm:py-3 px-50 max-sm:px-4 rounded-md hover:bg-blue-700 transition duration-300 flex items-center justify-center max-sm:text-base max-sm:font-medium ${
               isLoading ? 'opacity-70 cursor-not-allowed' : ''
             }`}
             disabled={isLoading}
@@ -154,7 +153,7 @@ function LoginForm({ onRegisterClick, callbackUrl }: LoginFormProps) {
           </button>
 
           {/* Register Link */}
-          <div className="text-center text-sm mt-4">
+          <div className="text-center text-sm mt-4 max-sm:mt-2">
             <p className="text-gray-600">
               ยังไม่มีบัญชีใช่ไหม?{" "}
               <button
@@ -167,7 +166,6 @@ function LoginForm({ onRegisterClick, callbackUrl }: LoginFormProps) {
             </p>
           </div>
         </form>
-      {/* </div> */}
     </div>
   );
 }

@@ -35,11 +35,11 @@ export default function ForgotPasswordPage() {
   if (isSuccess) {
     return (
       <div className="fixed inset-0 z-[200] bg-gray-50 flex items-center justify-center px-4 overflow-y-auto">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-500" />
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8 text-center">
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-green-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
             ส่งลิงก์รีเซ็ตรหัสผ่านแล้ว
           </h1>
           <p className="text-gray-600 mb-6">
@@ -63,15 +63,15 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="fixed inset-0 z-[200] bg-gray-50 flex items-center justify-center px-4 overflow-y-auto">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 md:p-8">
         <div className="text-center mb-4">
 {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo/cosci-hub-favicon.png"
             alt="COSCI Hub Logo"
-            className="h-[40px] w-auto mx-auto mb-4"
+            className="h-[32px] md:h-[40px] w-auto mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-1">
             ลืมรหัสผ่าน?
           </h1>
           <p className="text-gray-600">

@@ -62,11 +62,11 @@ function VerifyResultContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className={`max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border-1 ${config.borderColor} transition-all`}>
-        <div className={`p-8 text-center ${config.bgColor}`}>
-          <div className="flex justify-center mb-4">
+        <div className={`p-6 md:p-8 text-center ${config.bgColor}`}>
+          <div className="flex justify-center mb-4 [&>svg]:w-12 [&>svg]:h-12 md:[&>svg]:w-16 md:[&>svg]:h-16">
             {config.icon}
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
             {config.title}
           </h1>
           <p className="text-gray-600 leading-relaxed">
