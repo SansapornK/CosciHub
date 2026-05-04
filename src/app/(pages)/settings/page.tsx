@@ -34,7 +34,7 @@ const settingsMenuItems: SettingsMenuItem[] = [
   {
     name: "ข้อตกลงและเงื่อนไขการใช้งาน",
     description: "ดูข้อกำหนดและเงื่อนไขของเรา",
-    path: "/settings/privacy-policy",
+    path: "/settings/privacy-policy?fromName=ตั้งค่า",
     icon: Shield,
     color: "text-violet-500",
     bg: "bg-violet-50",
@@ -42,7 +42,7 @@ const settingsMenuItems: SettingsMenuItem[] = [
   {
     name: "แก้ไขข้อมูลส่วนตัว",
     description: "แก้ไขชื่อและช่องทางการติดต่อของคุณ",
-    path: "/settings/edit-profile",
+    path: "/settings/edit-profile?fromName=ตั้งค่า",
     icon: UserPen,
     color: "text-blue-500",
     bg: "bg-blue-50",
@@ -50,7 +50,7 @@ const settingsMenuItems: SettingsMenuItem[] = [
   {
     name: "เปลี่ยนรหัสผ่าน",
     description: "อัปเดตรหัสผ่านเพื่อความปลอดภัยของบัญชี",
-    path: "/settings/change-password",
+    path: "/settings/change-password?fromName=ตั้งค่า",
     icon: KeyRound,
     color: "text-emerald-500",
     bg: "bg-emerald-50",
@@ -58,7 +58,7 @@ const settingsMenuItems: SettingsMenuItem[] = [
   {
     name: "เกี่ยวกับเรา",
     description: "ทำความรู้จัก COSCI Hub และคณะผู้จัดทำ",
-    path: "/settings/about-us",
+    path: "/settings/about-us?fromName=ตั้งค่า",
     icon: Info,
     color: "text-orange-400",
     bg: "bg-orange-50",

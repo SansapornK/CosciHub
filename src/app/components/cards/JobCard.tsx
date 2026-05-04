@@ -256,7 +256,7 @@ const JobCardDesktop: React.FC<JobCardProps> = ({
             href={`/find-job/${data.id}?fromName=${encodeURIComponent(fromPageName)}`}
             className="flex-grow"
           >
-            <button className="bg-primary-blue-500 text-white text-base py-3 px-4 rounded-lg w-full hover:bg-primary-blue-600 transition-colors">
+            <button className="bg-gradient-to-r from-[#0A5BE9] to-[#7170D8] text-white text-base py-3 px-4 rounded-lg w-full hover:bg-primary-blue-600 transition-colors">
               ดูรายละเอียดงาน
             </button>
           </Link>

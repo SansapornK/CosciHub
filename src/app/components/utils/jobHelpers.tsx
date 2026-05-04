@@ -174,9 +174,9 @@ export const getCategoryColor = (category: string) => {
     case "งานบริการ/ธุรการ":
       return { bg: "bg-emerald-100", text: "text-emerald-600" };
     case "งานสอนพิเศษ":
-      return { bg: "bg-amber-50", text: "text-amber-700" };
-    case "งานกองถ่าย/Extra":
       return { bg: "bg-yellow-50", text: "text-yellow-400" };
+    case "งานกองถ่าย/Extra":
+      return { bg: "bg-red-50", text: "text-red-500" };
     default:
       return { bg: "bg-gray-50", text: "text-gray-500" };
   }

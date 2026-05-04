@@ -652,15 +652,15 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                     </button>
                   </div>
                 </div>
-              ) : (
+              ) : userData?.bio ? (
                 <p className="text-gray-600 leading-relaxed text-[13px] md:text-base break-words whitespace-pre-wrap w-full text-center md:text-left">
-                  {userData?.bio || (
-                    <span className="text-gray-300 italic">
-                      แนะนำตัวเองสั้น ๆ เพื่อให้ผู้ว่าจ้างรู้จักคุณมากขึ้น...
-                    </span>
-                  )}
+                  {userData.bio}
                 </p>
-              )}
+              ) : isOwnProfile ? (
+                <p className="text-gray-300 italic text-[13px] md:text-base text-center md:text-left">
+                  แนะนำตัวเองสั้น ๆ เพื่อให้ผู้ว่าจ้างรู้จักคุณมากขึ้น...
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
@@ -1093,10 +1093,10 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                           </div>
                           <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
                             <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 bg-[#0C5BEA] rounded-full animate-pulse" />
+                              {/* <span className="w-1.5 h-1.5 bg-[#0C5BEA] rounded-full animate-pulse" />
                               <span className="text-[9px] text-gray-400 font-medium uppercase">
                                 กด Enter เพื่อบันทึก
-                              </span>
+                              </span> */}
                             </div>
                             <div className="flex gap-2">
                               <button

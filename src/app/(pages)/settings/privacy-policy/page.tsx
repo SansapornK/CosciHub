@@ -4,21 +4,22 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import BackButton from "@/app/components/buttons/BackButton";
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="flex flex-col gap-6 pb-10 max-w-4xl mx-auto w-full px-4 md:px-6">
+    <div className="max-w-6xl mx-auto p-4 md:p-4 pt-3">
       {/* Header */}
-      <div className="flex items-center gap-3 mt-6 md:mt-8">
-        <Link
-          href="/settings"
-          className="p-2 hover:bg-gray-100 active:bg-gray-100 rounded-full transition-colors shrink-0"
-        >
-          <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
-        </Link>
-        <h2 className="text-lg md:text-2xl font-bold text-gray-800">
-          ข้อตกลงและเงื่อนไขการใช้งาน
-        </h2>
+      <div className="sticky z-40 backdrop-blur-xl" style={{ top: "75px" }}>
+        <div className="flex items-center justify-between px-3 h-14">
+          {/* Back button — pill style */}
+          <BackButton />
+
+          {/* Page title — center */}
+          <p className="absolute left-1/2 -translate-x-1/2 text-sm md:text-lg font-bold text-gray-800 max-w-[250px] truncate">
+            ข้อตกลงและเงื่อนไขการใช้งาน
+          </p>
+        </div>
       </div>
 
       {/* Content */}
