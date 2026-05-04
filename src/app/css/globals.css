@@ -59,7 +59,7 @@ button {
 }
 
 .btn-secondary {
-    @apply bg-white text-gray-500 text-nowrap border border-gray-300 hover:bg-gray-100 hover:border-gray-300 px-2.5 py-1.5 h-fit rounded-xl
+    @apply bg-white text-gray-500 text-nowrap border border-gray-300 hover:bg-gray-100 hover:border-gray-300 px-8 py-2 h-fit rounded-full
 }
 
 .btn-danger {

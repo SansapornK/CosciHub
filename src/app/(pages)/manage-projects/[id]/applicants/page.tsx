@@ -140,7 +140,7 @@ function ApplicantCard({
               {applicant.applicantName}
             </p>
             {applicant.major && (
-              <p className="text-xs text-gray-400">{applicant.major}</p>
+              <p className="text-xs text-gray-400 line-clamp-1">{applicant.major}</p>
             )}
             <p className="text-xs text-gray-400">
               สมัครเมื่อ{" "}

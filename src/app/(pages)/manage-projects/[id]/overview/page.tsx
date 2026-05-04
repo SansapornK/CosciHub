@@ -330,7 +330,7 @@ export default function JobOverviewPage() {
       {/* --- Review Modal (AnimatePresence) --- */}
       <AnimatePresence>
         {isReviewModalOpen && selectedWorker && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -345,7 +345,7 @@ export default function JobOverviewPage() {
               initial={{ scale: 0.95, opacity: 0, y: 50 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 50 }}
-              className="relative bg-white w-full md:max-w-md rounded-t-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl text-center max-h-[90vh] overflow-y-auto"
+              className="relative bg-white w-full max-w-md rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl text-center max-h-[85vh] overflow-y-auto"
             >
               <div className="w-12 h-12 md:w-16 md:h-16 bg-yellow-50 text-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
                 <Star size={24} fill="currentColor" className="md:hidden" />

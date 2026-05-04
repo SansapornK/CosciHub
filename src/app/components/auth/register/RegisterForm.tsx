@@ -751,16 +751,16 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
   };
 
   return (
-    <div className="max-w-[520px] w-full bg-white flex flex-col items-center px-6 py-8">
-      <div className="flex flex-col items-center mb-8">
+    <div className="max-w-[520px] w-full bg-white flex flex-col items-center px-6 py-8 max-sm:px-4 max-sm:py-6">
+      <div className="flex flex-col items-center mb-8 max-sm:mb-6">
         {/* โลโก้ COSCI Hub */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo/cosci-hub-favicon.png"
           alt="cosci hub logo"
-          className="h-[60px] w-auto mb-5"
+          className="h-[60px] max-sm:h-[50px] w-auto mb-5 max-sm:mb-4"
         />
-        <h1 className="text-2xl font-semibold text-gray-800">
+        <h1 className="text-2xl max-sm:text-xl font-semibold text-gray-800 max-sm:text-center">
           สร้างบัญชีผู้ใช้งาน
         </h1>
       </div>
@@ -807,12 +807,12 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           {/* <hr className="text-gray-200" /> */}
 
           {error && (
-            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded-lg mb-4">
+            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-2 max-sm:px-3 max-sm:py-2 max-sm:text-sm rounded-lg mb-4">
               {error}
             </div>
           )}
 
-          <div className="flex flex-col gap-6 items-center w-full">
+          <div className="flex flex-col gap-6 max-sm:gap-5 items-center w-full">
             {currentStep === 1 && (
               <StepRole
                 data={registerData}
@@ -913,7 +913,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
               </button>
             </div>
 
-            <div className="flex gap-2 justify-end text-sm w-full">
+            <div className="flex gap-2 justify-end max-sm:justify-center text-sm w-full">
               <p className="text-gray-400">มีบัญชีอยู่แล้ว ?</p>
               <button
                 type="button"

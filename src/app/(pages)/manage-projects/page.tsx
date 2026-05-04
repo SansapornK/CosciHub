@@ -857,7 +857,7 @@ export default function ManageProjectsPage() {
                                   e.stopPropagation();
                                   setWithdrawApp(app);
                                 }}
-                                className="text-xs text-red-400 hover:underline transition-colors"
+                                className="text-xs text-red-500 hover:underline transition-colors"
                               >
                                 ยกเลิกใบสมัคร
                               </button>
