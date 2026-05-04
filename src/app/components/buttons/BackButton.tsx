@@ -9,16 +9,16 @@ export default function BackButton() {
   const fromName = searchParams.get("fromName") || "ย้อนกลับ";
 
   return (
-    <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100/60 md:bg-transparent md:border-none md:relative md:backdrop-blur-none">
-      <div className="flex items-center px-4 h-14 md:h-auto md:py-6 max-w-7xl mx-auto w-full">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1 pl-1 pr-3 py-1.5 text-gray-500 hover:text-primary-blue-500 font-medium active:scale-95 transition-all"
-        >
-          <ChevronLeft className="w-5 h-5 text-primary-blue-500" />
-          <span>{fromName}</span>
-        </button>
+    <button
+      onClick={() => router.back()}
+      className="flex items-center gap-2.5 cursor-pointer active:scale-95 transition-transform duration-150 group/btn"
+    >
+      <div className="w-6 h-6 rounded-lg bg-[#0C5BEA]/10 flex items-center justify-center transition-all duration-200 group-hover:bg-[#0C5BEA] group-hover/btn:bg-[#0C5BEA]">
+        <ChevronLeft className="w-3.5 h-3.5 text-[#0C5BEA] transition-colors duration-200 group-hover:text-white group-hover/btn:text-white" />
       </div>
-    </div>
+      <span className="text-sm md:text-base font-semibold text-gray-600 group-hover/btn:text-gray-900 transition-colors duration-200 max-w-[160px] truncate">
+        {fromName}
+      </span>
+    </button>
   );
 }

@@ -222,50 +222,88 @@ function JobList({
     );
   }
 
-  return (
-    <div>
-      <section
-        className={`grid gap-3 md:gap-4 ${
-          isMobile ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-        }`}
-      >
-        {jobItems.map((job) => (
-          <JobCard
-            fromPageName="ค้นหางานพิเศษ"
-            key={job._id}
-            isLoggedIn={isLoggedIn}
-            isStudent={isStudent}
-            isBookmarked={savedJobIds.includes(job._id)}
-            onToggleBookmark={() => handleToggleBookmark(job._id)}
-            isMobile={isMobile}
-            data={{
-              id: job._id,
-              icon: getCategoryIcon(job.category),
-              title: job.title,
-              type: job.category,
-              postedBy: job.owner,
-              details: job.shortDescription,
-              minCompensation: job.budgetMin.toLocaleString(),
-              maxCompensation: job.budgetMax
-                ? job.budgetMax.toLocaleString()
-                : null,
-              currency: "บาท",
-              timeAgo: calculateTimeAgo(job.postedDate),
-              isVisible: true,
-            }}
-          />
-        ))}
-      </section>
+  // แทนที่ if (loading) return <Loading /> ด้านบน
+  // ให้ใช้ overlay แทน ใน return block
 
-      <div className="mt-8">
-        <Pagination
-          currentPage={pageFromUrl}
-          totalPages={totalPages}
-          baseUrl="/find-job"
-          queryParams={getPaginationQueryParams()}
-          isMobile={isMobile}
-        />
-      </div>
+  return (
+    <div className="relative">
+      {/* Overlay loading — ไม่ unmount content เดิม */}
+      {loading && (
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center 
+                      justify-center bg-white/70 backdrop-blur-sm rounded-xl min-h-[200px]"
+        >
+          <Loading />
+          <p className="mt-3 text-gray-500 text-sm">กำลังโหลดข้อมูลงาน...</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="text-red-600 text-center">{error}</div>
+      )}
+
+      {!loading && !error && jobItems.length === 0 && (
+        <div className="text-center py-10 text-gray-500">
+          ไม่พบงานที่ตรงตามเงื่อนไข
+          <div>
+            <button
+              onClick={() => onResetFilters?.()}
+              className="mt-4 bg-primary-blue-500 text-white px-4 py-2 rounded"
+            >
+              ล้างตัวกรอง
+            </button>
+          </div>
+        </div>
+      )}
+
+      {jobItems.length > 0 && (
+        <>
+          <section
+            className={`grid gap-3 md:gap-4 ${
+              isMobile
+                ? "grid-cols-1"
+                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
+            {jobItems.map((job) => (
+              <JobCard
+                fromPageName="ค้นหางานพิเศษ"
+                key={job._id}
+                isLoggedIn={isLoggedIn}
+                isStudent={isStudent}
+                isBookmarked={savedJobIds.includes(job._id)}
+                onToggleBookmark={() => handleToggleBookmark(job._id)}
+                isMobile={isMobile}
+                data={{
+                  id: job._id,
+                  icon: getCategoryIcon(job.category),
+                  title: job.title,
+                  type: job.category,
+                  postedBy: job.owner,
+                  details: job.shortDescription,
+                  minCompensation: job.budgetMin.toLocaleString(),
+                  maxCompensation: job.budgetMax
+                    ? job.budgetMax.toLocaleString()
+                    : null,
+                  currency: "บาท",
+                  timeAgo: calculateTimeAgo(job.postedDate),
+                  isVisible: true,
+                }}
+              />
+            ))}
+          </section>
+
+          <div className="mt-8">
+            <Pagination
+              currentPage={pageFromUrl}
+              totalPages={totalPages}
+              baseUrl="/find-job"
+              queryParams={getPaginationQueryParams()}
+              isMobile={isMobile}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

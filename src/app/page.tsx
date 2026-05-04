@@ -94,10 +94,10 @@ const KEYWORDS_MOBILE = [
   {
     text: "งานน่าเชื่อถือ",
     style: "border-2 border-dashed border-gray-400 text-gray-600 bg-white",
-    x: "65%",
+    x: "60%",
     y: "5%",
     rotate: 10,
-    size: "text-sm font-medium",
+    size: "text-[13px] font-medium",
   },
   {
     text: "การพัฒนา",
@@ -110,9 +110,9 @@ const KEYWORDS_MOBILE = [
   {
     text: "ประสบการณ์",
     style: "bg-[#F4FE57] text-gray-800 font-black",
-    x: "3%",
+    x: "1%",
     y: "10%",
-    rotate: -8,
+    rotate: -10,
     size: "text-sm font-medium",
   },
   {
@@ -127,8 +127,8 @@ const KEYWORDS_MOBILE = [
     text: "Project",
     style:
       "bg-[#F4FE57] text-gray-800 font-black border-2 border-dashed border-gray-500",
-    x: "65%",
-    y: "30%",
+    x: "75%",
+    y: "25%",
     rotate: -10,
     size: "text-sm font-medium",
   },
@@ -196,7 +196,7 @@ const ICON_BUBBLES_DESKTOP = [
 const ICON_BUBBLES_MOBILE = [
   {
     emoji: "🎓",
-    x: "10%",
+    x: "8%",
     y: "30%",
     size: "w-9 h-9",
     border: "bg-white shadow-sm border border-gray-100",
@@ -204,7 +204,7 @@ const ICON_BUBBLES_MOBILE = [
   },
   {
     emoji: "💼",
-    x: "50%",
+    x: "45%",
     y: "4%",
     size: "w-9 h-9",
     border: "border border-dashed border-gray-300 bg-white",
@@ -405,7 +405,7 @@ const CategoryCard = ({ title, icon, bgColor, path }) => (
         {icon}
       </div>
       <h4
-        className="text-[10px] md:text-[11px] font-bold text-gray-700 text-center 
+        className="text-[12px] md:text-[12px] font-medium text-black text-center 
                    group-hover:text-[#0C5BEA] transition-colors 
                    leading-tight break-words px-1 h-auto"
       >
@@ -479,6 +479,8 @@ function MobileFeatureSlider({ features }: { features: Feature[] }) {
   const touchStartX = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const isEven = current % 2 === 0;
+
   const goTo = useCallback(
     (index: number) => {
       setCurrent((index + features.length) % features.length);
@@ -504,19 +506,14 @@ function MobileFeatureSlider({ features }: { features: Feature[] }) {
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
-          initial={{ opacity: 0, x: 60 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -60 }}
-          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] as const }}
-          className="bg-gradient-to-b from-[#0C5BEA] to-[#3B76DE]/90 rounded-[2.5rem] p-8 flex flex-col items-center text-center gap-5 min-h-[320px]"
-          onTouchStart={(e) => {
-            touchStartX.current = e.touches[0].clientX;
-            stopPlay();
+          initial={{ opacity: 0, scale: 0.95, x: 20 }} // เพิ่ม Scale เล็กน้อยให้ดูมีมิติ
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          exit={{ opacity: 0, scale: 1.05, x: -20 }}
+          transition={{
+            duration: 0.4,
+            ease: [0.23, 1, 0.32, 1], // Custom Cubic Bezier (Out-Quint) จะดูพรีเมียมกว่า
           }}
-          onTouchEnd={(e) => {
-            const dx = e.changedTouches[0].clientX - touchStartX.current;
-            if (Math.abs(dx) > 40) goTo(dx < 0 ? current + 1 : current - 1);
-          }}
+          className="relative overflow-hidden rounded-[2.5rem] p-8 flex flex-col items-center text-center gap-5 min-h-[320px] shadow-xl"
         >
           {/* Counter pill
           <span className="text-xs font-bold text-white/60 tracking-widest uppercase">
@@ -524,20 +521,28 @@ function MobileFeatureSlider({ features }: { features: Feature[] }) {
             {String(features.length).padStart(2, "0")}
           </span> */}
 
-          {/* Icon */}
-          <div className="flex-1 flex items-center justify-center w-full py-2">
-            <div className="[&>svg]:w-24 [&>svg]:h-24 text-white/90 filter drop-shadow-lg">
-              {features[current].icon}
+          <div
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out bg-gradient-to-b from-[#0C5BEA] to-[#328ACC] ${isEven ? "opacity-100" : "opacity-0"}`}
+          />
+          <div
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out bg-gradient-to-b from-[#0C5BEA] to-[#7067EC] ${!isEven ? "opacity-100" : "opacity-0"}`}
+          />
+          <div className="relative z-10 flex flex-col items-center gap-5 w-full h-full">
+            {/* Icon */}
+            <div className="flex-1 flex items-center justify-center w-full py-2">
+              <div className="[&>svg]:w-24 [&>svg]:h-24 text-white/90 filter drop-shadow-lg">
+                {features[current].icon}
+              </div>
             </div>
-          </div>
 
-          {/* Text */}
-          <h3 className="text-xl font-black text-white leading-snug">
-            {features[current].title}
-          </h3>
-          <p className="text-[15px] text-white/80 leading-relaxed max-w-[85%]">
-            {features[current].description}
-          </p>
+            {/* Text */}
+            <h3 className="text-xl font-black text-white leading-snug">
+              {features[current].title}
+            </h3>
+            <p className="text-[15px] text-white/80 leading-relaxed max-w-[85%]">
+              {features[current].description}
+            </p>
+          </div>
         </motion.div>
       </AnimatePresence>
 
@@ -573,6 +578,8 @@ export default function Home() {
   const currentSlideData = HERO_SLIDES[currentSlideIndex];
   const heroPrimaryButton = getHeroPrimaryButton(userRole);
 
+  const [showMajorExpand, setShowMajorExpand] = useState(false);
+
   const [activeIndex, setActiveIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -590,6 +597,14 @@ export default function Home() {
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     axios
@@ -643,7 +658,10 @@ export default function Home() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }}
+                      transition={{
+                        duration: 0.6,
+                        ease: [0.22, 1, 0.36, 1] as const,
+                      }}
                       className="pointer-events-none"
                     >
                       <h1 className="leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
@@ -698,28 +716,166 @@ export default function Home() {
 
         <section className="bg-blue-50 w-full flex flex-col gap-8 py-5 px-5 justify-center text-center rounded-b-3xl shadow-lg">
           {/* Mobile Major Section */}
-          <div className="md:hidden overflow-x-auto flex gap-4 px-2 py-2 scrollbar-hide scroll-smooth snap-x snap-mandatory">
-            {MAJOR.map((category) => (
-              <Link
-                key={category.id}
-                href={`/find-job?major=${category.id}`}
-                className="flex flex-col items-center gap-2.5 flex-shrink-0 snap-start group"
-              >
-                <div className="relative">
-                  <div className="w-[40px] h-[40px] rounded-full bg-[#0C5BEA] flex items-center justify-center transition-all duration-300 group-active:scale-95 group-active:bg-blue-700 shadow-lg shadow-blue-200 relative overflow-hidden">
+          <div className="md:hidden">
+            <div className="grid grid-cols-4 gap-x-2 gap-y-4 px-2 py-2">
+              {MAJOR.slice(0, 3).map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/find-job?major=${category.id}`}
+                  className="flex flex-col items-center gap-2.5 group"
+                >
+                  <div className="w-[60px] h-[60px] rounded-full bg-[#0C5BEA] flex items-center justify-center transition-all duration-300 group-active:scale-95 group-active:bg-blue-700 shadow-lg shadow-blue-200 relative overflow-hidden mx-auto">
                     <div className="text-white transform transition-transform duration-300 group-hover:rotate-6 relative z-10">
-                      {React.cloneElement(category.icon as React.ReactElement<{ className: string }>, {
-                        className: "h-5 w-5",
-                      })}
+                      {React.cloneElement(
+                        category.icon as React.ReactElement<{
+                          className: string;
+                        }>,
+                        { className: "h-6 w-6" },
+                      )}
                     </div>
                     <div className="absolute inset-0 bg-black/0 group-active:bg-black/10 transition-colors duration-200" />
                   </div>
-                </div>
-                <span className="text-[10px] font-bold text-gray-500 text-center leading-tight w-[72px] opacity-90 line-clamp-2 min-h-[24px]">
-                  {category.title}
-                </span>
-              </Link>
-            ))}
+                  <span className="text-[12px] font-medium text-black text-center leading-tight w-full opacity-90 line-clamp-2 min-h-[28px] px-1">
+                    {category.title}
+                  </span>
+                </Link>
+              ))}
+
+              <div className="relative flex flex-col items-center">
+                <AnimatePresence mode="wait" initial={false}>
+                  {!showMajorExpand ? (
+                    <motion.button
+                      key="expand-btn"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      onClick={() => setShowMajorExpand(true)}
+                      className="flex flex-col items-center gap-2.5 w-full group absolute inset-0"
+                    >
+                      <div className="w-[60px] h-[60px] rounded-full bg-gray-200 flex items-center justify-center group-active:scale-95 transition-transform duration-200 mx-auto">
+                        <svg
+                          className="w-5 h-5 text-black"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
+                      </div>
+                      <span className="text-[12px] font-medium text-black text-center leading-tight w-full opacity-90 min-h-[28px] px-1">
+                        วิชาเอกอื่น ๆ
+                      </span>
+                    </motion.button>
+                  ) : (
+                    <motion.div
+                      key="major-3"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-0"
+                    >
+                      <Link
+                        href={`/find-job?major=${MAJOR[3].id}`}
+                        className="flex flex-col items-center gap-2.5 group"
+                      >
+                        <div className="w-[60px] h-[60px] rounded-full bg-[#0C5BEA] flex items-center justify-center transition-all duration-300 group-active:scale-95 group-active:bg-blue-700 shadow-lg shadow-blue-200 relative overflow-hidden mx-auto">
+                          <div className="text-white transform transition-transform duration-300 group-hover:rotate-6 relative z-10">
+                            {React.cloneElement(
+                              MAJOR[3].icon as React.ReactElement<{
+                                className: string;
+                              }>,
+                              { className: "h-6 w-6" },
+                            )}
+                          </div>
+                          <div className="absolute inset-0 bg-black/0 group-active:bg-black/10 transition-colors duration-200" />
+                        </div>
+                        <span className="text-[12px] font-medium text-black text-center leading-tight w-full opacity-90 line-clamp-2 min-h-[28px] px-1">
+                          {MAJOR[3].title}
+                        </span>
+                      </Link>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="w-[60px] h-[60px] mx-auto" />
+                <div className="min-h-[28px]" />
+              </div>
+            </div>
+
+            <motion.div
+              initial={false}
+              animate={showMajorExpand ? "open" : "closed"}
+              variants={{
+                open: {
+                  height: "auto",
+                  opacity: 1,
+                  clipPath: "inset(0% 0% 0% 0% round 12px)",
+                },
+                closed: {
+                  height: 0,
+                  opacity: 0,
+                  clipPath: "inset(0% 0% 100% 0% round 12px)",
+                },
+              }}
+              transition={{
+                duration: 0.4,
+                ease: [0.22, 1, 0.36, 1],
+                opacity: { duration: 0.3 },
+              }}
+              className="overflow-hidden"
+              style={{ willChange: "height, opacity, clip-path" }}
+            >
+              <div className="grid grid-cols-4 gap-x-2 gap-y-4 px-2 pt-1 pb-2">
+                {MAJOR.slice(4).map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/find-job?major=${category.id}`}
+                    className="flex flex-col items-center gap-2 group"
+                  >
+                    <div className="w-[60px] h-[60px] rounded-full bg-[#0C5BEA] flex items-center justify-center transition-all duration-300 group-active:scale-95 group-active:bg-blue-700 shadow-lg shadow-blue-200 relative overflow-hidden mx-auto">
+                      <div className="text-white transform transition-transform duration-300 group-hover:rotate-6 relative z-10">
+                        {React.cloneElement(
+                          category.icon as React.ReactElement<{
+                            className: string;
+                          }>,
+                          { className: "h-6 w-6" },
+                        )}
+                      </div>
+                      <div className="absolute inset-0 bg-black/0 group-active:bg-black/10 transition-colors duration-200" />
+                    </div>
+                    <span className="text-[12px] font-medium text-black text-center leading-tight w-full opacity-90 line-clamp-2 min-h-[28px] px-1">
+                      {category.title}
+                    </span>
+                  </Link>
+                ))}
+
+                <button
+                  onClick={() => setShowMajorExpand(false)}
+                  className="flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-[60px] h-[60px] rounded-full bg-gray-200 flex items-center justify-center group-active:scale-95 transition-transform duration-200 mx-auto">
+                    <svg
+                      className="w-5 h-5 text-black"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 15l-6-6-6 6" />
+                    </svg>
+                  </div>
+                  <span className="text-[12px] font-medium text-black text-center leading-tight w-full opacity-90 min-h-[28px] px-1">
+                    แสดงน้อยลง
+                  </span>
+                </button>
+              </div>
+            </motion.div>
           </div>
 
           {/* Desktop Major Section (เดิม) */}
@@ -772,6 +928,7 @@ export default function Home() {
                     isStudent={userRole === "student"}
                     isBookmarked={savedJobIds.includes(job._id)}
                     onToggleBookmark={() => handleToggleBookmark(job._id)}
+                    isMobile={isMobile}
                     data={{
                       id: job._id,
                       icon: getCategoryIcon(job.category),
@@ -885,30 +1042,51 @@ export default function Home() {
               whileInView="visible"
               className="relative z-10 grid grid-cols-4 gap-4 items-start"
             >
-              {ABOUT_FEATURES.map((feature, index) => (
-                <motion.div
-                  key={index}
-                  variants={fadeInUp}
-                  className="w-full"
-                  style={{
-                    marginTop: index % 2 === 1 ? "clamp(1rem, 4vw, 4rem)" : "0",
-                  }}
-                >
-                  <div className="bg-gradient-to-b from-[#0C5BEA] to-[#3B76DE]/90 rounded-[3rem] p-8 flex flex-col items-center text-center gap-6 h-full min-h-[320px] hover:scale-105 transition-transform duration-300">
-                    <h4 className="text-[16px] font-black text-white leading-snug">
-                      {feature.title}
-                    </h4>
-                    <div className="flex-1 flex items-center justify-center w-full py-2">
-                      <div className="[&>svg]:w-30 [&>svg]:h-30 text-white/90 filter drop-shadow-lg">
-                        {feature.icon}
+              {ABOUT_FEATURES.map((feature, index) => {
+                // Logic: ถ้า index เป็นเลขคู่ (0, 2) ใช้สีน้ำเงิน, เลขคี่ (1, 3) ใช้สีขาว/ใส
+                const isEven = index % 2 === 0;
+
+                return (
+                  <motion.div
+                    key={index}
+                    variants={fadeInUp}
+                    className="w-full"
+                    style={{
+                      // สลับระยะห่างฟันปลา (Staggered effect)
+                      marginTop:
+                        index % 2 === 1 ? "clamp(1rem, 4vw, 4rem)" : "0",
+                    }}
+                  >
+                    <div
+                      className={`rounded-[3rem] p-8 flex flex-col items-center text-center gap-6 h-full min-h-[320px] hover:scale-105 transition-all duration-300 shadow-xl ${
+                        isEven
+                          ? "bg-gradient-to-b from-[#0C5BEA] to-[#328ACC] text-white"
+                          : "bg-gradient-to-b from-[#0C5BEA] to-[#7067EC] text-white"
+                      }`}
+                    >
+                      <h4
+                        className={`text-[16px] font-black leading-snug text-white`}
+                      >
+                        {feature.title}
+                      </h4>
+
+                      <div className="flex-1 flex items-center justify-center w-full py-2">
+                        <div
+                          className={`[&>svg]:w-30 [&>svg]:h-30 filter drop-shadow-lg text-white`}
+                        >
+                          {feature.icon}
+                        </div>
                       </div>
+
+                      <p
+                        className={`text-[15px] leading-relaxed max-w-[90%] text-white`}
+                      >
+                        {feature.description}
+                      </p>
                     </div>
-                    <p className="text-[15px] text-white/80 leading-relaxed max-w-[90%]">
-                      {feature.description}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
         </motion.section>
@@ -922,7 +1100,20 @@ export default function Home() {
           className="w-full py-8 px-6 md:px-16 max-w-7xl mx-auto"
         >
           {/* Mobile: stack vertical, Desktop: overlap layout */}
-          <div className="flex flex-col md:relative md:min-h-[480px]">
+          <div className="relative flex flex-col overflow-hidden rounded-[2rem] p-6 md:p-10 min-h-[400px] md:min-h-[480px]">
+            <div
+              className="absolute inset-0 pointer-events-none opacity-[0.3] z-0
+               [--grid-size:40px] md:[--grid-size:60px]"
+              style={{
+                backgroundImage: `
+        linear-gradient(to right, #F4FE57 1px, transparent 1px),
+        linear-gradient(to bottom, #F4FE57 1px, transparent 1px)
+      `,
+                backgroundSize: "var(--grid-size) var(--grid-size)",
+                // เพิ่มบรรทัดนี้เพื่อให้มั่นใจว่าพื้นหลังจะเลื่อนตามและคลุมพื้นที่เสมอ
+                backgroundAttachment: "local",
+              }}
+            />
             {/* Text — mobile: full width, desktop: absolute left */}
             <div className="relative z-10 max-w-2xl">
               <h2 className="text-lg md:text-2xl font-black text-gray-900 leading-tight mb-4">

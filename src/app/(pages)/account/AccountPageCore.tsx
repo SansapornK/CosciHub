@@ -417,7 +417,7 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full bg-[#F8FAFC] min-h-screen pb-20">
+    <div className="w-full min-h-screen pb-20">
       {/* ══════════════════════════════════════════════
           HEADER SECTION
       ══════════════════════════════════════════════ */}
@@ -573,8 +573,8 @@ function AccountPageCore({ profileId }: AccountPageCoreProps) {
                 </div>
               </div>
               <div className="flex items-center gap-3 mt-6 md:mt-0 pt-1.5 md:pt-2">
-                <span className="flex items-center gap-2 px-6 py-2 bg-[#0C5BEA] text-white rounded-full font-medium text-[13px] shadow-lg">
-                  <User size={15} fill="currentColor" />
+                <span className="flex w-fit items-center gap-2 px-4 py-1.5 bg-[#0C5BEA] text-white rounded-full font-medium text-[13px] shadow-lg whitespace-nowrap">
+                  <User size={15} fill="currentColor" className="shrink-0" />
                   {userData?.role === "student"
                     ? "นิสิต"
                     : userData?.role === "alumni"

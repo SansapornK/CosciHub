@@ -10,6 +10,7 @@ interface IJobFilter {
   title?: { $regex: string; $options: string };
   category?: { $in: string[] };
   budgetMin?: { $gte?: number; $lte?: number };
+  budgetMax?: { $lte?: number };
   owner?: string;
   ownerId?: string;
   status?: "draft" | "published" | "closed" | { $nin: string[] };
@@ -50,12 +51,13 @@ export async function GET(req: Request) {
   }
   if (ownerId) filter.ownerId = ownerId;
 
-  if (minPrice || maxPrice) {
-    filter.budgetMin = {};
-    if (minPrice) filter.budgetMin.$gte = Number(minPrice);
-    if (maxPrice) filter.budgetMin.$lte = Number(maxPrice);
+  if (minPrice) {
+    filter.budgetMin = { $gte: Number(minPrice) };
   }
-
+  if (maxPrice) {
+    // งานที่ budgetMax ไม่เกิน maxPrice ที่กรอก
+    filter.budgetMax = { $lte: Number(maxPrice) };
+  }
   const total = await Job.countDocuments(filter as FilterQuery<typeof Job>);
 
   const jobs = await (Job as any)

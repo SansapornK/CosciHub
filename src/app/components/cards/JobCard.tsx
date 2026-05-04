@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { Bookmark, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { getCategoryColor } from "@/app/components/utils/jobHelpers";
 
 export interface JobCardData {
   id: string;
@@ -63,6 +64,8 @@ const JobCardMobile: React.FC<JobCardProps> = ({
   onToggleBookmark,
   fromPageName = "ย้อนกลับ",
 }) => {
+  const colors = getCategoryColor(data.type);
+
   const compensation = data.maxCompensation
     ? `฿${data.minCompensation} – ${data.maxCompensation}`
     : `฿${data.minCompensation}+`;
@@ -75,12 +78,14 @@ const JobCardMobile: React.FC<JobCardProps> = ({
       <div className="flex flex-col p-4 gap-2.5">
         {/* ── Row 1: Icon + Title + Bookmark ── */}
         <div className="flex items-start gap-3">
-          <div className="w-[46px] h-[46px] rounded-[14px] bg-indigo-50 flex items-center justify-center shrink-0 text-indigo-500">
+          <div
+            className={`w-[46px] h-[46px] rounded-[14px] flex items-center justify-center shrink-0 ${colors.bg} ${colors.text}`}
+          >
             {data.icon}
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-bold text-zinc-900 leading-snug line-clamp-1 mb-0.5">
+            <p className="text-[15px] font-bold text-zinc-900 leading-snug line-clamp-1 text-left mb-0.5">
               {data.title}
             </p>
             <div className="flex items-center gap-1">
@@ -95,7 +100,7 @@ const JobCardMobile: React.FC<JobCardProps> = ({
                 <circle cx="12" cy="8" r="4" />
                 <path d="M20 21a8 8 0 0 0-16 0" />
               </svg>
-              <span className="text-[12px] text-blue-400 truncate">
+              <span className="text-[12px] text-blue-400 text-left truncate">
                 {data.postedBy}
               </span>
             </div>
@@ -122,7 +127,7 @@ const JobCardMobile: React.FC<JobCardProps> = ({
         </div>
 
         {/* ── Row 2: Description ── */}
-        <p className="text-[13px] text-zinc-500 leading-relaxed line-clamp-2">
+        <p className="text-[13px] text-zinc-500 leading-relaxed text-left line-clamp-2">
           {data.details}
         </p>
 
@@ -164,7 +169,7 @@ const JobCardMobile: React.FC<JobCardProps> = ({
           <Link
             href={`/find-job/${data.id}?fromName=${encodeURIComponent(fromPageName)}`}
           >
-            <button className="bg-gradient-to-br from-blue-500 to-blue-400 active:scale-95 text-white text-[13px] font-semibold px-4 py-2 rounded-xl transition-all">
+            <button className="bg-gradient-to-r from-[#0A5BE9] to-[#7170D8] active:scale-95 text-white text-[13px] font-semibold px-4 py-2 rounded-xl transition-all">
               ดูรายละเอียด
             </button>
           </Link>
@@ -183,6 +188,8 @@ const JobCardDesktop: React.FC<JobCardProps> = ({
   actionButton,
   fromPageName = "ย้อนกลับ",
 }) => {
+  const colors = getCategoryColor(data.type);
+
   const compensation = data.maxCompensation
     ? `${data.minCompensation} - ${data.maxCompensation}`
     : `${data.minCompensation}+`;
@@ -203,7 +210,7 @@ const JobCardDesktop: React.FC<JobCardProps> = ({
       </div>
 
       <div className="flex items-center gap-2 mb-2 mt-0 min-w-0">
-        <div className="p-3 rounded-2xl bg-blue-50/50 group-hover:scale-110 transition-transform duration-500 shrink-0">
+        <div className={`p-3 rounded-2xl group-hover:scale-110 transition-transform duration-500 shrink-0 ${colors.bg} ${colors.text}`}>
           {data.icon}
         </div>
         <TruncatedWithTooltip

@@ -12,6 +12,8 @@ import { toast } from "react-hot-toast";
 import EmployerWithdrawModal from "../../../../components/modals/EmployerWithdrawModal";
 import StudentContactModal from "../../../../components/modals/StudentContactModal";
 import ConfirmationModal from "../../../../components/modals/ConfirmationModal";
+import BackButton from "@/app/components/buttons/BackButton";
+
 
 // ─── Interfaces ───────────────────────────────────
 interface Applicant {
@@ -177,7 +179,7 @@ function ApplicantCard({
           {applicant.userId && (
             <Link
               href={`/account/${applicant.userId}`}
-              target="_blank"
+              // target="_blank"
               className="flex-1 text-center text-sm border border-gray-300 text-gray-600 rounded-lg py-2 hover:bg-gray-50 transition-colors"
             >
               ดูโปรไฟล์
@@ -203,7 +205,7 @@ function ApplicantCard({
           {applicant.userId && (
             <Link
               href={`/account/${applicant.userId}`}
-              target="_blank"
+              // target="_blank"
               className="flex-1 text-center text-sm border border-gray-300 text-gray-600 rounded-lg py-2 hover:bg-gray-50 transition-colors"
             >
               ดูโปรไฟล์
@@ -221,7 +223,7 @@ function ApplicantCard({
         applicant.userId && (
           <Link
             href={`/account/${applicant.userId}`}
-            target="_blank"
+            // target="_blank"
             className="text-center text-sm border border-gray-300 text-gray-600 rounded-lg py-2 hover:bg-gray-50 transition-colors"
           >
             ดูโปรไฟล์
@@ -372,12 +374,7 @@ export default function ApplicantsPage() {
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-6xl mx-auto w-full">
       <div className="mt-6 mb-1">
-        <Link
-          href="/manage-projects"
-          className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 w-fit"
-        >
-          <ArrowLeft size={18} /> กลับหน้าติดตามงาน
-        </Link>
+        <BackButton />
       </div>
 
       {/* Header */}
