@@ -9,8 +9,7 @@ import { FilterQuery } from "mongoose";
 interface IJobFilter {
   title?: { $regex: string; $options: string };
   category?: { $in: string[] };
-  budgetMin?: { $gte?: number; $lte?: number };
-  budgetMax?: { $lte?: number };
+  budget?: { $gte?: number; $lte?: number };
   owner?: string;
   ownerId?: string;
   status?: "draft" | "published" | "closed" | { $nin: string[] };
@@ -51,12 +50,14 @@ export async function GET(req: Request) {
   }
   if (ownerId) filter.ownerId = ownerId;
 
-  if (minPrice) {
-    filter.budgetMin = { $gte: Number(minPrice) };
-  }
-  if (maxPrice) {
-    // งานที่ budgetMax ไม่เกิน maxPrice ที่กรอก
-    filter.budgetMax = { $lte: Number(maxPrice) };
+  if (minPrice || maxPrice) {
+    filter.budget = {};
+    if (minPrice) {
+      filter.budget.$gte = Number(minPrice);
+    }
+    if (maxPrice) {
+      filter.budget.$lte = Number(maxPrice);
+    }
   }
   const total = await Job.countDocuments(filter as FilterQuery<typeof Job>);
 
@@ -65,9 +66,9 @@ export async function GET(req: Request) {
     .lean()
     .sort(
       sort === "price-asc"
-        ? { budgetMin: 1 }
+        ? { budget: 1 }
         : sort === "price-desc"
-          ? { budgetMin: -1 }
+          ? { budget: -1 }
           : { postedDate: -1 },
     )
     .skip(skip)
@@ -127,8 +128,7 @@ export async function POST(req: Request) {
         "description",
         "qualifications",
         "jobType",
-        "budgetMin",
-        "budgetMax",
+        "budget",
         "capacity",
         "applicationDeadline",
       ];
@@ -141,15 +141,9 @@ export async function POST(req: Request) {
       }
     }
 
-    if (Number(data.budgetMin) < 100) {
+    if (Number(data.budget) < 100) {
       return NextResponse.json(
-        { error: "ค่าตอบแทนขั้นต่ำต้องไม่น้อยกว่า 100 บาท" },
-        { status: 400 },
-      );
-    }
-    if (Number(data.budgetMin) > Number(data.budgetMax)) {
-      return NextResponse.json(
-        { error: "ค่าตอบแทนเริ่มต้นต้องไม่มากกว่าค่าตอบแทนสูงสุด" },
+        { error: "ค่าตอบแทนต้องไม่น้อยกว่า 100 บาท" },
         { status: 400 },
       );
     }
@@ -170,8 +164,7 @@ export async function POST(req: Request) {
       jobType: data.jobType,
       location: data.location || null,
       deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
-      budgetMin: Number(data.budgetMin),
-      budgetMax: Number(data.budgetMax),
+      budget: Number(data.budget),
       capacity: Number(data.capacity),
       applicationDeadline: new Date(data.applicationDeadline),
       ownerId: user._id,

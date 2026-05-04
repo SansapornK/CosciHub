@@ -37,8 +37,7 @@ interface JobItem {
   _id: string;
   title: string;
   shortDescription: string;
-  budgetMin: number;
-  budgetMax: number | null;
+  budget: number;
   category: string;
   postedDate: string;
   owner: string;
@@ -522,10 +521,7 @@ export default function MyJobsPage() {
                           type: job.category,
                           postedBy: job.owner,
                           details: job.shortDescription,
-                          minCompensation: job.budgetMin.toLocaleString(),
-                          maxCompensation: job.budgetMax
-                            ? job.budgetMax.toLocaleString()
-                            : null,
+                          budget: job.budget ?? 0,
                           currency: "บาท",
                           timeAgo: calculateTimeAgo(job.postedDate),
                           isVisible: true,
@@ -725,10 +721,7 @@ export default function MyJobsPage() {
                         type: job.category,
                         postedBy: job.owner,
                         details: job.shortDescription,
-                        minCompensation: job.budgetMin.toLocaleString(),
-                        maxCompensation: job.budgetMax
-                          ? job.budgetMax.toLocaleString()
-                          : null,
+                        budget: job.budget ?? 0,
                         currency: "บาท",
                         timeAgo: calculateTimeAgo(job.postedDate),
                         isVisible: true,

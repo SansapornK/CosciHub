@@ -85,8 +85,7 @@ export async function PATCH(
         "description",
         "qualifications",
         "jobType",
-        "budgetMin",
-        "budgetMax",
+        "budget",
         "capacity",
         "applicationDeadline",
       ];
@@ -133,8 +132,7 @@ export async function PATCH(
             deliveryDate: data.deliveryDate
               ? new Date(data.deliveryDate)
               : null,
-            budgetMin: Number(data.budgetMin),
-            budgetMax: Number(data.budgetMax),
+            budget: Number(data.budget),
             capacity: Number(data.capacity),
             applicationDeadline: data.applicationDeadline
               ? new Date(data.applicationDeadline)

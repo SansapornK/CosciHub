@@ -269,7 +269,7 @@ export async function notifyWorkApproved(
       message:       `${owner.name} ยืนยันว่างาน "${job.title}" เสร็จสมบูรณ์แล้ว ขอบคุณสำหรับการทำงาน`,
       jobId,
       applicationId,
-      link:          `/manage-projects`,
+      link:          `/manage-projects/${jobId}/work/${applicationId}`,
     });
   } catch (error) {
     console.error('notifyWorkApproved error:', error);
@@ -332,11 +332,11 @@ export async function notifyStudentReviewReceived(
       recipientId:   applicantId,
       senderId:      owner._id.toString(),
       type:          'review_received_by_student',
-      title:         'คุณได้รับรีวิวจากผู้ว่าจ้าง! 🎉',
-      message:       `งาน "${job.title} ผู้ว่าจ้างรีวิวให้คุณเรียบร้อยแล้ว"`,
+      title:         'คุณได้รับรีวิวใหม่จากผู้ว่าจ้าง! 🎉',
+      message:       `ผู้ว่าจ้างรีวิวให้คุณเรียบร้อยแล้ว"`,
       jobId,
       applicationId,
-      link:          `/manage-projects/${jobId}/work/${applicationId}`,
+      link:          `/account`,
     });
   } catch (error) {
     console.error('notifyStudentReviewReceived error:', error);
@@ -359,11 +359,11 @@ export async function notifyOwnerReviewReceived(
       recipientId:   owner._id.toString(),
       senderId:      applicantId,
       type:          'review_received_by_owner',
-      title:         'คุณได้รับรีวิวจากนิสิต! 🎉',
-      message:       `งาน "${job.title}" นิสิตรีวิวให้คุณเรียบร้อยแล้ว`,
+      title:         'คุณได้รับรีวิวใหม่จากนิสิต! 🎉',
+      message:       `นิสิตรีวิวให้คุณเรียบร้อยแล้ว`,
       jobId,
       applicationId,
-      link:          `/manage-projects/${jobId}/overview`,
+      link:          `/account`,
     });
   } catch (error) {
     console.error('notifyOwnerReviewReceived error:', error);
@@ -425,12 +425,44 @@ export async function notifyApplicationWithdrawnByEmployer(
       message:       `${owner.name} ยกเลิกใบสมัครของคุณสำหรับงาน "${job.title}"`,
       jobId,
       applicationId,
-      link:          `/find-job`,
+      link:          `/manage-projects`,
     });
     console.log('[notifyApplicationWithdrawnByEmployer] result:', result);
     return result;
   } catch (error) {
     console.error('notifyApplicationWithdrawnByEmployer error:', error);
+    return { success: false };
+  }
+}
+
+// ─── 13. แจ้งนิสิต: ยินดีต้อนรับ & อัปเดตโปรไฟล์ ──────────────────────────
+export async function notifyWelcomeCompleteProfile(userId: string) {
+  try {
+    return await createNotification({
+      recipientId: userId,
+      type: 'system_welcome',
+      title: 'ยินดีต้อนรับสู่ CosciHub! 🎉',
+      message: 'เริ่มต้นด้วยการอัปเดตโปรไฟล์ของคุณ เพิ่มทักษะ ผลงาน และ Resume เพื่อเพิ่มโอกาสได้งาน',
+      link: '/account',
+    });
+  } catch (error) {
+    console.error('notifyWelcomeCompleteProfile error:', error);
+    return { success: false };
+  }
+}
+
+// ─── 14. แจ้งศิษย์เก่า: รอการยืนยันบัญชี ──────────────────────────────────────
+export async function notifyAlumniPendingVerification(userId: string) {
+  try {
+    return await createNotification({
+      recipientId: userId,
+      type: 'system_alumni_pending',
+      title: 'บัญชีของท่านยังไม่ได้รับการยืนยัน',
+      message: 'กรุณารอการยืนยันจากอาจารย์ หรือสามารถส่ง email คำขอยืนยันไปที่อาจารย์ได้อีกครั้งในหน้าตั้งค่า',
+      link: '/setting',
+    });
+  } catch (error) {
+    console.error('notifyAlumniPendingVerification error:', error);
     return { success: false };
   }
 }

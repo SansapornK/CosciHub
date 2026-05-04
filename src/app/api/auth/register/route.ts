@@ -5,7 +5,8 @@ import User from '@/models/User';
 import { uploadToCloudinary } from '@/libs/cloudinary';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { sendTeacherVerificationEmails } from '@/libs/emailToProf'; 
+import { sendTeacherVerificationEmails } from '@/libs/emailToProf';
+import { notifyWelcomeCompleteProfile, notifyAlumniPendingVerification } from '@/utils/notificationUtils'; 
 
 export async function POST(req: NextRequest) {
   try {
@@ -187,6 +188,20 @@ export async function POST(req: NextRequest) {
     // Save the updated user if files were uploaded
     if (profileImage || (role === 'student' && (formData.get('portfolio') || formData.get('galleryImage0')))) {
       await user.save();
+    }
+
+    // ส่ง notification ยินดีต้อนรับ & แนะนำให้อัปเดตโปรไฟล์ (เฉพาะนิสิต)
+    if (role === 'student') {
+      notifyWelcomeCompleteProfile(userId).catch(err =>
+        console.error('Welcome notification failed:', err)
+      );
+    }
+
+    // ส่ง notification แจ้งศิษย์เก่าว่าบัญชียังรอการยืนยัน
+    if (role === 'alumni') {
+      notifyAlumniPendingVerification(userId).catch(err =>
+        console.error('Alumni pending verification notification failed:', err)
+      );
     }
 
     // สร้างข้อมูลสำหรับการตอบกลับโดยส่งข้อมูลเฉพาะตามบทบาท

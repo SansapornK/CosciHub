@@ -40,8 +40,7 @@ interface JobDetail {
   ownerImage: string | null;
   jobType?: string;
   location?: string;
-  budgetMin: number;
-  budgetMax: number | null;
+  budget: number;
   capacity?: number;
   applicants: string[];
 }
@@ -415,7 +414,7 @@ const JobDetailPage = () => {
               <MetaCard
                 icon={<Wallet className="w-4 h-4" />}
                 label="ค่าตอบแทน"
-                value={`${job.budgetMin.toLocaleString()}${job.budgetMax ? `–${job.budgetMax.toLocaleString()}` : "+"} ฿`}
+                value={`${job.budget?.toLocaleString()} ฿`}
                 iconBg="bg-emerald-50"
                 iconColor="text-emerald-500"
                 valueColor="text-emerald-500"
@@ -581,11 +580,7 @@ const JobDetailPage = () => {
                       ค่าตอบแทน
                     </p>
                     <p className="text-sm font-bold text-emerald-500">
-                      {job.budgetMin.toLocaleString()}
-                      {job.budgetMax
-                        ? ` - ${job.budgetMax.toLocaleString()}`
-                        : ""}{" "}
-                      บาท
+                      {job.budget?.toLocaleString()} บาท
                     </p>
                   </div>
                 </div>
@@ -795,14 +790,7 @@ const JobDetailPage = () => {
                   ค่าตอบแทน
                 </p>
                 <p className="text-base font-extrabold text-gray-900 truncate leading-tight">
-                  ฿{job.budgetMin.toLocaleString()}
-                  {job.budgetMax ? (
-                    <span className="text-gray-400 font-semibold">
-                      –{job.budgetMax.toLocaleString()}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 font-semibold">+</span>
-                  )}
+                  ฿{job.budget?.toLocaleString()}
                 </p>
               </div>
 
@@ -867,7 +855,7 @@ const JobDetailPage = () => {
               <DetailRow label="ผู้ว่าจ้าง" value={job.owner} />
               <DetailRow
                 label="ค่าตอบแทน"
-                value={`${job.budgetMin.toLocaleString()} บาท`}
+                value={`${job.budget?.toLocaleString()} บาท`}
               />
             </div>
             <div className="flex gap-4 justify-center">
@@ -902,7 +890,7 @@ const JobDetailPage = () => {
                 <DetailRow label="ผู้ว่าจ้าง" value={job.owner} />
                 <DetailRow
                   label="ค่าตอบแทน"
-                  value={`${job.budgetMin.toLocaleString()} บาท`}
+                  value={`${job.budget?.toLocaleString()} บาท`}
                 />
               </div>
               <div className="flex gap-3">

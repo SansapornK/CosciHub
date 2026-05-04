@@ -48,8 +48,7 @@ interface ApplicationDetail {
     title: string;
     description: string;
     category: string;
-    budgetMin: number;
-    budgetMax: number;
+    budget: number;
     deadline: string;
     jobType: string;
     location: string;
@@ -584,13 +583,8 @@ export default function WorkManagementPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xl font-black text-white">
-                    ฿{workData.jobId?.budgetMin?.toLocaleString()}
+                    ฿{workData.jobId?.budget?.toLocaleString()}
                   </span>
-                  {workData.jobId?.budgetMax && (
-                    <span className="text-sm font-bold text-white/40">
-                      - ฿{workData.jobId?.budgetMax?.toLocaleString()}
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -2178,13 +2172,8 @@ export default function WorkManagementPage() {
                   <div className="px-2 pb-7">
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span className="text-xl font-black text-white">
-                        ฿{workData.jobId?.budgetMin?.toLocaleString()}
+                        ฿{workData.jobId?.budget?.toLocaleString()}
                       </span>
-                      {workData.jobId?.budgetMax && (
-                        <span className="text-xl font-bold text-white/40 whitespace-nowrap">
-                          - ฿{workData.jobId?.budgetMax?.toLocaleString()}
-                        </span>
-                      )}
                     </div>
                   </div>
 

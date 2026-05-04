@@ -55,8 +55,7 @@ interface JobApplication {
   jobId: string;
   jobTitle: string;
   jobCategory: string;
-  jobBudgetMin: number;
-  jobBudgetMax: number;
+  jobBudget: number;
   jobOwner: string;
   status: "pending" | "accepted" | "rejected" | "completed";
   appliedDate: string;
@@ -69,8 +68,7 @@ interface OwnerJobWithApplicants {
   _id: string;
   title: string;
   category: string;
-  budgetMin: number;
-  budgetMax: number;
+  budget: number;
   pendingCount: number;
   acceptedCount: number;
   capacity: number;
@@ -434,7 +432,7 @@ export default function ManageProjectsPage() {
     totalCompleted: uniqueCompletedApps.length,
     totalEarnings: jobApplications
       .filter((app) => app.status === "completed")
-      .reduce((sum, app) => sum + (app.jobBudgetMin || 0), 0),
+      .reduce((sum, app) => sum + (app.jobBudget || 0), 0),
     avgRating: avgRatingValue,
     reviewCount: reviewedApps.length,
   };
@@ -804,11 +802,7 @@ export default function ManageProjectsPage() {
                         {/* Budget + Date */}
                         <div className="flex items-center justify-between mt-auto pt-1 md:pt-2">
                           <p className="text-[10px] md:text-xs text-gray-500">
-                            {app.jobBudgetMin.toLocaleString()}
-                            {app.jobBudgetMax
-                              ? ` – ${app.jobBudgetMax.toLocaleString()}`
-                              : ""}{" "}
-                            บาท
+                            ฿{app.jobBudget?.toLocaleString()} บาท
                           </p>
                           <p className="text-[10px] md:text-xs text-gray-400">
                             สมัครเมื่อ{" "}

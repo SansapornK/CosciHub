@@ -936,10 +936,7 @@ export default function Home() {
                       type: job.category,
                       postedBy: job.owner,
                       details: job.shortDescription,
-                      minCompensation: job.budgetMin.toLocaleString(),
-                      maxCompensation: job.budgetMax
-                        ? job.budgetMax.toLocaleString()
-                        : null,
+                      budget: job.budget ?? 0,
                       currency: "บาท",
                       timeAgo: calculateTimeAgo(job.postedDate),
                       isVisible: true,

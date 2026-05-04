@@ -85,9 +85,8 @@ function CreateJobPageContent() {
     qualifications: "",
     jobType: "online", // รูปแบบงาน → Job.jobType
     location: "", // สถานที่ (optional)
-    deliveryDate: "", // วันกำหนดส่งงาน 
-    budgetMin: "" as number | "", // → Job.budgetMin
-    budgetMax: "" as number | "", // → Job.budgetMax
+    deliveryDate: "", // วันกำหนดส่งงาน
+    budget: "" as number | "", // → Job.budget
     capacity: "" as number | "", // → Job.capacity
     applicationDeadline: "", // วันสิ้นสุดรับสมัคร → Job.applicationDeadline
     requiredSkills: [] as string[],
@@ -112,8 +111,7 @@ function CreateJobPageContent() {
           jobType: job.jobType || "online",
           location: job.location || "",
           deliveryDate: "", // ให้เลือกใหม่
-          budgetMin: job.budgetMin || "",
-          budgetMax: job.budgetMax || "",
+          budget: job.budget || "",
           capacity: job.capacity || "",
           applicationDeadline: "", // ให้เลือกใหม่
           requiredSkills: [],
@@ -163,14 +161,8 @@ function CreateJobPageContent() {
     }
 
     // ตรวจสอบค่าตอบแทน
-    if (formData.budgetMin === "" || formData.budgetMin < 0) {
-      newErrors.budgetMin = "กรุณาระบุค่าตอบแทนเริ่มต้น";
-    }
-    if (formData.budgetMax === "" || formData.budgetMax < 1) {
-      newErrors.budgetMax = "กรุณาระบุค่าตอบแทนสูงสุด (อย่างน้อย 1 บาท)";
-    }
-    if (formData.budgetMin !== "" && formData.budgetMax !== "" && formData.budgetMin > formData.budgetMax) {
-      newErrors.budgetMax = "ค่าตอบแทนสูงสุดต้องไม่น้อยกว่าค่าตอบแทนเริ่มต้น";
+    if (formData.budget === "" || formData.budget < 1) {
+      newErrors.budget = "กรุณาระบุค่าตอบแทน (อย่างน้อย 1 บาท)";
     }
 
     // ตรวจสอบจำนวนรับ
@@ -240,8 +232,7 @@ function CreateJobPageContent() {
         jobType: formData.jobType,
         location: formData.location || null,
         deliveryDate: formData.deliveryDate || null,
-        budgetMin: formData.budgetMin,
-        budgetMax: formData.budgetMax,
+        budget: formData.budget,
         capacity: formData.capacity,
         applicationDeadline:
           formData.applicationDeadline || new Date().toISOString(),
@@ -562,72 +553,36 @@ function CreateJobPageContent() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8">
-              {/* ค่าตอบแทน Min */}
-              <InputField
-                label="ค่าตอบแทนเริ่มต้น (บาท)"
-                id="budgetMin"
-                required
-                error={errors.budgetMin}
-              >
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-                    ฿
-                  </span>
-                  <input
-                    id="budgetMin"
-                    type="number"
-                    min={0}
-                    required
-                    placeholder="0"
-                    className={`w-full pl-9 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
-                      errors.budgetMin ? "border-red-300" : "border-gray-200"
-                    }`}
-                    value={formData.budgetMin}
-                    onChange={(e) => {
-                      const value = e.target.value === "" ? "" : Number(e.target.value);
-                      setFormData({ ...formData, budgetMin: value });
-                      if (errors.budgetMin)
-                        setErrors((prev) => ({ ...prev, budgetMin: "" }));
-                    }}
-                  />
-                </div>
-              </InputField>
-
-              {/* ค่าตอบแทน Max */}
-              <InputField
-                label="ค่าตอบแทนสูงสุด (บาท)"
-                id="budgetMax"
-                required
-                error={errors.budgetMax}
-              >
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-                    ฿
-                  </span>
-                  <input
-                    id="budgetMax"
-                    type="number"
-                    min={1}
-                    required
-                    placeholder="0"
-                    className={`w-full pl-9 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
-                      errors.budgetMax ? "border-red-300" : "border-gray-200"
-                    }`}
-                    value={formData.budgetMax}
-                    onChange={(e) => {
-                      const value = e.target.value === "" ? "" : Number(e.target.value);
-                      setFormData({
-                        ...formData,
-                        budgetMax: value,
-                      });
-                      if (errors.budgetMax)
-                        setErrors((prev) => ({ ...prev, budgetMax: "" }));
-                    }}
-                  />
-                </div>
-              </InputField>
-            </div>
+            {/* ค่าตอบแทน */}
+            <InputField
+              label="ค่าตอบแทน (บาท)"
+              id="budget"
+              required
+              error={errors.budget}
+            >
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                  ฿
+                </span>
+                <input
+                  id="budget"
+                  type="number"
+                  min={1}
+                  required
+                  placeholder="0"
+                  className={`w-full pl-9 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
+                    errors.budget ? "border-red-300" : "border-gray-200"
+                  }`}
+                  value={formData.budget}
+                  onChange={(e) => {
+                    const value = e.target.value === "" ? "" : Number(e.target.value);
+                    setFormData({ ...formData, budget: value });
+                    if (errors.budget)
+                      setErrors((prev) => ({ ...prev, budget: "" }));
+                  }}
+                />
+              </div>
+            </InputField>
 
             {/* จำนวนรับ */}
             <InputField

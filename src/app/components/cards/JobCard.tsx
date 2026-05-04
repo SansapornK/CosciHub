@@ -11,8 +11,7 @@ export interface JobCardData {
   title: string;
   type: string;
   postedBy: string;
-  minCompensation: string;
-  maxCompensation: string | null;
+  budget: number;
   details: string;
   currency: string;
   timeAgo: string;
@@ -68,9 +67,7 @@ const JobCardMobile: React.FC<JobCardProps> = ({
 }) => {
   const colors = getCategoryColor(data.type);
 
-  const compensation = data.maxCompensation
-    ? `฿${data.minCompensation} – ${data.maxCompensation}`
-    : `฿${data.minCompensation}+`;
+
 
   return (
     <motion.div
@@ -161,7 +158,7 @@ const JobCardMobile: React.FC<JobCardProps> = ({
         <div className="flex items-center justify-between">
           <div className="leading-none">
             <span className="text-[20px] font-extrabold text-zinc-900">
-              {compensation}
+              {(data.budget ?? 0).toLocaleString()}
             </span>
             <span className="text-[12px] text-zinc-400 ml-1">
               {data.currency}
@@ -192,9 +189,6 @@ const JobCardDesktop: React.FC<JobCardProps> = ({
 }) => {
   const colors = getCategoryColor(data.type);
 
-  const compensation = data.maxCompensation
-    ? `${data.minCompensation} - ${data.maxCompensation}`
-    : `${data.minCompensation}+`;
 
   const favBtnClass = isBookmarked
     ? "text-primary-blue-500 fill-current bg-blue-50 border-blue-200"
@@ -244,8 +238,8 @@ const JobCardDesktop: React.FC<JobCardProps> = ({
 
       <div className="mt-auto mb-4 flex justify-between items-center w-full">
         <p className="text-sm font-medium text-gray-800">ค่าตอบแทน</p>
-        <p className="text-lg font-bold text-gray-800">
-          {compensation}{" "}
+        <p className="text-[20px] font-bold text-gray-800">
+          {(data.budget).toLocaleString()}{" "}
           <span className="text-xs font-normal">{data.currency}</span>
         </p>
       </div>

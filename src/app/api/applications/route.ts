@@ -253,7 +253,7 @@ export async function GET(req: Request) {
       const jobIds = applications.map((a: any) => a.jobId);
       const jobs = await (Job as any)
         .find({ _id: { $in: jobIds } })
-        .select("title category budgetMin budgetMax owner deliveryDate")
+        .select("title category budget owner deliveryDate")
         .lean();
 
       const jobMap: Record<string, any> = {};
@@ -311,7 +311,7 @@ export async function GET(req: Request) {
       const allOwnedJobs = await (Job as any)
         .find(ownerFilter)
         .select(
-          "_id title category budgetMin budgetMax deliveryDate status capacity",
+          "_id title category budget deliveryDate status capacity",
         )
         .lean();
 
@@ -602,7 +602,7 @@ export async function GET(req: Request) {
       const jobs = await (Job as any)
         .find({ _id: { $in: jobIds } })
         .select(
-          "title category budgetMin budgetMax owner applicationDeadline status",
+          "title category budget owner applicationDeadline status",
         )
         .lean();
 
@@ -629,8 +629,7 @@ export async function GET(req: Request) {
           jobId: a.jobId.toString(),
           jobTitle: jobMap[a.jobId.toString()]?.title ?? "ไม่พบข้อมูล",
           jobCategory: jobMap[a.jobId.toString()]?.category ?? "",
-          jobBudgetMin: jobMap[a.jobId.toString()]?.budgetMin ?? 0,
-          jobBudgetMax: jobMap[a.jobId.toString()]?.budgetMax ?? 0,
+          jobBudget: jobMap[a.jobId.toString()]?.budget ?? 0,
           jobOwner: jobOwnerName,
           contactInfo: ownerContactMap[jobOwnerName] || [],
           jobDeadline: jobMap[a.jobId.toString()]?.applicationDeadline ?? null,
@@ -654,7 +653,7 @@ export async function GET(req: Request) {
       const ownedJobs = await (Job as any)
         .find(ownerFilter)
         .select(
-          "_id title category budgetMin budgetMax applicationDeadline status capacity",
+          "_id title category budget applicationDeadline status capacity",
         )
         .lean();
 
@@ -685,8 +684,7 @@ export async function GET(req: Request) {
           _id: j._id.toString(),
           title: j.title,
           category: j.category,
-          budgetMin: j.budgetMin,
-          budgetMax: j.budgetMax,
+          budget: j.budget,
           applicationDeadline: j.applicationDeadline,
           jobStatus: j.status,
           capacity: j.capacity || 1,

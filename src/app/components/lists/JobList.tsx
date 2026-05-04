@@ -24,8 +24,7 @@ interface JobItem {
   _id: string;
   title: string;
   shortDescription: string;
-  budgetMin: number;
-  budgetMax: number | null;
+  budget: number;
   category: string;
   postedDate: string;
   owner: string;
@@ -37,8 +36,7 @@ interface JobCardData {
   title: string;
   type: string;
   postedBy: string;
-  minCompensation: string;
-  maxCompensation: string | null;
+  budget: number;
   details: string;
   currency: string;
   timeAgo: string;
@@ -281,10 +279,7 @@ function JobList({
                   type: job.category,
                   postedBy: job.owner,
                   details: job.shortDescription,
-                  minCompensation: job.budgetMin.toLocaleString(),
-                  maxCompensation: job.budgetMax
-                    ? job.budgetMax.toLocaleString()
-                    : null,
+                  budget: job.budget ?? 0,
                   currency: "บาท",
                   timeAgo: calculateTimeAgo(job.postedDate),
                   isVisible: true,

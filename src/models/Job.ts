@@ -10,8 +10,9 @@ export interface IJob extends Document {
   jobType: "online" | "onsite" | "onsite-online";
   location?: string;
   deliveryDate?: Date;
-  budgetMin: number;
-  budgetMax: number;
+  // NOTE: Run migration script to rename budgetMin → budget in MongoDB
+  // db.jobs.updateMany({}, [{ $set: { budget: "$budgetMin" } }, { $unset: ["budgetMin", "budgetMax"] }])
+  budget: number;
   capacity: number;
   applicationDeadline: Date;
   ownerId: mongoose.Types.ObjectId;
@@ -46,8 +47,9 @@ const JobSchema = new mongoose.Schema({
   },
   location: { type: String },
   deliveryDate: { type: Date },
-  budgetMin: { type: Number, required: true },
-  budgetMax: { type: Number, required: true },
+  // NOTE: Run migration script to rename budgetMin → budget in MongoDB
+  // db.jobs.updateMany({}, [{ $set: { budget: "$budgetMin" } }, { $unset: ["budgetMin", "budgetMax"] }])
+  budget: { type: Number, required: true, min: 0 },
   capacity: { type: Number, required: true, default: 1 },
   applicationDeadline: { type: Date, required: true },
 
