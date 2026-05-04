@@ -846,7 +846,7 @@ export default function ManageProjectsPage() {
                           ) : app.status === "pending" ? (
                             <div className="flex items-center justify-between pb-1 md:pb-2">
                               <Link
-                                href={`/find-job/${app.jobId}`}
+                                href={`/find-job/${app.jobId}?fromName=งานของฉัน`}
                                 className="text-xs text-primary-blue-500 font-medium hover:underline"
                               >
                                 ดูรายละเอียดงาน →
@@ -864,7 +864,7 @@ export default function ManageProjectsPage() {
                             </div>
                           ) : (
                             <Link
-                              href={`/find-job/${app.jobId}`}
+                              href={`/find-job/${app.jobId}?romName=งานของฉัน`}
                               className="text-xs text-primary-blue-500 font-medium text-right hover:underline"
                             >
                               ดูรายละเอียดงาน →
@@ -941,7 +941,7 @@ export default function ManageProjectsPage() {
                           {job.acceptedCount}/{job.capacity}
                         </span>
                         <Link
-                          href={`/manage-projects/${job._id}/applicants`}
+                          href={`/manage-projects/${job._id}/applicants?fromName=ติดตามงาน`}
                           className="text-xs text-primary-blue-500 font-medium group-hover:underline"
                         >
                           ดูผู้สมัคร →
@@ -1056,7 +1056,7 @@ export default function ManageProjectsPage() {
                               : "-"}
                           </p>
                           <Link
-                            href={`/manage-projects/${app.jobId}/work/${app._id}`}
+                            href={`/manage-projects/${app.jobId}/work/${app._id}?fromName=งานของฉัน`}
                             className="text-xs text-primary-blue-500 font-medium hover:underline"
                           >
                             {app.status === "submitted"
@@ -1227,7 +1227,7 @@ export default function ManageProjectsPage() {
                           </div>
                         )}
                         <Link
-                          href={`/manage-projects/${job._id}/overview`}
+                          href={`/manage-projects/${job._id}/overview?fromName=ติดตามงาน`}
                           className="btn-primary block text-sm text-center py-2 rounded-full w-full mt-2 md:mt-3"
                         >
                           ดูรายละเอียดงาน
@@ -1301,7 +1301,7 @@ export default function ManageProjectsPage() {
 
                           {hasStudentReviewed ? (
                             <Link
-                              href={`/manage-projects/${app.jobId}/work/${app._id}`}
+                              href={`/manage-projects/${app.jobId}/work/${app._id}?fromName=งานของฉัน`}
                               className="text-xs font-medium text-primary-blue-500 hover:underline"
                             >
                               ดูรายละเอียด →
@@ -1384,7 +1384,7 @@ export default function ManageProjectsPage() {
                           </span>
 
                           <Link
-                            href={`/manage-projects/${job.jobId || job._id}/overview`}
+                            href={`/manage-projects/${job.jobId || job._id}/overview?fromName=ติดตามงาน`}
                             className={`text-xs font-medium transition-all hover:underline flex items-center gap-1 ${
                               isAllReviewed
                                 ? "text-primary-blue-500"

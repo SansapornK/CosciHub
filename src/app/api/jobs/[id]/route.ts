@@ -26,7 +26,16 @@ export async function GET(
       return NextResponse.json({ error: "ไม่พบข้อมูลงาน" }, { status: 404 });
     }
 
-    return NextResponse.json(job);
+    const ownerUser = await User.findById(job.ownerId)
+      .select("profileImageUrl")
+      .lean();
+
+    const jobWithProfile = {
+      ...job,
+      ownerImage: ownerUser?.profileImageUrl || null,
+    };
+
+    return NextResponse.json(jobWithProfile);
   } catch (error) {
     console.error("GET Error:", error);
     return NextResponse.json({ error: "Server Error" }, { status: 500 });
@@ -99,8 +108,11 @@ export async function PATCH(
       });
       if (activeApplications > 0) {
         return NextResponse.json(
-          { error: "ไม่สามารถปิดรับสมัครได้ เนื่องจากมีผู้สมัครที่กำลังดำเนินการอยู่" },
-          { status: 400 }
+          {
+            error:
+              "ไม่สามารถปิดรับสมัครได้ เนื่องจากมีผู้สมัครที่กำลังดำเนินการอยู่",
+          },
+          { status: 400 },
         );
       }
     }
@@ -143,8 +155,6 @@ export async function PATCH(
       { message: "อัปเดตงานสำเร็จ", job: updatedJob },
       { status: 200 },
     );
-
-    
   } catch (error: any) {
     console.error("[PATCH /api/jobs/[id]] Error:", error);
     return NextResponse.json(
@@ -174,6 +184,7 @@ export async function DELETE(
     if (!job) {
       return NextResponse.json({ message: "ไม่พบงาน" }, { status: 404 });
     }
+
     if (job.ownerId.toString() !== user?._id.toString()) {
       return NextResponse.json(
         { error: "ไม่มีสิทธิ์ลบงานนี้" },
@@ -189,8 +200,11 @@ export async function DELETE(
 
     if (activeApplications > 0) {
       return NextResponse.json(
-        { error: "ไม่สามารถลบงานนี้ได้ เนื่องจากมีนิสิตกำลังดำเนินการอยู่งานนี้" },
-        { status: 400 }
+        {
+          error:
+            "ไม่สามารถลบงานนี้ได้ เนื่องจากมีนิสิตกำลังดำเนินการอยู่งานนี้",
+        },
+        { status: 400 },
       );
     }
 

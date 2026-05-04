@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MAJOR_JOB_MAPPING } from "@/app/constants/JobCategories";
 
@@ -54,13 +54,41 @@ const JobFilter: React.FC<JobFilterProps> = ({
   const [jobTypeSearch, setJobTypeSearch] = useState("");
   const [isMajorDropdownOpen, setIsMajorDropdownOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  // Local price state to allow free typing before applying
+  const [localMin, setLocalMin] = useState<string>(
+    priceRange.min > 0 ? String(priceRange.min) : ""
+  );
+  const [localMax, setLocalMax] = useState<string>(
+    priceRange.max !== null ? String(priceRange.max) : ""
+  );
+  const [priceError, setPriceError] = useState<string>("");
+
+  // Sync local state when priceRange prop changes (e.g. on reset)
+  // แทนที่ useEffect เดิม
+const prevPriceRef = useRef({ min: priceRange.min, max: priceRange.max });
+
+useEffect(() => {
+  const prev = prevPriceRef.current;
+  const isReset = priceRange.min === 0 && priceRange.max === null;
+  const changedFromOutside =
+    prev.min !== priceRange.min || prev.max !== priceRange.max;
+
+  // sync เฉพาะตอน reset (ทั้งคู่กลับเป็น 0/null)
+  if (isReset && changedFromOutside) {
+    setLocalMin("");
+    setLocalMax("");
+    setPriceError("");
+  }
+
+  prevPriceRef.current = { min: priceRange.min, max: priceRange.max };
+}, [priceRange.min, priceRange.max]);
 
   useEffect(() => {
     if (jobTypeSearch) {
       setFilteredJobTypes(
         availableJobTypes.filter((type) =>
-          type.toLowerCase().includes(jobTypeSearch.toLowerCase()),
-        ),
+          type.toLowerCase().includes(jobTypeSearch.toLowerCase())
+        )
       );
     } else {
       setFilteredJobTypes(availableJobTypes);
@@ -96,8 +124,22 @@ const JobFilter: React.FC<JobFilterProps> = ({
     priceSortOptions.find((opt) => opt.value === currentSort)?.label ||
     "จัดเรียง";
 
+  // Validate price range and commit to parent, then apply all filters together
   const handleApplyAndClose = () => {
-    onApplyFilters();
+    const minVal = localMin === "" ? 0 : Math.max(0, parseInt(localMin, 10) || 0);
+    const maxVal = localMax === "" ? null : Math.max(0, parseInt(localMax, 10) || 0);
+
+    // Validate: min must not exceed max
+    if (maxVal !== null && minVal > maxVal) {
+      setPriceError("ราคาขั้นต่ำต้องไม่มากกว่าราคาสูงสุด");
+      return;
+    }
+
+    setPriceError("");
+    // Commit validated price range to parent
+    onPriceRangeChange({ min: minVal, max: maxVal });
+    // Apply all filters (job types + major + price) together
+    // onApplyFilters();
     setIsFilterOpen(false);
   };
 
@@ -109,26 +151,26 @@ const JobFilter: React.FC<JobFilterProps> = ({
     }
   };
 
+  // Only update local string state while typing — do NOT push to parent yet
   const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // ป้องกันค่าติดลบ และใช้ 0 เป็นค่าเริ่มต้นหากช่องว่าง
-    const value =
-      e.target.value === ""
-        ? 0
-        : Math.max(0, parseInt(e.target.value, 10) || 0);
-    onPriceRangeChange({ ...priceRange, min: value });
+    const raw = e.target.value;
+    if (raw === "" || /^\d+$/.test(raw)) {
+      setLocalMin(raw);
+      setPriceError("");
+    }
   };
 
   const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value.trim();
-    // ถ้าว่างให้เป็น null (ไม่จำกัด) ถ้ามีค่าให้เป็นตัวเลขที่ไม่ติดลบ
-    const value =
-      inputValue === "" ? null : Math.max(0, parseInt(inputValue, 10) || 0);
-    onPriceRangeChange({ ...priceRange, max: value });
+    const raw = e.target.value;
+    if (raw === "" || /^\d+$/.test(raw)) {
+      setLocalMax(raw);
+      setPriceError("");
+    }
   };
 
   const hasActiveFilters =
     selectedJobTypes.length > 0 ||
-    selectedMajor ||
+    selectedMajor !== "" ||
     priceRange.min > 0 ||
     priceRange.max !== null;
 
@@ -302,7 +344,6 @@ const JobFilter: React.FC<JobFilterProps> = ({
                       )}
                     </div>
 
-                    {/* Filter sections — stack vertical บน mobile */}
                     <div className="flex flex-col gap-5">
                       {/* Job Type */}
                       <div>
@@ -369,9 +410,11 @@ const JobFilter: React.FC<JobFilterProps> = ({
                               type="number"
                               min="0"
                               step="100"
-                              className="w-full p-2.5 pl-7 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300 text-sm"
+                              className={`w-full p-2.5 pl-7 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300 text-sm ${
+                                priceError ? "border-red-400" : "border-gray-200"
+                              }`}
                               placeholder="ต่ำสุด"
-                              value={priceRange.min || ""}
+                              value={localMin}
                               onChange={handleMinPriceChange}
                             />
                             <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
@@ -384,11 +427,11 @@ const JobFilter: React.FC<JobFilterProps> = ({
                               type="number"
                               min="0"
                               step="100"
-                              className="w-full p-2.5 pl-7 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300 text-sm"
+                              className={`w-full p-2.5 pl-7 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300 text-sm ${
+                                priceError ? "border-red-400" : "border-gray-200"
+                              }`}
                               placeholder="ไม่จำกัด"
-                              value={
-                                priceRange.max === null ? "" : priceRange.max
-                              }
+                              value={localMax}
                               onChange={handleMaxPriceChange}
                             />
                             <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
@@ -396,6 +439,9 @@ const JobFilter: React.FC<JobFilterProps> = ({
                             </div>
                           </div>
                         </div>
+                        {priceError && (
+                          <p className="text-red-500 text-xs mt-1.5">{priceError}</p>
+                        )}
                       </div>
                     </div>
 
@@ -410,7 +456,7 @@ const JobFilter: React.FC<JobFilterProps> = ({
                 </motion.div>
               </>
             ) : (
-              // Desktop: inline expand เดิม
+              // Desktop: inline expand
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
@@ -435,14 +481,7 @@ const JobFilter: React.FC<JobFilterProps> = ({
                           strokeLinejoin="round"
                           className="mr-2 text-primary-blue-500"
                         >
-                          <rect
-                            x="2"
-                            y="7"
-                            width="20"
-                            height="14"
-                            rx="2"
-                            ry="2"
-                          ></rect>
+                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                         </svg>
                         ประเภทงาน
@@ -538,18 +577,10 @@ const JobFilter: React.FC<JobFilterProps> = ({
                       <div className="custom-major-dropdown relative">
                         <div
                           className="relative"
-                          onClick={() =>
-                            setIsMajorDropdownOpen(!isMajorDropdownOpen)
-                          }
+                          onClick={() => setIsMajorDropdownOpen(!isMajorDropdownOpen)}
                         >
                           <div className="flex items-center justify-between w-full p-2 pl-4 border border-gray-200 rounded-xl bg-white cursor-pointer hover:border-primary-blue-300">
-                            <span
-                              className={
-                                selectedMajor
-                                  ? "text-gray-800"
-                                  : "text-gray-500"
-                              }
-                            >
+                            <span className={selectedMajor ? "text-gray-800" : "text-gray-500"}>
                               {selectedMajor || "ทั้งหมด"}
                             </span>
                             <div className="text-gray-500">
@@ -580,7 +611,11 @@ const JobFilter: React.FC<JobFilterProps> = ({
                             >
                               <div className="p-1">
                                 <div
-                                  className={`p-1.5 px-4 rounded-lg cursor-pointer ${selectedMajor === "" ? "bg-primary-blue-50 text-primary-blue-600" : "hover:bg-gray-50"}`}
+                                  className={`p-1.5 px-4 rounded-lg cursor-pointer ${
+                                    selectedMajor === ""
+                                      ? "bg-primary-blue-50 text-primary-blue-600"
+                                      : "hover:bg-gray-50"
+                                  }`}
                                   onClick={() => {
                                     onMajorChange("");
                                     setIsMajorDropdownOpen(false);
@@ -591,7 +626,11 @@ const JobFilter: React.FC<JobFilterProps> = ({
                                 {availableMajors.map((major) => (
                                   <div
                                     key={major}
-                                    className={`p-1.5 px-4 rounded-lg cursor-pointer ${selectedMajor === major ? "bg-primary-blue-50 text-primary-blue-600" : "hover:bg-gray-50"}`}
+                                    className={`p-1.5 px-4 rounded-lg cursor-pointer ${
+                                      selectedMajor === major
+                                        ? "bg-primary-blue-50 text-primary-blue-600"
+                                        : "hover:bg-gray-50"
+                                    }`}
                                     onClick={() => {
                                       onMajorChange(major);
                                       setIsMajorDropdownOpen(false);
@@ -634,9 +673,11 @@ const JobFilter: React.FC<JobFilterProps> = ({
                             type="number"
                             min="0"
                             step="100"
-                            className="w-full p-2 pl-8 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300"
+                            className={`w-full p-2 pl-8 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300 ${
+                              priceError ? "border-red-400" : "border-gray-200"
+                            }`}
                             placeholder="ต่ำสุด"
-                            value={priceRange.min || ""}
+                            value={localMin}
                             onChange={handleMinPriceChange}
                           />
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -649,11 +690,11 @@ const JobFilter: React.FC<JobFilterProps> = ({
                             type="number"
                             min="0"
                             step="100"
-                            className="w-full p-2 pl-8 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300"
+                            className={`w-full p-2 pl-8 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300 ${
+                              priceError ? "border-red-400" : "border-gray-200"
+                            }`}
                             placeholder="ไม่จำกัด"
-                            value={
-                              priceRange.max === null ? "" : priceRange.max
-                            }
+                            value={localMax}
                             onChange={handleMaxPriceChange}
                           />
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -661,6 +702,9 @@ const JobFilter: React.FC<JobFilterProps> = ({
                           </div>
                         </div>
                       </div>
+                      {priceError && (
+                        <p className="text-red-500 text-xs mt-1.5">{priceError}</p>
+                      )}
                     </div>
                   </div>
 
@@ -703,6 +747,37 @@ const JobFilter: React.FC<JobFilterProps> = ({
                               {selectedMajor}
                               <button
                                 onClick={() => onMajorChange("")}
+                                className="ml-2 text-primary-blue-400 group-hover:text-primary-blue-600"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                              </button>
+                            </span>
+                          )}
+                          {(priceRange.min > 0 || priceRange.max !== null) && (
+                            <span className="bg-primary-blue-50 text-primary-blue-600 text-sm px-3 py-1 rounded-lg flex items-center group">
+                              ฿{priceRange.min.toLocaleString()}
+                              {priceRange.max !== null
+                                ? ` – ฿${priceRange.max.toLocaleString()}`
+                                : "+"}
+                              <button
+                                onClick={() => {
+                                  setLocalMin("");
+                                  setLocalMax("");
+                                  onPriceRangeChange({ min: 0, max: null });
+                                }}
                                 className="ml-2 text-primary-blue-400 group-hover:text-primary-blue-600"
                               >
                                 <svg

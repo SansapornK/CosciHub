@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -17,7 +18,7 @@ import {
 } from "@/app/constants/JobCategories";
 import JobFilter from "../../components/filters/JobFilter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search,X } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 // ================= SearchInput =================
 const SearchInput = ({
@@ -161,10 +162,21 @@ function FindJobPageContent() {
   const searchQuery = searchParams.get("q") || "";
   const selectedMajor = searchParams.get("major") || "";
   const currentSort = searchParams.get("sort") || "latest";
-  const priceMin = Number(searchParams.get("minPrice") || 0);
-  const priceMax = searchParams.get("maxPrice")
-    ? Number(searchParams.get("maxPrice"))
-    : null;
+
+  const priceRange = useMemo(
+    () => ({
+      min: Number(searchParams.get("minPrice") || 0),
+      max: searchParams.get("maxPrice")
+        ? Number(searchParams.get("maxPrice"))
+        : null,
+    }),
+    [searchParams],
+  );
+  // const priceMin = Number(searchParams.get("minPrice") || 0);
+  // const priceMax = searchParams.get("maxPrice")
+  //   ? Number(searchParams.get("maxPrice"))
+  //   : null;
+
   const selectedJobTypes = searchParams.get("jobTypes")
     ? searchParams.get("jobTypes")!.split(",").filter(Boolean)
     : [];
@@ -211,11 +223,13 @@ function FindJobPageContent() {
       selectedMajor && MAJOR_JOB_MAPPING[selectedMajor]
         ? MAJOR_JOB_MAPPING[selectedMajor].map((t) => t.trim())
         : [];
+
     if (selectedMajor && selectedJobTypes.length > 0) {
       const intersect = selectedJobTypes.filter((t) =>
         majorTypes.includes(t.trim()),
       );
-      return intersect.length > 0 ? intersect : ["EMPTY_RESULT"];
+      // ถ้า intersect ว่าง = ไม่มีงานที่ตรงเงื่อนไขทั้งคู่ → ส่ง major types ไปเลย
+      return intersect.length > 0 ? intersect : majorTypes;
     }
     if (selectedMajor) return majorTypes;
     return selectedJobTypes.map((t) => t.trim());
@@ -269,7 +283,7 @@ function FindJobPageContent() {
           onJobTypesChange={handleJobTypesChange}
           selectedMajor={selectedMajor}
           onMajorChange={handleMajorChange}
-          priceRange={{ min: priceMin, max: priceMax }}
+          priceRange={priceRange}
           onPriceRangeChange={handlePriceRangeChange}
           availableJobTypes={jobCategories}
           availableMajors={majors}
@@ -285,7 +299,7 @@ function FindJobPageContent() {
             searchQuery={searchQuery}
             selectedJobTypes={getEffectiveJobTypes()}
             selectedMajor={selectedMajor}
-            priceRange={{ min: priceMin, max: priceMax }}
+            priceRange={priceRange}
             currentSort={currentSort}
             onResetFilters={handleResetFilters}
             isMobile={isMobile}

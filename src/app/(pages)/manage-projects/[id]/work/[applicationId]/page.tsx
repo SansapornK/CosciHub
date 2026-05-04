@@ -28,6 +28,8 @@ import {
   Wallet,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import BackButton from "@/app/components/buttons/BackButton";
+
 
 import Loading from "../../../../../components/common/Loading";
 
@@ -325,24 +327,15 @@ export default function WorkManagementPage() {
         className="bg-white border-b border-gray-100 pt-12 pb-8 px-6 md:px-12 sticky top-0 z-30 backdrop-blur-md bg-white/80"
       >
         <div className="max-w-6xl mx-auto">
-          <button
-            onClick={() => router.back()}
-            className="group flex items-center gap-2 text-gray-400 hover:text-blue-600 transition-all mb-6 text-sm font-bold"
-          >
-            <ArrowLeft
-              size={18}
-              className="group-hover:-translate-x-1 transition-transform"
-            />
-            ย้อนกลับ
-          </button>
+          <BackButton />
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mt-6">
             <div className="flex-1">
               <motion.h1
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-3xl md:text-4xl font-black text-gray-900 mb-4 tracking-tight"
+                className="text-3xl md:text-4xl font-black text-gray-900 mb-2 tracking-tight"
               >
                 {workData.jobId?.title}
               </motion.h1>
@@ -362,7 +355,7 @@ export default function WorkManagementPage() {
 
             <Link
               href={`/account/${isFreelancer ? workData.jobId?.ownerId : workData.applicantId?._id}`}
-              target="_blank"
+              // target="_blank"
               className="block w-full md:w-auto"
             >
               <motion.div

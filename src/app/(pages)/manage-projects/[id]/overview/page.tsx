@@ -16,6 +16,8 @@ import {
 import Loading from "../../../../components/common/Loading";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import BackButton from "@/app/components/buttons/BackButton";
+
 
 interface Worker {
   _id: string;
@@ -157,6 +159,7 @@ export default function JobOverviewPage() {
         <Link href="/manage-projects" className="btn-secondary inline-block">
           กลับหน้าจัดการโปรเจกต์
         </Link>
+        {/* <BackButton/> */}
       </div>
     );
 
@@ -171,12 +174,7 @@ export default function JobOverviewPage() {
   return (
     <div className="flex flex-col gap-4 md:gap-6 pb-10 max-w-6xl mx-auto w-full px-4 md:px-0">
       <div className="mt-4 md:mt-6 mb-1">
-        <Link
-          href="/manage-projects"
-          className="text-primary-blue-500 hover:text-primary-blue-600 flex items-center gap-1 w-fit"
-        >
-          <ArrowLeft size={18} /> กลับหน้าจัดการโปรเจกต์
-        </Link>
+        <BackButton />
       </div>
 
       {/* Header */}
@@ -318,7 +316,7 @@ export default function JobOverviewPage() {
                   ) : null}
 
                   <Link
-                    href={`/manage-projects/${jobId}/work/${worker._id}`}
+                    href={`/manage-projects/${jobId}/work/${worker._id}?fromName=ภาพรวมงาน`}
                     className="w-full md:w-auto flex items-center justify-center px-3 py-1.5 bg-white text-primary-blue-500 text-xs md:text-s rounded-lg border border-gray-200 shadow-sm hover:bg-primary-blue-500 hover:text-white hover:border-primary-blue-500 transition-all whitespace-nowrap"
                   >
                     ติดตามงาน
