@@ -373,7 +373,9 @@ export default function ManageProjectsPage() {
                   key={i}
                   onClick={() => setPage(i)}
                   className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all ${
-                    i === page ? "bg-primary-blue-500 w-3 md:w-4" : "bg-gray-300"
+                    i === page
+                      ? "bg-primary-blue-500 w-3 md:w-4"
+                      : "bg-gray-300"
                   }`}
                 />
               ))}
@@ -564,8 +566,7 @@ export default function ManageProjectsPage() {
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
               className="rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[160px] md:min-h-[200px] flex flex-col justify-between items-end"
               style={{
-                background:
-                  "linear-gradient(135deg, #0C5BEA 10%, #6D91D3 100%)",
+                background: "linear-gradient(135deg, #0C5BEA 0%, #7170D8 100%)",
               }}
             >
               <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-700">
@@ -600,7 +601,7 @@ export default function ManageProjectsPage() {
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
               className="rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[160px] md:min-h-[200px] flex flex-col justify-between items-end"
               style={{
-                background: "linear-gradient(135deg, #0C5BEA 0%, #6D91D3 100%)",
+                background: "linear-gradient(135deg, #0C5BEA 0%, #7170D8 100%)",
               }}
             >
               <div className="absolute -left-6 -bottom-6 opacity-20 group-hover:scale-110 transition-all duration-700">
@@ -761,7 +762,8 @@ export default function ManageProjectsPage() {
                       <Briefcase size={32} className="hidden md:block" />
                     </div>
                     <p className="font-bold text-gray-400 text-base">
-                      ไม่พบใบสมัครในสถานะ &ldquo;{filterLabels[appStatusFilter]}&rdquo;
+                      ไม่พบใบสมัครในสถานะ &ldquo;{filterLabels[appStatusFilter]}
+                      &rdquo;
                     </p>
                     <button
                       onClick={() => setAppStatusFilter("all")}
@@ -778,98 +780,98 @@ export default function ManageProjectsPage() {
                   items={filteredApps}
                   page={page1}
                   setPage={setPage1}
-                renderItem={(app) => {
-                  const s =
-                    appStatusConfig[app.status] ?? appStatusConfig.pending;
-                  return (
-                    <div
-                      key={app._id}
-                      className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
-                    >
-                      <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
-                        {/* Title + badge */}
-                        <div className="flex items-start justify-between gap-2 md:gap-4">
-                          <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-base">
-                            {app.jobTitle}
-                          </h3>
-                          <span
-                            className={`text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg uppercase shrink-0 ${s.className}`}
-                          >
-                            {s.label}
-                          </span>
-                        </div>
+                  renderItem={(app) => {
+                    const s =
+                      appStatusConfig[app.status] ?? appStatusConfig.pending;
+                    return (
+                      <div
+                        key={app._id}
+                        className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
+                      >
+                        <div className="p-4 md:p-6 flex-1 flex flex-col gap-2 md:gap-3">
+                          {/* Title + badge */}
+                          <div className="flex items-start justify-between gap-2 md:gap-4">
+                            <h3 className="font-black text-gray-900 leading-tight line-clamp-1 text-base">
+                              {app.jobTitle}
+                            </h3>
+                            <span
+                              className={`text-xs px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg uppercase shrink-0 ${s.className}`}
+                            >
+                              {s.label}
+                            </span>
+                          </div>
 
-                        {/* Budget + Date */}
-                        <div className="flex items-center justify-between mt-auto pt-1 md:pt-2">
-                          <p className="text-[10px] md:text-xs text-gray-500">
-                            ฿{app.jobBudget?.toLocaleString()} บาท
-                          </p>
-                          <p className="text-[10px] md:text-xs text-gray-400">
-                            สมัครเมื่อ{" "}
-                            {new Date(app.appliedDate).toLocaleDateString(
-                              "th-TH",
-                            )}
-                          </p>
-                        </div>
+                          {/* Budget + Date */}
+                          <div className="flex items-center justify-between mt-auto pt-1 md:pt-2">
+                            <p className="text-[10px] md:text-xs text-gray-500">
+                              ฿{app.jobBudget?.toLocaleString()} บาท
+                            </p>
+                            <p className="text-[10px] md:text-xs text-gray-400">
+                              สมัครเมื่อ{" "}
+                              {new Date(app.appliedDate).toLocaleDateString(
+                                "th-TH",
+                              )}
+                            </p>
+                          </div>
 
-                        {/* ปุ่ม — กำหนด min-h ให้คงที่ทุก status */}
-                        <div className="min-h-[36px] md:min-h-[40px] flex flex-col justify-end mt-auto">
-                          {app.status === "accepted" ? (
-                            <div className="flex gap-2 items-center">
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setConfirmApp(app);
-                                }}
-                                className="flex-[2] btn-primary text-xs text-center rounded-full py-2"
-                              >
-                                เริ่มงาน
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setWithdrawApp(app);
-                                }}
-                                className="flex-1 bg-white text-red-500 text-xs border border-red-400 hover:bg-red-50 px-2 py-2 rounded-full transition-colors"
-                              >
-                                ยกเลิก
-                              </button>
-                            </div>
-                          ) : app.status === "pending" ? (
-                            <div className="flex items-center justify-between pb-1 md:pb-2">
+                          {/* ปุ่ม — กำหนด min-h ให้คงที่ทุก status */}
+                          <div className="min-h-[36px] md:min-h-[40px] flex flex-col justify-end mt-auto">
+                            {app.status === "accepted" ? (
+                              <div className="flex gap-2 items-center">
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setConfirmApp(app);
+                                  }}
+                                  className="flex-[2] btn-primary text-xs text-center rounded-full py-2"
+                                >
+                                  เริ่มงาน
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setWithdrawApp(app);
+                                  }}
+                                  className="flex-1 bg-white text-red-500 text-xs border border-red-400 hover:bg-red-50 px-2 py-2 rounded-full transition-colors"
+                                >
+                                  ยกเลิก
+                                </button>
+                              </div>
+                            ) : app.status === "pending" ? (
+                              <div className="flex items-center justify-between pb-1 md:pb-2">
+                                <Link
+                                  href={`/find-job/${app.jobId}?fromName=งานของฉัน`}
+                                  className="text-xs text-primary-blue-500 font-medium hover:underline"
+                                >
+                                  ดูรายละเอียดงาน →
+                                </Link>
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setWithdrawApp(app);
+                                  }}
+                                  className="text-xs text-red-500 hover:underline transition-colors"
+                                >
+                                  ยกเลิกใบสมัคร
+                                </button>
+                              </div>
+                            ) : (
                               <Link
-                                href={`/find-job/${app.jobId}?fromName=งานของฉัน`}
-                                className="text-xs text-primary-blue-500 font-medium hover:underline"
+                                href={`/find-job/${app.jobId}?romName=งานของฉัน`}
+                                className="text-xs text-primary-blue-500 font-medium text-right hover:underline"
                               >
                                 ดูรายละเอียดงาน →
                               </Link>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setWithdrawApp(app);
-                                }}
-                                className="text-xs text-red-500 hover:underline transition-colors"
-                              >
-                                ยกเลิกใบสมัคร
-                              </button>
-                            </div>
-                          ) : (
-                            <Link
-                              href={`/find-job/${app.jobId}?romName=งานของฉัน`}
-                              className="text-xs text-primary-blue-500 font-medium text-right hover:underline"
-                            >
-                              ดูรายละเอียดงาน →
-                            </Link>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                }}
-              />
+                    );
+                  }}
+                />
               );
             })()}
           </div>
@@ -1046,7 +1048,9 @@ export default function ManageProjectsPage() {
                           <p className="text-xs text-gray-400">
                             กำหนดส่ง{" "}
                             {app.jobDeadline
-                              ? new Date(app.jobDeadline).toLocaleDateString("th-TH")
+                              ? new Date(app.jobDeadline).toLocaleDateString(
+                                  "th-TH",
+                                )
                               : "-"}
                           </p>
                           <Link
@@ -1062,7 +1066,9 @@ export default function ManageProjectsPage() {
                         <p className="hidden md:block text-xs text-gray-400">
                           กำหนดส่ง{" "}
                           {app.jobDeadline
-                            ? new Date(app.jobDeadline).toLocaleDateString("th-TH")
+                            ? new Date(app.jobDeadline).toLocaleDateString(
+                                "th-TH",
+                              )
                             : "-"}
                         </p>
                         <Link
@@ -1204,7 +1210,9 @@ export default function ManageProjectsPage() {
                           <span className="text-xs text-gray-400">
                             กำหนดส่ง{" "}
                             {job.deliveryDate
-                              ? new Date(job.deliveryDate).toLocaleDateString("th-TH")
+                              ? new Date(job.deliveryDate).toLocaleDateString(
+                                  "th-TH",
+                                )
                               : "-"}
                           </span>
                         </div>
@@ -1305,8 +1313,16 @@ export default function ManageProjectsPage() {
                               onClick={() => openReviewModal(app)}
                               className="text-xs font-medium text-orange-500 animate-pulse hover:underline flex items-center gap-1"
                             >
-                              <Star size={10} className="md:hidden" fill="currentColor" />
-                              <Star size={12} className="hidden md:block" fill="currentColor" />{" "}
+                              <Star
+                                size={10}
+                                className="md:hidden"
+                                fill="currentColor"
+                              />
+                              <Star
+                                size={12}
+                                className="hidden md:block"
+                                fill="currentColor"
+                              />{" "}
                               รีวิวผู้ว่าจ้างเลย! →
                             </button>
                           )}
@@ -1389,8 +1405,16 @@ export default function ManageProjectsPage() {
                               "ดูรายละเอียด →"
                             ) : (
                               <span className="flex items-center gap-1">
-                                <Star size={10} className="md:hidden" fill="currentColor" />
-                                <Star size={12} className="hidden md:block" fill="currentColor" />{" "}
+                                <Star
+                                  size={10}
+                                  className="md:hidden"
+                                  fill="currentColor"
+                                />
+                                <Star
+                                  size={12}
+                                  className="hidden md:block"
+                                  fill="currentColor"
+                                />{" "}
                                 รีวิวนิสิตเลย! →
                               </span>
                             )}
@@ -1427,7 +1451,11 @@ export default function ManageProjectsPage() {
             >
               <div className="w-12 h-12 md:w-16 md:h-16 bg-yellow-50 text-yellow-500 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
                 <Star size={24} className="md:hidden" fill="currentColor" />
-                <Star size={32} className="hidden md:block" fill="currentColor" />
+                <Star
+                  size={32}
+                  className="hidden md:block"
+                  fill="currentColor"
+                />
               </div>
 
               <h3 className="text-lg md:text-xl font-black text-gray-900 mb-1 md:mb-2">

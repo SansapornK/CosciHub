@@ -846,64 +846,133 @@ const JobDetailPage = () => {
       {isModalOpen && job && (
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center md:p-4 bg-black/50 backdrop-blur-sm">
           {/* Desktop modal — 100% original */}
-          <div className="hidden md:block bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden p-8 md:p-12 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              ยืนยันการสมัครงาน
-            </h2>
-            <div className="text-left bg-gray-50 rounded-[2rem] p-6 mb-8 border border-gray-100">
-              <DetailRow label="ชื่องาน" value={job.title} />
-              <DetailRow label="ผู้ว่าจ้าง" value={job.owner} />
-              <DetailRow
-                label="ค่าตอบแทน"
-                value={`${job.budget?.toLocaleString()} บาท`}
-              />
-            </div>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-8 py-4 bg-gray-200 text-gray-600 font-bold rounded-2xl"
-              >
-                ยกเลิก
-              </button>
-              <button
-                onClick={confirmApplication}
-                disabled={applying}
-                className="px-8 py-4 bg-green-500 text-white font-bold rounded-2xl shadow-lg shadow-green-100"
-              >
-                {applying ? "กำลังส่งข้อมูล..." : "ยืนยันการสมัคร"}
-              </button>
-            </div>
-          </div>
+          <div className="hidden md:block bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden">
+            {/* Header gradient bar */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-400 to-blue-300" />
 
-          {/* Mobile modal — bottom sheet */}
-          <div className="md:hidden w-full bg-white rounded-t-3xl shadow-2xl">
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-2" />
-            <div className="px-5 pb-8 pt-2">
-              <h2 className="text-lg font-bold text-gray-900 mb-1">
-                ยืนยันการสมัครงาน
-              </h2>
-              <p className="text-xs text-gray-400 mb-4">
-                ตรวจสอบข้อมูลก่อนส่งใบสมัคร
-              </p>
-              <div className="bg-gray-50 rounded-2xl p-4 mb-5 border border-gray-100">
-                <DetailRow label="ชื่องาน" value={job.title} />
-                <DetailRow label="ผู้ว่าจ้าง" value={job.owner} />
-                <DetailRow
-                  label="ค่าตอบแทน"
-                  value={`${job.budget?.toLocaleString()} บาท`}
-                />
+            <div className="p-10">
+              {/* Icon + Title */}
+              <div className="flex flex-col items-center text-center mb-8">
+                <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+                  <BriefcaseBusiness size={26} className="text-blue-500" />
+                </div>
+                <h2 className="text-2xl font-extrabold text-gray-900">
+                  ยืนยันการสมัครงาน
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  ตรวจสอบข้อมูลก่อนส่งใบสมัคร
+                </p>
               </div>
+
+              {/* Job info card */}
+              <div className="bg-gray-50 rounded-2xl p-5 mb-7 border border-gray-100 space-y-3">
+                <div className="flex justify-between items-start gap-4">
+                  <span className="text-xs text-gray-400 font-medium w-20 shrink-0 pt-0.5">
+                    ชื่องาน
+                  </span>
+                  <span className="text-sm font-bold text-gray-800 text-right">
+                    {job.title}
+                  </span>
+                </div>
+                <div className="border-t border-gray-100" />
+                <div className="flex justify-between items-center gap-4">
+                  <span className="text-xs text-gray-400 font-medium w-20 shrink-0">
+                    ผู้ว่าจ้าง
+                  </span>
+                  <span className="text-sm font-semibold text-gray-700">
+                    {job.owner}
+                  </span>
+                </div>
+                <div className="border-t border-gray-100" />
+                <div className="flex justify-between items-center gap-4">
+                  <span className="text-xs text-gray-400 font-medium w-20 shrink-0">
+                    ค่าตอบแทน
+                  </span>
+                  <span className="text-sm font-extrabold text-emerald-500">
+                    ฿{job.budget?.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3.5 bg-gray-100 text-gray-600 font-semibold rounded-2xl text-sm active:scale-95 transition-all"
+                  className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold rounded-2xl text-sm transition-all active:scale-95"
                 >
                   ยกเลิก
                 </button>
                 <button
                   onClick={confirmApplication}
                   disabled={applying}
-                  className="flex-1 py-3.5 bg-green-500 text-white font-bold rounded-2xl text-sm shadow-lg shadow-green-100 active:scale-95 transition-all disabled:opacity-60"
+                  className="flex-1 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold rounded-2xl text-sm transition-all active:scale-95 disabled:opacity-60 shadow-lg shadow-blue-100"
+                >
+                  {applying ? "กำลังส่ง..." : "ยืนยันสมัคร"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile modal — bottom sheet */}
+          <div className="md:hidden w-full bg-white rounded-t-3xl shadow-2xl">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-4" />
+            {/* <div className="h-0.5 w-full bg-gradient-to-r from-blue-500 via-indigo-400 to-blue-300" /> */}
+
+            <div className="px-5 pb-8 pt-5">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                  <BriefcaseBusiness size={20} className="text-blue-500" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-gray-900">
+                    ยืนยันการสมัครงาน
+                  </h2>
+                  <p className="text-xs text-gray-400">
+                    ตรวจสอบข้อมูลก่อนส่งใบสมัคร
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-2xl p-4 mb-5 border border-gray-100 space-y-2.5">
+                <div className="flex justify-between items-start gap-4">
+                  <span className="text-xs text-gray-400 font-medium shrink-0">
+                    ชื่องาน
+                  </span>
+                  <span className="text-xs font-bold text-gray-800 text-right">
+                    {job.title}
+                  </span>
+                </div>
+                <div className="border-t border-gray-100" />
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400 font-medium">
+                    ผู้ว่าจ้าง
+                  </span>
+                  <span className="text-xs font-semibold text-gray-700">
+                    {job.owner}
+                  </span>
+                </div>
+                <div className="border-t border-gray-100" />
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-400 font-medium">
+                    ค่าตอบแทน
+                  </span>
+                  <span className="text-xs font-extrabold text-emerald-500">
+                    ฿{job.budget?.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold rounded-2xl text-sm active:scale-95 transition-all"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={confirmApplication}
+                  disabled={applying}
+                  className="flex-1 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold rounded-2xl text-sm active:scale-95 transition-all disabled:opacity-60 shadow-lg shadow-blue-100"
                 >
                   {applying ? "กำลังส่ง..." : "ยืนยันสมัคร"}
                 </button>

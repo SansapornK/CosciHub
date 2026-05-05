@@ -14,6 +14,7 @@ interface IJobFilter {
   ownerId?: string;
   status?: "draft" | "published" | "closed" | { $nin: string[] };
   applicationDeadline?: { $gte: Date };
+  jobType?: { $in: string[] };
 }
 
 /* ===================== GET — ดึงรายการงาน ===================== */
@@ -38,6 +39,9 @@ export async function GET(req: Request) {
 
   if (q) filter.title = { $regex: q.trim(), $options: "i" };
   if (jobTypes) filter.category = { $in: jobTypes.split(",") };
+
+  const workMode = searchParams.get("workMode");
+  if (workMode) filter.jobType = { $in: workMode.split(",") };
 
   // ถ้าไม่ได้ขอ includeDraft (สำหรับหน้า find-jobs)
   // → แสดงเฉพาะ published + ยังไม่หมดอายุ + ไม่ใช่ closed
