@@ -77,9 +77,9 @@ const JobFilter: React.FC<JobFilterProps> = ({
 
   const handleWorkModeToggle = (mode: string) => {
     if (selectedWorkMode.includes(mode)) {
-      onWorkModeChange(selectedWorkMode.filter((m) => m !== mode));
+      onWorkModeChange([]);
     } else {
-      onWorkModeChange([...selectedWorkMode, mode]);
+      onWorkModeChange([mode]);
     }
   };
 
@@ -433,6 +433,16 @@ const JobFilter: React.FC<JobFilterProps> = ({
                           รูปแบบการทำงาน
                         </h4>
                         <div className="flex gap-2">
+                          <button
+                            onClick={() => onWorkModeChange([])}
+                            className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                              selectedWorkMode.length === 0
+                                ? "bg-primary-blue-500 text-white border-primary-blue-500"
+                                : "border-gray-200 text-gray-600 bg-white hover:border-primary-blue-300"
+                            }`}
+                          >
+                            ทั้งหมด
+                          </button>
                           {workModeOptions.map((opt) => (
                             <button
                               key={opt.value}
@@ -806,9 +816,10 @@ const JobFilter: React.FC<JobFilterProps> = ({
                                         ? "bg-primary-blue-50 text-primary-blue-600"
                                         : "hover:bg-gray-50"
                                     }`}
-                                    onClick={() =>
-                                      handleWorkModeToggle(opt.value)
-                                    }
+                                    onClick={() => {
+                                      handleWorkModeToggle(opt.value);
+                                      setIsWorkModeDropdownOpen(false);
+                                    }}
                                   >
                                     {opt.label}
                                   </div>
