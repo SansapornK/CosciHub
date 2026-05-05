@@ -553,7 +553,9 @@ function CreateJobPageContent() {
               </h2>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8 overflow-hidden">
             {/* ค่าตอบแทน */}
+            <div className="space-y-2 min-w-0">
             <InputField
               label="ค่าตอบแทน (บาท)"
               id="budget"
@@ -583,8 +585,10 @@ function CreateJobPageContent() {
                 />
               </div>
             </InputField>
+            </div>
 
             {/* จำนวนรับ */}
+            <div className="space-y-2 min-w-0">
             <InputField
               label="จำนวนรับ (คน)"
               id="capacity"
@@ -615,6 +619,8 @@ function CreateJobPageContent() {
                 />
               </div>
             </InputField>
+            </div>
+            </div>
 
             {/* วันสิ้นสุดรับสมัคร → Job.applicationDeadline */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8 overflow-hidden">

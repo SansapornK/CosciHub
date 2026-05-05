@@ -2,11 +2,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/libs/mongodb';
 import User from '@/models/User';
+import AllowedEmail from '@/models/AllowedEmail';
 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const email = url.searchParams.get('email');
+    const role = url.searchParams.get('role');
 
     if (!email) {
       return NextResponse.json(
@@ -19,11 +21,22 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
 
     // ตรวจสอบว่าอีเมลมีในระบบหรือไม่
-    const user = await User.findOne({ email }).exec();
-    
-    // ส่งผลลัพธ์การตรวจสอบ (มี/ไม่มี)
-    return NextResponse.json({ 
-      exists: !!user 
+    const user = await User.findOne({ email: email.toLowerCase() }).exec();
+
+    // ถ้าเป็น role teacher ให้ตรวจสอบว่าอีเมลอยู่ใน allowedEmails หรือไม่
+    let isAllowed = true;
+    if (role === 'teacher') {
+      const allowedEmail = await AllowedEmail.findOne({
+        email: email.toLowerCase(),
+        isActive: true
+      }).exec();
+      isAllowed = !!allowedEmail;
+    }
+
+    // ส่งผลลัพธ์การตรวจสอบ
+    return NextResponse.json({
+      exists: !!user,
+      isAllowed: isAllowed
     });
   } catch (error) {
     console.error('Error checking email:', error);
