@@ -14,7 +14,6 @@ import StudentContactModal from "../../../../components/modals/StudentContactMod
 import ConfirmationModal from "../../../../components/modals/ConfirmationModal";
 import BackButton from "@/app/components/buttons/BackButton";
 
-
 // ─── useIsMobile Hook ─────────────────────────────
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -140,7 +139,9 @@ function ApplicantCard({
               {applicant.applicantName}
             </p>
             {applicant.major && (
-              <p className="text-xs text-gray-400 line-clamp-1">{applicant.major}</p>
+              <p className="text-xs text-gray-400 line-clamp-1">
+                {applicant.major}
+              </p>
             )}
             <p className="text-xs text-gray-400">
               สมัครเมื่อ{" "}
@@ -150,7 +151,7 @@ function ApplicantCard({
         </div>
         <div className="flex flex-col items-end gap-2">
           <span
-            className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${s.className}`}
+            className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 whitespace-nowrap ${s.className}`}
           >
             {s.label}
           </span>
@@ -453,13 +454,26 @@ export default function ApplicantsPage() {
 
       {/* Stats row - Filter buttons */}
       {(() => {
-        const workingStatuses = ["in_progress", "submitted", "revision", "completed"];
+        const workingStatuses = [
+          "in_progress",
+          "submitted",
+          "revision",
+          "completed",
+        ];
 
         // คำนวณ count ทั้งหมดจาก applicants array โดยตรง
-        const actualPendingCount = applicants.filter((a) => a.status === "pending").length;
-        const actualAcceptedCount = applicants.filter((a) => a.status === "accepted").length;
-        const workingCount = applicants.filter((a) => workingStatuses.includes(a.status)).length;
-        const rejectedCount = applicants.filter((a) => a.status === "rejected").length;
+        const actualPendingCount = applicants.filter(
+          (a) => a.status === "pending",
+        ).length;
+        const actualAcceptedCount = applicants.filter(
+          (a) => a.status === "accepted",
+        ).length;
+        const workingCount = applicants.filter((a) =>
+          workingStatuses.includes(a.status),
+        ).length;
+        const rejectedCount = applicants.filter(
+          (a) => a.status === "rejected",
+        ).length;
 
         const filters = [
           {
@@ -515,11 +529,17 @@ export default function ApplicantsPage() {
 
       {/* Applicant List */}
       {(() => {
-        const workingStatuses = ["in_progress", "submitted", "revision", "completed"];
+        const workingStatuses = [
+          "in_progress",
+          "submitted",
+          "revision",
+          "completed",
+        ];
 
         const filteredApplicants = applicants.filter((a) => {
           if (statusFilter === "all") return true;
-          if (statusFilter === "working") return workingStatuses.includes(a.status);
+          if (statusFilter === "working")
+            return workingStatuses.includes(a.status);
           return a.status === statusFilter;
         });
 
@@ -550,7 +570,7 @@ export default function ApplicantsPage() {
         const startIndex = (currentPage - 1) * itemsPerPage;
         const paginatedApplicants = sortedApplicants.slice(
           startIndex,
-          startIndex + itemsPerPage
+          startIndex + itemsPerPage,
         );
 
         if (applicants.length === 0) {
@@ -597,7 +617,9 @@ export default function ApplicantsPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-6">
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
                   className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -605,53 +627,66 @@ export default function ApplicantsPage() {
                 </button>
 
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                    // Show first, last, current, and adjacent pages
-                    const showPage =
-                      page === 1 ||
-                      page === totalPages ||
-                      Math.abs(page - currentPage) <= 1;
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => {
+                      // Show first, last, current, and adjacent pages
+                      const showPage =
+                        page === 1 ||
+                        page === totalPages ||
+                        Math.abs(page - currentPage) <= 1;
 
-                    if (!showPage && page !== 2 && page !== totalPages - 1) {
-                      return null;
-                    }
+                      if (!showPage && page !== 2 && page !== totalPages - 1) {
+                        return null;
+                      }
 
-                    if (page === 2 && currentPage > 4) {
+                      if (page === 2 && currentPage > 4) {
+                        return (
+                          <span
+                            key="ellipsis-start"
+                            className="px-2 text-gray-400"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      if (
+                        page === totalPages - 1 &&
+                        currentPage < totalPages - 3
+                      ) {
+                        return (
+                          <span
+                            key="ellipsis-end"
+                            className="px-2 text-gray-400"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      if (!showPage) return null;
+
                       return (
-                        <span key="ellipsis-start" className="px-2 text-gray-400">
-                          ...
-                        </span>
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
+                            currentPage === page
+                              ? "bg-primary-blue-500 text-white"
+                              : "border border-gray-300 text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
                       );
-                    }
-
-                    if (page === totalPages - 1 && currentPage < totalPages - 3) {
-                      return (
-                        <span key="ellipsis-end" className="px-2 text-gray-400">
-                          ...
-                        </span>
-                      );
-                    }
-
-                    if (!showPage) return null;
-
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
-                          currentPage === page
-                            ? "bg-primary-blue-500 text-white"
-                            : "border border-gray-300 text-gray-600 hover:bg-gray-50"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
+                    },
+                  )}
                 </div>
 
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages}
                   className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -663,7 +698,9 @@ export default function ApplicantsPage() {
             {/* Page Info */}
             {totalPages > 1 && (
               <p className="text-center text-sm text-gray-500">
-                แสดง {startIndex + 1}-{Math.min(startIndex + itemsPerPage, sortedApplicants.length)} จาก {sortedApplicants.length} คน
+                แสดง {startIndex + 1}-
+                {Math.min(startIndex + itemsPerPage, sortedApplicants.length)}{" "}
+                จาก {sortedApplicants.length} คน
               </p>
             )}
           </>
