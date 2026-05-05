@@ -145,9 +145,9 @@ export async function POST(req: Request) {
       }
     }
 
-    if (Number(data.budget) < 100) {
+    if (Number(data.budget) < 1) {
       return NextResponse.json(
-        { error: "ค่าตอบแทนต้องไม่น้อยกว่า 100 บาท" },
+        { error: "ค่าตอบแทนต้องไม่น้อยกว่า 1 บาท" },
         { status: 400 },
       );
     }

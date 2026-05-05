@@ -385,7 +385,7 @@ function StepMajorAndSkills({
           <div className="w-full">
             <div className="flex justify-between items-end">
               <label className="block text-gray-700 text-sm mb-1">
-                อีเมลอาจารย์ในมหาวิทยาลัยนวัตกรรมสื่อสารสังคม
+                อีเมลอาจารย์ในวิทยาลัยนวัตกรรมสื่อสารสังคม
                 <span className="text-red-500">*</span>
                 <span className="text-xs text-gray-500 font-normal ml-1 block sm:inline">
                   (อย่างน้อย 2 ท่าน)

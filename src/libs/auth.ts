@@ -176,7 +176,8 @@ export const authOptions: NextAuthOptions = {
             session.user.galleryImages = userData.galleryImages;
           }
            if (userData.role === 'alumni') {
-              session.user.verificationStatus = userData.verificationStatus;
+              // ถ้า verificationStatus ไม่มีค่า ให้ default เป็น 'pending' สำหรับ alumni
+              session.user.verificationStatus = userData.verificationStatus || 'pending';
             }
 
         }

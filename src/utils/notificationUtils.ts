@@ -459,7 +459,7 @@ export async function notifyAlumniPendingVerification(userId: string) {
       type: 'system_alumni_pending',
       title: 'บัญชีของท่านยังไม่ได้รับการยืนยัน',
       message: 'กรุณารอการยืนยันจากอาจารย์ หรือสามารถส่ง email คำขอยืนยันไปที่อาจารย์ได้อีกครั้งในหน้าตั้งค่า',
-      link: '/setting',
+      link: '/settings',
     });
   } catch (error) {
     console.error('notifyAlumniPendingVerification error:', error);

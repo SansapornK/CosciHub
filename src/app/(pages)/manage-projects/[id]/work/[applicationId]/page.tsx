@@ -771,6 +771,73 @@ export default function WorkManagementPage() {
                   )}
                 </>
               )}
+
+            {/* Owner View: แสดง progressNote และ progressLogs */}
+            {!isFreelancer && (
+              <div className="space-y-3">
+                {workData.progressNote && (
+                  <div className="flex gap-2 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className="w-1 self-stretch bg-blue-500 rounded-full shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-bold text-blue-500 mb-0.5">
+                        รายละเอียดการอัปเดตล่าสุด
+                      </p>
+                      <p className="text-xs text-gray-700 break-words whitespace-pre-wrap">
+                        {workData.progressNote}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {(() => {
+                  const meaningfulLogs =
+                    workData.progressLogs?.filter(
+                      (log) => !(log.progress === 0 && !log.note)
+                    ) ?? [];
+                  return meaningfulLogs.length > 0 ? (
+                    <details className="group">
+                      <summary className="cursor-pointer flex items-center gap-2 text-[10px] font-bold text-gray-400 select-none list-none py-1">
+                        <History size={12} />
+                        ประวัติการอัปเดต ({meaningfulLogs.length} ครั้ง)
+                      </summary>
+                      <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                        {[...meaningfulLogs].reverse().map((log, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-start gap-2 py-2 border-b border-gray-50 last:border-0"
+                          >
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg shrink-0 tabular-nums">
+                              {log.progress}%
+                            </span>
+                            <div className="flex-1 min-w-0 overflow-hidden">
+                              <p className="text-xs text-gray-600 break-words whitespace-pre-wrap">
+                                {log.note || (
+                                  <span className="text-gray-300 italic">
+                                    ไม่มีรายละเอียด
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-[9px] text-gray-300 mt-0.5">
+                                {new Date(log.createdAt).toLocaleDateString(
+                                  "th-TH",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null;
+                })()}
+              </div>
+            )}
           </motion.div>
 
           {/* ── 7. Submit Work Section ── */}
@@ -1572,6 +1639,73 @@ export default function WorkManagementPage() {
                     )}
                   </div>
                 )}
+
+              {/* Owner View: แสดง progressNote และ progressLogs */}
+              {!isFreelancer && (
+                <div className="px-8 pb-8 space-y-4">
+                  {workData.progressNote && (
+                    <div className="flex gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <div className="w-1 self-stretch bg-blue-500 rounded-full shrink-0" />
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <p className="text-[12px] font-black text-blue-500 uppercase mb-1">
+                          รายละเอียดการอัปเดตล่าสุด
+                        </p>
+                        <p className="text-sm text-gray-700 font-medium leading-relaxed break-words whitespace-pre-wrap">
+                          {workData.progressNote}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(() => {
+                    const meaningfulLogs =
+                      workData.progressLogs?.filter(
+                        (log) => !(log.progress === 0 && !log.note)
+                      ) ?? [];
+                    return meaningfulLogs.length > 0 ? (
+                      <details className="group">
+                        <summary className="cursor-pointer flex items-center gap-2 text-[11px] font-black text-gray-400 select-none list-none py-1">
+                          <History size={12} />
+                          ประวัติการอัปเดต ({meaningfulLogs.length} ครั้ง)
+                        </summary>
+                        <div className="mt-3 space-y-2 max-h-52 overflow-y-auto">
+                          {[...meaningfulLogs].reverse().map((log, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-start gap-3 py-3 border-b border-gray-50 last:border-0"
+                            >
+                              <span className="text-[11px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg shrink-0 tabular-nums">
+                                {log.progress}%
+                              </span>
+                              <div className="flex-1 min-w-0 overflow-hidden">
+                                <p className="text-xs text-gray-600 break-words whitespace-pre-wrap leading-relaxed">
+                                  {log.note || (
+                                    <span className="text-gray-300 italic">
+                                      ไม่มีรายละเอียดเพิ่มเติม
+                                    </span>
+                                  )}
+                                </p>
+                                <p className="text-[10px] text-gray-300 mt-0.5">
+                                  {new Date(log.createdAt).toLocaleDateString(
+                                    "th-TH",
+                                    {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "2-digit",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    }
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    ) : null;
+                  })()}
+                </div>
+              )}
             </section>
 
             {/* ── Submission Form ── */}
