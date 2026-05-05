@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MAJOR_JOB_MAPPING } from "@/app/constants/JobCategories";
 
@@ -16,6 +16,8 @@ interface JobFilterProps {
   onJobTypesChange: (jobTypes: string[]) => void;
   selectedMajor: string;
   onMajorChange: (major: string) => void;
+  selectedWorkMode: string[];
+  onWorkModeChange: (modes: string[]) => void;
   priceRange: PriceRange;
   onPriceRangeChange: (range: PriceRange) => void;
   onApplyFilters: () => void;
@@ -26,6 +28,11 @@ interface JobFilterProps {
   onSortChange: (sortOption: string) => void;
   isMobile?: boolean;
 }
+
+const workModeOptions = [
+  { value: "online", label: "ออนไลน์" },
+  { value: "onsite", label: "ออนไซต์" },
+];
 
 const priceSortOptions = [
   { value: "latest", label: "ล่าสุด" },
@@ -38,6 +45,8 @@ const JobFilter: React.FC<JobFilterProps> = ({
   onJobTypesChange,
   selectedMajor,
   onMajorChange,
+  selectedWorkMode,
+  onWorkModeChange,
   priceRange,
   onPriceRangeChange,
   onApplyFilters,
@@ -53,42 +62,49 @@ const JobFilter: React.FC<JobFilterProps> = ({
     useState<string[]>(availableJobTypes);
   const [jobTypeSearch, setJobTypeSearch] = useState("");
   const [isMajorDropdownOpen, setIsMajorDropdownOpen] = useState(false);
+  const [isWorkModeDropdownOpen, setIsWorkModeDropdownOpen] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   // Local price state to allow free typing before applying
   const [localMin, setLocalMin] = useState<string>(
-    priceRange.min > 0 ? String(priceRange.min) : ""
+    priceRange.min > 0 ? String(priceRange.min) : "",
   );
   const [localMax, setLocalMax] = useState<string>(
-    priceRange.max !== null ? String(priceRange.max) : ""
+    priceRange.max !== null ? String(priceRange.max) : "",
   );
   const [priceError, setPriceError] = useState<string>("");
 
-  // Sync local state when priceRange prop changes (e.g. on reset)
-  // แทนที่ useEffect เดิม
-const prevPriceRef = useRef({ min: priceRange.min, max: priceRange.max });
+  const prevPriceRef = useRef({ min: priceRange.min, max: priceRange.max });
 
-useEffect(() => {
-  const prev = prevPriceRef.current;
-  const isReset = priceRange.min === 0 && priceRange.max === null;
-  const changedFromOutside =
-    prev.min !== priceRange.min || prev.max !== priceRange.max;
+  const handleWorkModeToggle = (mode: string) => {
+    if (selectedWorkMode.includes(mode)) {
+      onWorkModeChange(selectedWorkMode.filter((m) => m !== mode));
+    } else {
+      onWorkModeChange([...selectedWorkMode, mode]);
+    }
+  };
 
-  // sync เฉพาะตอน reset (ทั้งคู่กลับเป็น 0/null)
-  if (isReset && changedFromOutside) {
-    setLocalMin("");
-    setLocalMax("");
-    setPriceError("");
-  }
+  useEffect(() => {
+    const prev = prevPriceRef.current;
+    const isReset = priceRange.min === 0 && priceRange.max === null;
+    const changedFromOutside =
+      prev.min !== priceRange.min || prev.max !== priceRange.max;
 
-  prevPriceRef.current = { min: priceRange.min, max: priceRange.max };
-}, [priceRange.min, priceRange.max]);
+    // sync เฉพาะตอน reset (ทั้งคู่กลับเป็น 0/null)
+    if (isReset && changedFromOutside) {
+      setLocalMin("");
+      setLocalMax("");
+      setPriceError("");
+    }
+
+    prevPriceRef.current = { min: priceRange.min, max: priceRange.max };
+  }, [priceRange.min, priceRange.max]);
 
   useEffect(() => {
     if (jobTypeSearch) {
       setFilteredJobTypes(
         availableJobTypes.filter((type) =>
-          type.toLowerCase().includes(jobTypeSearch.toLowerCase())
-        )
+          type.toLowerCase().includes(jobTypeSearch.toLowerCase()),
+        ),
       );
     } else {
       setFilteredJobTypes(availableJobTypes);
@@ -101,13 +117,21 @@ useEffect(() => {
       if (isMajorDropdownOpen && !target.closest(".custom-major-dropdown")) {
         setIsMajorDropdownOpen(false);
       }
+
+      if (
+        isWorkModeDropdownOpen &&
+        !target.closest(".custom-workmode-dropdown")
+      ) {
+        setIsWorkModeDropdownOpen(false);
+      }
+
       if (isSortDropdownOpen && !target.closest(".custom-sort-dropdown")) {
         setIsSortDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isMajorDropdownOpen, isSortDropdownOpen]);
+  }, [isMajorDropdownOpen, isSortDropdownOpen, isWorkModeDropdownOpen]);
 
   const toggleFilter = () => {
     setIsFilterOpen(!isFilterOpen);
@@ -126,8 +150,10 @@ useEffect(() => {
 
   // Validate price range and commit to parent, then apply all filters together
   const handleApplyAndClose = () => {
-    const minVal = localMin === "" ? 0 : Math.max(0, parseInt(localMin, 10) || 0);
-    const maxVal = localMax === "" ? null : Math.max(0, parseInt(localMax, 10) || 0);
+    const minVal =
+      localMin === "" ? 0 : Math.max(0, parseInt(localMin, 10) || 0);
+    const maxVal =
+      localMax === "" ? null : Math.max(0, parseInt(localMax, 10) || 0);
 
     // Validate: min must not exceed max
     if (maxVal !== null && minVal > maxVal) {
@@ -172,7 +198,8 @@ useEffect(() => {
     selectedJobTypes.length > 0 ||
     selectedMajor !== "" ||
     priceRange.min > 0 ||
-    priceRange.max !== null;
+    priceRange.max !== null ||
+    selectedWorkMode.length > 0; // ← || แทน ;
 
   return (
     <div className="relative z-40">
@@ -226,7 +253,8 @@ useEffect(() => {
               <span className="flex items-center justify-center w-4 h-4 md:w-5 md:h-5 bg-primary-blue-500 text-white text-[10px] md:text-xs font-semibold rounded-full leading-none">
                 {selectedJobTypes.length +
                   (selectedMajor ? 1 : 0) +
-                  (priceRange.min > 0 || priceRange.max !== null ? 1 : 0)}
+                  (priceRange.min > 0 || priceRange.max !== null ? 1 : 0) +
+                  selectedWorkMode.length}
               </span>
             )}
           </button>
@@ -399,6 +427,28 @@ useEffect(() => {
                         </div>
                       </div>
 
+                      {/* Type */}
+                      <div>
+                        <h4 className="text-gray-700 font-semibold text-sm mb-2">
+                          รูปแบบการทำงาน
+                        </h4>
+                        <div className="flex gap-2">
+                          {workModeOptions.map((opt) => (
+                            <button
+                              key={opt.value}
+                              onClick={() => handleWorkModeToggle(opt.value)}
+                              className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                                selectedWorkMode.includes(opt.value)
+                                  ? "bg-primary-blue-500 text-white border-primary-blue-500"
+                                  : "border-gray-200 text-gray-600 bg-white hover:border-primary-blue-300"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Price */}
                       <div>
                         <h4 className="text-gray-700 font-semibold text-sm mb-2">
@@ -411,7 +461,9 @@ useEffect(() => {
                               min="0"
                               step="100"
                               className={`w-full p-2.5 pl-7 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300 text-sm ${
-                                priceError ? "border-red-400" : "border-gray-200"
+                                priceError
+                                  ? "border-red-400"
+                                  : "border-gray-200"
                               }`}
                               placeholder="ต่ำสุด"
                               value={localMin}
@@ -428,7 +480,9 @@ useEffect(() => {
                               min="0"
                               step="100"
                               className={`w-full p-2.5 pl-7 border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-blue-300 text-sm ${
-                                priceError ? "border-red-400" : "border-gray-200"
+                                priceError
+                                  ? "border-red-400"
+                                  : "border-gray-200"
                               }`}
                               placeholder="ไม่จำกัด"
                               value={localMax}
@@ -440,7 +494,9 @@ useEffect(() => {
                           </div>
                         </div>
                         {priceError && (
-                          <p className="text-red-500 text-xs mt-1.5">{priceError}</p>
+                          <p className="text-red-500 text-xs mt-1.5">
+                            {priceError}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -465,7 +521,7 @@ useEffect(() => {
                 className="overflow-hidden"
               >
                 <div className="p-5 bg-gray-50 border-t border-gray-100">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     {/* Job Type filter */}
                     <div>
                       <h3 className="text-gray-700 font-medium mb-3 flex items-center">
@@ -481,7 +537,14 @@ useEffect(() => {
                           strokeLinejoin="round"
                           className="mr-2 text-primary-blue-500"
                         >
-                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                          <rect
+                            x="2"
+                            y="7"
+                            width="20"
+                            height="14"
+                            rx="2"
+                            ry="2"
+                          ></rect>
                           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                         </svg>
                         ประเภทงาน
@@ -577,10 +640,18 @@ useEffect(() => {
                       <div className="custom-major-dropdown relative">
                         <div
                           className="relative"
-                          onClick={() => setIsMajorDropdownOpen(!isMajorDropdownOpen)}
+                          onClick={() =>
+                            setIsMajorDropdownOpen(!isMajorDropdownOpen)
+                          }
                         >
                           <div className="flex items-center justify-between w-full p-2 pl-4 border border-gray-200 rounded-xl bg-white cursor-pointer hover:border-primary-blue-300">
-                            <span className={selectedMajor ? "text-gray-800" : "text-gray-500"}>
+                            <span
+                              className={
+                                selectedMajor
+                                  ? "text-gray-800"
+                                  : "text-gray-500"
+                              }
+                            >
                               {selectedMajor || "ทั้งหมด"}
                             </span>
                             <div className="text-gray-500">
@@ -646,6 +717,109 @@ useEffect(() => {
                       </div>
                     </div>
 
+                    {/* Work mode */}
+                    <div>
+                      <h3 className="text-gray-700 font-medium mb-3 flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2 text-primary-blue-500"
+                        >
+                          <rect x="2" y="3" width="20" height="14" rx="2" />
+                          <path d="M8 21h8M12 17v4" />
+                        </svg>
+                        รูปแบบการทำงาน
+                      </h3>
+                      <div className="custom-workmode-dropdown relative">
+                        <div
+                          className="flex items-center justify-between w-full p-2 pl-4 border border-gray-200 rounded-xl bg-white cursor-pointer hover:border-primary-blue-300"
+                          onClick={() =>
+                            setIsWorkModeDropdownOpen(!isWorkModeDropdownOpen)
+                          }
+                        >
+                          <span
+                            className={
+                              selectedWorkMode.length > 0
+                                ? "text-gray-800"
+                                : "text-gray-500"
+                            }
+                          >
+                            {selectedWorkMode.length > 0
+                              ? selectedWorkMode
+                                  .map(
+                                    (m) =>
+                                      workModeOptions.find((o) => o.value === m)
+                                        ?.label,
+                                  )
+                                  .join(", ")
+                              : "ทั้งหมด"}
+                          </span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={`text-gray-500 transition-transform duration-300 ${isWorkModeDropdownOpen ? "rotate-180" : ""}`}
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </div>
+                        <AnimatePresence>
+                          {isWorkModeDropdownOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="absolute z-[60] w-full mt-1 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-md"
+                            >
+                              <div className="p-1">
+                                <div
+                                  className={`p-1.5 px-4 rounded-lg cursor-pointer ${
+                                    selectedWorkMode.length === 0
+                                      ? "bg-primary-blue-50 text-primary-blue-600"
+                                      : "hover:bg-gray-50"
+                                  }`}
+                                  onClick={() => {
+                                    onWorkModeChange([]);
+                                    setIsWorkModeDropdownOpen(false);
+                                  }}
+                                >
+                                  ทั้งหมด
+                                </div>
+                                {workModeOptions.map((opt) => (
+                                  <div
+                                    key={opt.value}
+                                    className={`p-1.5 px-4 rounded-lg cursor-pointer ${
+                                      selectedWorkMode.includes(opt.value)
+                                        ? "bg-primary-blue-50 text-primary-blue-600"
+                                        : "hover:bg-gray-50"
+                                    }`}
+                                    onClick={() =>
+                                      handleWorkModeToggle(opt.value)
+                                    }
+                                  >
+                                    {opt.label}
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
                     {/* Price range filter */}
                     <div>
                       <h3 className="text-gray-700 font-medium mb-3 flex items-center">
@@ -661,9 +835,8 @@ useEffect(() => {
                           strokeLinejoin="round"
                           className="mr-2 text-primary-blue-500"
                         >
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="12" y1="8" x2="12" y2="12"></line>
-                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+                          <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
                         </svg>
                         ช่วงราคา (บาท)
                       </h3>
@@ -703,7 +876,9 @@ useEffect(() => {
                         </div>
                       </div>
                       {priceError && (
-                        <p className="text-red-500 text-xs mt-1.5">{priceError}</p>
+                        <p className="text-red-500 text-xs mt-1.5">
+                          {priceError}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -718,7 +893,7 @@ useEffect(() => {
                           {selectedJobTypes.map((type) => (
                             <span
                               key={type}
-                              className="bg-primary-blue-50 text-primary-blue-600 text-sm px-3 py-1 rounded-lg flex items-center group"
+                              className="bg-white border border-primary-blue-400 text-primary-blue-600 text-sm px-3 py-1 rounded-full flex items-center group"
                             >
                               {type}
                               <button
@@ -743,7 +918,7 @@ useEffect(() => {
                             </span>
                           ))}
                           {selectedMajor && (
-                            <span className="bg-primary-blue-50 text-primary-blue-600 text-sm px-3 py-1 rounded-lg flex items-center group">
+                            <span className="bg-white border border-primary-blue-400 text-primary-blue-600 text-sm px-3 py-1 rounded-full flex items-center group">
                               {selectedMajor}
                               <button
                                 onClick={() => onMajorChange("")}
@@ -767,7 +942,7 @@ useEffect(() => {
                             </span>
                           )}
                           {(priceRange.min > 0 || priceRange.max !== null) && (
-                            <span className="bg-primary-blue-50 text-primary-blue-600 text-sm px-3 py-1 rounded-lg flex items-center group">
+                            <span className="bg-white border border-primary-blue-400 text-primary-blue-600 text-sm px-3 py-1 rounded-full flex items-center group">
                               ฿{priceRange.min.toLocaleString()}
                               {priceRange.max !== null
                                 ? ` – ฿${priceRange.max.toLocaleString()}`
@@ -797,6 +972,37 @@ useEffect(() => {
                               </button>
                             </span>
                           )}
+
+                          {selectedWorkMode.map((mode) => (
+                            <span
+                              key={mode}
+                              className="bg-white border border-primary-blue-400 text-primary-blue-600 text-sm px-3 py-1 rounded-full flex items-center group"
+                            >
+                              {
+                                workModeOptions.find((o) => o.value === mode)
+                                  ?.label
+                              }
+                              <button
+                                onClick={() => handleWorkModeToggle(mode)}
+                                className="ml-2 text-primary-blue-400 group-hover:text-primary-blue-600"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                              </button>
+                            </span>
+                          ))}
                         </>
                       ) : (
                         <span className="text-sm text-gray-500 py-1">

@@ -111,16 +111,18 @@ const AnimatedWord = () => {
     let timeout: NodeJS.Timeout;
 
     if (!isDeleting && displayed.length < word.length) {
-      timeout = setTimeout(() => {
-        setDisplayed(word.slice(0, displayed.length + 1));
-      }, 80);
+      timeout = setTimeout(
+        () => setDisplayed(word.slice(0, displayed.length + 1)),
+        80,
+      );
     } else if (!isDeleting && displayed.length === word.length) {
       timeout = setTimeout(() => setIsDeleting(true), 2500);
     } else if (isDeleting && displayed.length > 0) {
-      timeout = setTimeout(() => {
-        setDisplayed(word.slice(0, displayed.length - 1));
-      }, 40);
-    } else if (isDeleting && displayed.length === 0) {
+      timeout = setTimeout(
+        () => setDisplayed(word.slice(0, displayed.length - 1)),
+        40,
+      );
+    } else {
       setIsDeleting(false);
       setIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
     }
@@ -129,12 +131,12 @@ const AnimatedWord = () => {
   }, [displayed, isDeleting, index]);
 
   return (
-    <span className="inline-flex items-center">
+    <>
       <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
         {displayed}
       </span>
-      <span className="ml-0.5 inline-block w-[2px] h-[1em] bg-blue-500 align-middle animate-pulse" />
-    </span>
+      <span className="ml-0.5 inline-block w-[2px] h-[0.85em] bg-blue-500 align-middle animate-pulse" />
+    </>
   );
 };
 
@@ -181,6 +183,10 @@ function FindJobPageContent() {
     ? searchParams.get("jobTypes")!.split(",").filter(Boolean)
     : [];
 
+  const selectedWorkMode = searchParams.get("workMode")
+    ? searchParams.get("workMode")!.split(",").filter(Boolean)
+    : [];
+
   const [searchInput, setSearchInput] = useState(searchQuery);
   useEffect(() => {
     setSearchInput(searchQuery);
@@ -210,6 +216,10 @@ function FindJobPageContent() {
     });
   const handleSortChange = (sort: string) =>
     updateParams({ sort: sort !== "latest" ? sort : null });
+
+  const handleWorkModeChange = (modes: string[]) =>
+    updateParams({ workMode: modes.length ? modes.join(",") : null });
+
   const handleApplySearch = () =>
     updateParams({ q: searchInput.trim() || null });
 
@@ -253,10 +263,14 @@ function FindJobPageContent() {
             <p className="inline-flex items-center gap-2 text-[11px] md:text-xs font-bold text-blue-600 uppercase bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
               COSCI HUB
             </p>
-            <h1 className="text-[26px] leading-tight md:text-4xl font-extrabold text-slate-900 tracking-tight">
-              ค้นหา <AnimatedWord />
-              <br className="md:hidden" /> ในที่เดียว
-            </h1>
+            <div className="space-y-1">
+              <h1 className="text-[26px] md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                ค้นหา <AnimatedWord />
+              </h1>
+              <h1 className="text-[26px] md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                ได้ในที่เดียว
+              </h1>
+            </div>
             <p className="text-[10px] md:text-base text-slate-400">
               แพลตฟอร์มรวมงานพิเศษภายในวิทยาลัยฯ · สำหรับนิสิต COSCI โดยเฉพาะ!
             </p>
@@ -283,6 +297,8 @@ function FindJobPageContent() {
           onJobTypesChange={handleJobTypesChange}
           selectedMajor={selectedMajor}
           onMajorChange={handleMajorChange}
+          selectedWorkMode={selectedWorkMode}
+          onWorkModeChange={handleWorkModeChange}
           priceRange={priceRange}
           onPriceRangeChange={handlePriceRangeChange}
           availableJobTypes={jobCategories}
@@ -299,6 +315,7 @@ function FindJobPageContent() {
             searchQuery={searchQuery}
             selectedJobTypes={getEffectiveJobTypes()}
             selectedMajor={selectedMajor}
+            selectedWorkMode={selectedWorkMode}
             priceRange={priceRange}
             currentSort={currentSort}
             onResetFilters={handleResetFilters}

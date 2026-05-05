@@ -49,6 +49,7 @@ interface JobListProps {
   searchQuery?: string;
   selectedJobTypes?: string[];
   selectedMajor?: string;
+  selectedWorkMode?: string[];
   priceRange?: PriceRange;
   currentSort?: string;
   onResetFilters?: () => void;
@@ -62,6 +63,7 @@ function JobList({
   searchQuery = "",
   selectedJobTypes = [],
   selectedMajor = "",
+  selectedWorkMode = [],
   priceRange = { min: 0, max: null },
   currentSort = "latest",
   onResetFilters,
@@ -135,6 +137,8 @@ function JobList({
       if (selectedJobTypes.length > 0)
         params.jobTypes = selectedJobTypes.join(",");
       if (selectedMajor) params.major = selectedMajor;
+      if (selectedWorkMode.length > 0)
+        params.workMode = selectedWorkMode.join(",");
 
       if (priceRange.min > 0) params.minPrice = priceRange.min;
       if (priceRange.max !== null) params.maxPrice = priceRange.max;
@@ -160,6 +164,7 @@ function JobList({
     // selectedJobTypes,
     // selectedMajor.join(","),
     selectedMajor,
+    selectedWorkMode.join(","),
     priceRange,
     currentSort,
   ]);

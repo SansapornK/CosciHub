@@ -101,7 +101,7 @@ export default function BookmarksPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pb-20">
       {/* Hero header */}
-      <section className="relative overflow-hidden py-10 md:py-10 px-6 md:px-10 text-center">
+      <section className="relative overflow-hidden py-8 md:py-10 px-5 md:px-10 text-center">
         <div className="absolute top-[-5%] left-[-10%] md:top-[-10%] md:left-[-5%] w-[70%] md:w-[50%] h-[60%] md:h-[70%] bg-blue-400/10 rounded-full blur-[60px] md:blur-[100px]" />
 
         <div className="relative z-10 max-w-4xl mx-auto">
@@ -127,7 +127,7 @@ export default function BookmarksPage() {
       </section>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-6 md:px-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-12">
         <AnimatePresence mode="popLayout">
           {paginatedJobs.length > 0 ? (
             <motion.div
@@ -175,38 +175,33 @@ export default function BookmarksPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-10">
-                  {/* Prev */}
+                <div className="flex items-center justify-center gap-1.5 mt-8 md:mt-10">
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="p-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
 
-                  {/* Page numbers */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                     (page) => {
-                      // แสดง: หน้าแรก, หน้าสุดท้าย, หน้าปัจจุบัน ±1
                       const show =
                         page === 1 ||
                         page === totalPages ||
                         Math.abs(page - currentPage) <= 1;
                       const isEllipsis =
                         !show && (page === 2 || page === totalPages - 1);
-
                       if (!show && !isEllipsis) return null;
-                      if (isEllipsis) {
+                      if (isEllipsis)
                         return (
                           <span
                             key={page}
-                            className="px-1 text-gray-400 text-sm"
+                            className="px-1 text-gray-300 text-sm"
                           >
-                            ...
+                            …
                           </span>
                         );
-                      }
                       return (
                         <button
                           key={page}
@@ -223,11 +218,10 @@ export default function BookmarksPage() {
                     },
                   )}
 
-                  {/* Next */}
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="p-2 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -242,24 +236,18 @@ export default function BookmarksPage() {
               )} */}
             </motion.div>
           ) : (
-            <motion.div
-              key="empty-state"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="flex flex-col items-center justify-center py-20 bg-white/40 backdrop-blur-md rounded-[3rem] border border-white/60 shadow-sm"
-            >
-              <div className="p-6 bg-blue-50 rounded-full mb-6">
-                <Bookmark className="w-12 h-12 text-blue-300" />
+            <motion.div className="flex flex-col items-center justify-center py-14 md:py-20 mx-2 md:mx-0 bg-white/40 backdrop-blur-md rounded-[2rem] md:rounded-[3rem] border border-white/60 shadow-sm">
+              <div className="p-4 md:p-6 bg-blue-50 rounded-full mb-4 md:mb-6">
+                <Bookmark className="w-8 h-8 md:w-12 md:h-12 text-blue-300" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-800">
+              <h3 className="text-lg md:text-2xl font-bold text-gray-800">
                 ยังไม่มีงานที่บันทึกไว้
               </h3>
-              <p className="text-gray-500 mt-2 mb-8 text-center max-w-xs">
+              <p className="text-gray-400 mt-2 mb-6 md:mb-8 text-sm text-center max-w-[220px] md:max-w-xs">
                 ลองไปสำรวจงานใหม่ๆ แล้วกดบันทึกงานที่สนใจไว้ที่นี่สิ
               </p>
               <Link href="/find-job">
-                <button className="bg-blue-600 text-white font-bold py-4 px-10 rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95">
+                <button className="bg-gradient-to-r from-[#0A5BE9] to-[#7170D8] text-white font-bold py-3.5 md:py-4 px-8 md:px-10 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 text-sm md:text-base">
                   เริ่มต้นสำรวจงาน
                 </button>
               </Link>
