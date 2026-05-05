@@ -843,21 +843,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
             {currentStep === 1 && (
               <StepRole
                 data={registerData}
-                // validation={validation}
                 updateData={updateRegisterData}
-                // onValidateName={handleNameValidation}
-                // selectedRole={registerData.role}
-                // onRoleSelect={(role) => updateRegisterData({ role })}
               />
-
-              // <Step1_UserInfo
-              //   data={registerData}
-              //   validation={validation}
-              //   updateData={updateRegisterData}
-              //   onValidateName={handleNameValidation}
-              //   // selectedRole={registerData.role}
-              //   // onRoleSelect={(role) => updateRegisterData({ role })}
-              // />
             )}
 
             {currentStep === 2 && (
@@ -871,7 +858,6 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
             )}
 
             {currentStep === 3 && (
-              // (Placeholder - จะสร้าง Step 3 ในขั้นถัดไป)
               <StepMajorAndSkills
                 data={registerData}
                 updateData={updateRegisterData}
@@ -880,22 +866,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
                 jobOptions={jobCategories}
                 onSelectImage={(imageUrl) => setCropImage(imageUrl)}
               />
-              // <StepMajorAndSkills
-              //   data={registerData}
-              //   updateData={updateRegisterData}
-              //   skillCategories={skillCategories}
-              // />
             )}
 
-            {/* {currentStep === 4 && (
-              <StepEmail 
-                email={registerData.email}
-                isVerified={registerData.isEmailVerified}
-                validation={validation.email}
-                onEmailChange={(email) => updateRegisterData({ email })}
-                onEmailTouched={handleEmailTouched}
-              />
-            )} */}
 
             {currentStep === 4 && (
               <StepEmail
