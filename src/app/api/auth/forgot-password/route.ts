@@ -45,7 +45,7 @@ const generateResetEmailHTML = (resetUrl: string, userName: string) => `
     </div>
     <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;">
       <p style="font-size: 12px; color: #888; margin: 0;">
-        COSCI HUB - ระบบหางานสำหรับนิสิตวิทยาลัยนวัตกรรมสื่อสารสังคม
+        COSCI HUB - ระบบหางานพิเศษสำหรับนิสิตวิทยาลัยนวัตกรรมสื่อสารสังคม
       </p>
     </div>
   </div>

@@ -98,23 +98,7 @@ export async function PATCH(
       }
     }
 
-    // Validate สำหรับปิดรับสมัคร (เปลี่ยนเป็น closed)
-    if (data.status === "closed" && existing.status === "published") {
-      // ตรวจสอบว่าไม่มี application ที่กำลังดำเนินการอยู่
-      const activeApplications = await Application.countDocuments({
-        jobId: id,
-        status: { $in: ["accepted", "in_progress", "submitted", "revision"] },
-      });
-      if (activeApplications > 0) {
-        return NextResponse.json(
-          {
-            error:
-              "ไม่สามารถปิดรับสมัครได้ เนื่องจากมีผู้สมัครที่กำลังดำเนินการอยู่",
-          },
-          { status: 400 },
-        );
-      }
-    }
+    // closed = ปิดรับสมัครใหม่ (งานที่กำลังดำเนินการอยู่ยังทำต่อได้)
 
     const allowedStatus = ["published", "draft", "closed"];
     const updatedJob = await (Job as any)
