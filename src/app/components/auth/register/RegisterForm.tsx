@@ -55,6 +55,7 @@ interface ValidationState {
   email: {
     isChecking: boolean;
     exists: boolean;
+    isAllowed: boolean; // สำหรับตรวจสอบว่าอีเมล teacher อยู่ในรายการที่อนุญาตหรือไม่
     error: string;
     touched: boolean;
   };
@@ -105,6 +106,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     email: {
       isChecking: false,
       exists: false,
+      isAllowed: true,
       error: "",
       touched: false,
     },
@@ -225,7 +227,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         email: { ...prev.email, error: "" },
       }));
     }
-  }, [registerData.email, validation.email.touched]);
+  }, [registerData.email, registerData.role, validation.email.touched]);
 
   // Validate Password
   useEffect(() => {
@@ -309,9 +311,16 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
     try {
       const response = await axios.get(
-        `/api/auth/check-email?email=${encodeURIComponent(registerData.email)}`,
+        `/api/auth/check-email?email=${encodeURIComponent(registerData.email)}&role=${registerData.role}`,
       );
-      const exists = response.data.exists;
+      const { exists, isAllowed } = response.data;
+
+      let errorMessage = "";
+      if (exists) {
+        errorMessage = "อีเมลนี้ได้ลงทะเบียนไปแล้ว";
+      } else if (registerData.role === "teacher" && !isAllowed) {
+        errorMessage = "อีเมลนี้ไม่อยู่ในรายชื่อบุคลากรที่ได้รับอนุญาต";
+      }
 
       setValidation((prev) => ({
         ...prev,
@@ -319,7 +328,8 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           ...prev.email,
           isChecking: false,
           exists: exists,
-          error: exists ? "อีเมลนี้ได้ลงทะเบียนไปแล้ว" : "",
+          isAllowed: isAllowed,
+          error: errorMessage,
         },
       }));
     } catch (error) {
@@ -381,6 +391,9 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
 
         // ตรวจสอบ Email Error
         if (validation.email.error || validation.email.exists) return false;
+
+        // ตรวจสอบว่า teacher ใช้อีเมลที่อนุญาตหรือไม่
+        if (registerData.role === "teacher" && !validation.email.isAllowed) return false;
 
         // เพิ่ม: ตรวจสอบ Password
         if (!registerData.password || registerData.password.length < 8)

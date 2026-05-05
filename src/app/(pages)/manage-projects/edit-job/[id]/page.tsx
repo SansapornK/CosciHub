@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Loading from "@/app/components/common/Loading";
 import ConfirmationModal from "@/app/components/modals/ConfirmationModal";
+import InfoModal from "@/app/components/modals/InfoModal";
 import { jobCategories } from "@/app/constants/JobCategories";
 
 const jobForms = [
@@ -53,6 +54,7 @@ export default function EditJobPage() {
 
   // Modal state
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [helpPopup, setHelpPopup] = useState<'deadline' | 'delivery' | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -149,13 +151,19 @@ export default function EditJobPage() {
       newErrors.applicationDeadline = "วันสิ้นสุดรับสมัครต้องไม่เป็นวันในอดีต";
     }
 
-    // ตรวจสอบวันครบกำหนดส่งงาน (ถ้ามี)
-    if (formData.deliveryDate) {
+    // ตรวจสอบวันกำหนดส่งงาน/วันปฏิบัติงาน (required)
+    const deliveryDateLabel = formData.jobType === "online" ? "วันกำหนดส่งงาน" : "วันปฏิบัติงาน";
+    if (!formData.deliveryDate) {
+      newErrors.deliveryDate = `กรุณาระบุ${deliveryDateLabel}`;
+    } else {
       if (formData.deliveryDate < today) {
-        newErrors.deliveryDate = "วันครบกำหนดส่งงานต้องไม่เป็นวันในอดีต";
+        newErrors.deliveryDate = `${deliveryDateLabel}ต้องไม่เป็นวันในอดีต`;
       }
-      if (formData.applicationDeadline && formData.deliveryDate < formData.applicationDeadline) {
-        newErrors.deliveryDate = "วันครบกำหนดส่งงานต้องไม่ก่อนวันสิ้นสุดรับสมัคร";
+      if (
+        formData.applicationDeadline &&
+        formData.deliveryDate < formData.applicationDeadline
+      ) {
+        newErrors.deliveryDate = `${deliveryDateLabel}ต้องไม่ก่อนวันสิ้นสุดรับสมัคร`;
       }
     }
 
@@ -214,6 +222,24 @@ export default function EditJobPage() {
   return (
     <div className="bg-gray-50/50 min-h-screen">
 
+      {/* Help Info Modals */}
+      <InfoModal
+        isOpen={helpPopup === 'deadline'}
+        title="วันสิ้นสุดการรับสมัคร"
+        onClose={() => setHelpPopup(null)}
+      >
+        <p>• คุณสามารถปิดรับสมัครก่อนกำหนดได้</p>
+        <p>• หากเลยวันสิ้นสุดการรับสมัคร งานของคุณจะถูกปิดรับสมัครโดยอัตโนมัติ</p>
+      </InfoModal>
+
+      <InfoModal
+        isOpen={helpPopup === 'delivery'}
+        title={formData.jobType === "online" ? "วันกำหนดส่งงาน" : "วันปฏิบัติงาน"}
+        onClose={() => setHelpPopup(null)}
+      >
+        <p>• เป็นเพียงกำหนดการเบื้องต้น นิสิตและผู้ว่าจ้างสามารถตกลง{formData.jobType === "online" ? "วันส่งงาน" : "วันปฏิบัติงาน"}อีกครั้งได้ภายหลัง</p>
+      </InfoModal>
+
       {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={showPublishModal}
@@ -230,7 +256,7 @@ export default function EditJobPage() {
       <div className="max-w-6xl mx-auto p-4 md:p-7 pt-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-10 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between gap-4 mb-6 md:mb-10 pb-4 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <Link href="/manage-projects/my-jobs"
               className="p-2.5 hover:bg-white rounded-full transition-all text-gray-400 hover:text-gray-600 shadow-sm">
@@ -238,24 +264,24 @@ export default function EditJobPage() {
             </Link>
             <div className="flex items-center gap-3">
               <div>
-                <h1 className="text-2xl font-extrabold text-[#0C5BEA] tracking-tight">แก้ไขประกาศงาน</h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-[#0C5BEA] tracking-tight">แก้ไขประกาศงาน</h1>
                 <p className="text-sm text-gray-400 mt-0.5">แก้ไขแล้วเผยแพร่หรือบันทึกร่าง</p>
               </div>
             </div>
           </div>
           <Link href="/manage-projects/my-jobs"
-            className="px-6 py-2.5 rounded-full text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100">
+            className="px-4 md:px-6 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-semibold text-gray-600 bg-white hover:bg-gray-100 transition-all shadow-sm border border-gray-100 shrink-0">
             ยกเลิก
           </Link>
         </div>
 
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4 md:space-y-8">
 
           {/* Section 1: รายละเอียดงาน */}
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-8">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-              <Pencil className="w-6 h-6 text-blue-500" />
-              <h2 className="text-xl font-bold text-gray-900">รายละเอียดงาน</h2>
+          <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2rem] shadow-sm border border-gray-100 space-y-5 md:space-y-8">
+            <div className="flex items-center gap-3 pb-3 md:pb-4 border-b border-gray-100">
+              <Pencil className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">รายละเอียดงาน</h2>
             </div>
 
             <InputField label="ชื่องาน" id="title" required>
@@ -280,7 +306,7 @@ export default function EditJobPage() {
               </div>
             </InputField>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-4 md:gap-y-5">
 
               <InputField label="ประเภทงาน" id="category" required>
                 <div className="relative">
@@ -386,16 +412,33 @@ export default function EditJobPage() {
           </div>
 
           {/* Section 2: ค่าตอบแทนและกำหนดการ */}
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-8">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-              <DollarSign className="w-6 h-6 text-emerald-500" />
-              <h2 className="text-xl font-bold text-gray-900">ค่าตอบแทน &amp; กำหนดการ</h2>
+          <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[2rem] shadow-sm border border-gray-100 space-y-5 md:space-y-8">
+            <div className="flex items-center gap-3 pb-3 md:pb-4 border-b border-gray-100">
+              <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">
+                ค่าตอบแทน &amp; กำหนดการ
+              </h2>
             </div>
 
-            <InputField label="ค่าตอบแทน (บาท)" id="budget" required error={errors.budget}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8 overflow-hidden">
+            {/* ค่าตอบแทน */}
+            <div className="space-y-2 min-w-0">
+            <InputField
+              label="ค่าตอบแทน (บาท)"
+              id="budget"
+              required
+              error={errors.budget}
+            >
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">฿</span>
-                <input id="budget" type="number" min={1} required placeholder="0"
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                  ฿
+                </span>
+                <input
+                  id="budget"
+                  type="number"
+                  min={1}
+                  required
+                  placeholder="0"
                   className={`w-full pl-9 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
                     errors.budget ? "border-red-300" : "border-gray-200"
                   }`}
@@ -403,112 +446,235 @@ export default function EditJobPage() {
                   onChange={(e) => {
                     const value = e.target.value === "" ? "" : Number(e.target.value);
                     setFormData({ ...formData, budget: value });
-                    if (errors.budget) setErrors((prev) => ({ ...prev, budget: "" }));
+                    if (errors.budget)
+                      setErrors((prev) => ({ ...prev, budget: "" }));
                   }}
                 />
               </div>
             </InputField>
+            </div>
 
-            <InputField label="จำนวนรับ (คน)" id="capacity" required error={errors.capacity}>
+            {/* จำนวนรับ */}
+            <div className="space-y-2 min-w-0">
+            <InputField
+              label="จำนวนรับ (คน)"
+              id="capacity"
+              required
+              error={errors.capacity}
+            >
               <div className="relative">
                 <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input id="capacity" type="number" min={1} required placeholder="0"
+                <input
+                  id="capacity"
+                  type="number"
+                  min={1}
+                  required
+                  placeholder="0"
                   className={`w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
                     errors.capacity ? "border-red-300" : "border-gray-200"
                   }`}
                   value={formData.capacity}
                   onChange={(e) => {
                     const value = e.target.value === "" ? "" : Number(e.target.value);
-                    setFormData({ ...formData, capacity: value });
-                    if (errors.capacity) setErrors((prev) => ({ ...prev, capacity: "" }));
+                    setFormData({
+                      ...formData,
+                      capacity: value,
+                    });
+                    if (errors.capacity)
+                      setErrors((prev) => ({ ...prev, capacity: "" }));
                   }}
                 />
               </div>
             </InputField>
+            </div>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-              <div className="space-y-2">
+            {/* วันสิ้นสุดรับสมัคร → Job.applicationDeadline */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 md:gap-x-10 gap-y-5 md:gap-y-8 overflow-hidden">
+              <div className="space-y-2 min-w-0">
                 <label
                   htmlFor="applicationDeadline"
-                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"
+                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 flex-wrap"
                 >
                   วันสิ้นสุดการรับสมัคร
                   <span className="text-red-400">*</span>
-                  <span className="relative group">
-                    <HelpCircle className="w-4 h-4 text-gray-400 cursor-help" />
-                    <span className="absolute  -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-gray-800 text-white text-xs text-center rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
-                      - คุณสามารถปิดรับสมัครก่อนกำหนดได้
-                      <br />
-                      - หากเลยวันสิ้นสุดการรับสมัคร งานของคุณจะถูกปิดรับสมัครโดยอัตโนมัติ
-                    </span>
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setHelpPopup('deadline')}
+                    className="focus:outline-none"
+                  >
+                    <HelpCircle className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+                  </button>
                 </label>
-                <div className="relative">
+                <div className="relative w-full">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input id="applicationDeadline" type="date" required
+                  <input
+                    id="applicationDeadline"
+                    type="date"
+                    required
                     min={getTodayDate()}
-                    className={`w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
-                      errors.applicationDeadline ? "border-red-300" : "border-gray-200"
-                    }`}
+                    className={`w-full max-w-full box-border pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
+                    errors.applicationDeadline ? "border-red-300" : "border-gray-200"
+                  }`}
                     value={formData.applicationDeadline}
                     onChange={(e) => {
-                      setFormData({ ...formData, applicationDeadline: e.target.value });
-                      if (errors.applicationDeadline) setErrors((prev) => ({ ...prev, applicationDeadline: "" }));
+                      setFormData({
+                        ...formData,
+                        applicationDeadline: e.target.value,
+                      });
+                      if (errors.applicationDeadline)
+                        setErrors((prev) => ({
+                          ...prev,
+                          applicationDeadline: "",
+                        }));
                     }}
                   />
                 </div>
                 {errors.applicationDeadline && (
-                  <p className="text-xs text-red-500 mt-1">{errors.applicationDeadline}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.applicationDeadline}
+                  </p>
                 )}
               </div>
 
-              <InputField label="วันครบกำหนดส่งงาน (ถ้ามี)" id="deliveryDate" error={errors.deliveryDate}>
-                <div className="relative">
+              {/* วันกำหนดส่งงาน/วันปฏิบัติงาน → Job.deliveryDate */}
+              <div className="space-y-2 min-w-0 min-h-0">
+                <label
+                  htmlFor="deliveryDate"
+                  className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 flex-wrap"
+                >
+                  {formData.jobType === "online" ? "วันกำหนดส่งงาน" : "วันปฏิบัติงาน"}
+                  <span className="text-red-400">*</span>
+                  <button
+                    type="button"
+                    onClick={() => setHelpPopup('delivery')}
+                    className="focus:outline-none"
+                  >
+                    <HelpCircle className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
+                  </button>
+                </label>
+                <div className="relative w-full">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input id="deliveryDate" type="date"
+                  <input
+                    id="deliveryDate"
+                    type="date"
+                    required
                     min={formData.applicationDeadline || getTodayDate()}
-                    className={`w-full pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
+                    className={`w-full max-w-full box-border pl-11 pr-5 py-3.5 rounded-xl bg-gray-50 border focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition-all text-gray-800 ${
                       errors.deliveryDate ? "border-red-300" : "border-gray-200"
                     }`}
                     value={formData.deliveryDate}
                     onChange={(e) => {
-                      setFormData({ ...formData, deliveryDate: e.target.value });
-                      if (errors.deliveryDate) setErrors((prev) => ({ ...prev, deliveryDate: "" }));
+                      setFormData({
+                        ...formData,
+                        deliveryDate: e.target.value,
+                      });
+                      if (errors.deliveryDate)
+                        setErrors((prev) => ({ ...prev, deliveryDate: "" }));
                     }}
                   />
                 </div>
-              </InputField>
+                {errors.deliveryDate && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.deliveryDate}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-3 pb-8">
-            <button type="button" disabled={isDrafting || isSubmitting || !formData.title}
+          {/* ───── Submit/Draft Button ───── */}
+          <div className="flex md:justify-end gap-2 md:gap-3 pb-8">
+            {/* ปุ่มบันทึกร่าง */}
+            <button
+              type="button"
+              disabled={isDrafting || isSubmitting || !formData.title}
               onClick={() => handleSubmit("draft")}
-              className="px-8 py-4 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold rounded-2xl transition-all border-2 border-gray-200 hover:border-gray-300 flex items-center gap-3 text-base">
+              className="flex-1 md:flex-none py-3 md:py-4 md:px-8 bg-white hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold rounded-xl md:rounded-2xl transition-all border-2 border-gray-200 hover:border-gray-300 flex items-center justify-center gap-1.5 md:gap-3 text-sm md:text-base"
+            >
               {isDrafting ? (
-                <><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>กำลังบันทึก...</>
+                <>
+                  <svg
+                    className="animate-spin h-4 w-4 md:h-5 md:w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
+                  </svg>
+กำลังบันทึก...
+                </>
               ) : (
-                <><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4z"/>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 3v4H8V3M12 12v6m-3-3h6"/>
-                </svg>บันทึกร่าง</>
+                <>
+                  <svg
+                    className="w-4 h-4 md:w-5 md:h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17 3v4H8V3M12 12v6m-3-3h6"
+                    />
+                  </svg>
+                  บันทึกร่าง
+                </>
               )}
             </button>
 
-            <button type="button" disabled={isSubmitting || isDrafting}
+            {/* ปุ่มเผยแพร่งาน */}
+            <button
+              type="button"
+              disabled={isSubmitting || isDrafting}
               onClick={handlePublishClick}
-              className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-100 active:scale-95 flex items-center gap-3 text-base">
+              className="flex-1 md:flex-none py-3 md:py-4 md:px-10 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold rounded-xl md:rounded-2xl transition-all shadow-lg shadow-blue-100 active:scale-95 flex items-center justify-center gap-1.5 md:gap-3 text-sm md:text-base"
+            >
               {isSubmitting ? (
-                <><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>กำลังเผยแพร่...</>
+                <>
+                  <svg
+                    className="animate-spin h-4 w-4 md:h-5 md:w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    />
+                  </svg>
+กำลังเผยแพร่...
+                </>
               ) : (
-                <><Pencil className="w-5 h-5" />เผยแพร่งาน</>
+                <>
+                  <Pencil className="w-4 h-4 md:w-5 md:h-5" />
+                  เผยแพร่งาน
+                </>
               )}
             </button>
           </div>
