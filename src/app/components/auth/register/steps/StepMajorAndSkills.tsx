@@ -11,6 +11,7 @@ interface StepMajorAndSkillsProps {
   onOpenSkillsModal: () => void;
   onOpenJobsModal: () => void;
   jobOptions: string[];
+  onSelectImage?: (imageUrl: string) => void; // For alumni profile image crop
 }
 
 function StepMajorAndSkills({
@@ -20,6 +21,7 @@ function StepMajorAndSkills({
   onOpenSkillsModal,
   onOpenJobsModal,
   jobOptions,
+  onSelectImage,
 }: StepMajorAndSkillsProps) {
   // --- State สำหรับแยกประเภทบุคลากร (เฉพาะ Role Teacher) ---
   const [teacherType, setTeacherType] = useState<"academic" | "staff">(
@@ -110,15 +112,21 @@ function StepMajorAndSkills({
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      updateData({ profileImage: file });
+    if (file && onSelectImage) {
+      // Open crop modal by passing base64 image URL
+      const reader = new FileReader();
+      reader.onload = () => {
+        const imageUrl = reader.result as string;
+        onSelectImage(imageUrl);
+      };
+      reader.readAsDataURL(file);
     }
     // Reset input value เพื่อให้เลือกไฟล์เดิมซ้ำได้ถ้าต้องการ
     e.target.value = "";
   };
 
   const removeImage = () => {
-    updateData({ profileImage: null });
+    updateData({ profileImage: undefined, profileImageUrl: undefined });
   };
 
   const handleEmailChange = (index: number, value: string) => {

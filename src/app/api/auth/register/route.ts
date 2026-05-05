@@ -2,42 +2,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/libs/mongodb';
 import User from '@/models/User';
-import { uploadToCloudinary } from '@/libs/cloudinary';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { sendTeacherVerificationEmails } from '@/libs/emailToProf';
-import { notifyWelcomeCompleteProfile, notifyAlumniPendingVerification } from '@/utils/notificationUtils'; 
+import { notifyWelcomeCompleteProfile, notifyAlumniPendingVerification } from '@/utils/notificationUtils';
+
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST to register.' },
+    { status: 405 }
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
     // Connect to the database
     await connectToDatabase();
 
-    // Parse the request body
-    const formData = await req.formData();
-    
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const firstName = formData.get('firstName') as string;
-    const lastName = formData.get('lastName') as string;
-    const name = `${firstName} ${lastName}`;
-    const role = formData.get('role') as 'student' | 'alumni' | 'teacher';
-    const major = formData.get('major') as string;
-    const bio = formData.get('bio') as string || '';
+    // Parse JSON body (files are already uploaded to Cloudinary from client)
+    const body = await req.json();
 
-    // รับค่า contactInfo (array)
-    const contactInfoString = formData.get('contactInfo') as string;
-    let contactInfo: string[] = [];
-    if (contactInfoString) {
-      try {
-        contactInfo = JSON.parse(contactInfoString);
-        if (!Array.isArray(contactInfo)) {
-          contactInfo = [];
-        }
-      } catch (e) {
-        contactInfo = [];
-      }
-    }
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      role,
+      major,
+      bio = '',
+      contactInfo = [],
+      profileImageUrl,
+      studentId,
+      skills = [],
+      portfolioFileUrl,
+      portfolioFileName,
+      portfolioFileSize,
+      galleryImageUrls = [],
+      teacherEmails = [],
+      interestedJobs = [],
+    } = body;
+
+    const name = `${firstName} ${lastName}`;
 
     if (!email || !password || !firstName || !lastName || !role || !major) {
       return NextResponse.json(
@@ -45,7 +50,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // Check if user already exists
     const existingUser = await User.findOne({ email }).exec();
     if (existingUser) {
@@ -58,7 +63,7 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // สร้างอ็อบเจกต์ข้อมูลผู้ใช้พื้นฐาน
-    const userData: any = {
+    const userData: Record<string, unknown> = {
       name,
       firstName,
       lastName,
@@ -66,22 +71,26 @@ export async function POST(req: NextRequest) {
       role,
       major,
       bio,
-      contactInfo, // เพิ่มช่องทางการติดต่อ
-      emailVerified: true, // Set to true since we verify via OTP
+      contactInfo,
+      emailVerified: true,
       password: hashedPassword,
+      interestedJobs,
     };
+
+    // Add profile image URL if provided (already uploaded from client)
+    if (profileImageUrl) {
+      userData.profileImageUrl = profileImageUrl;
+    }
 
     // เพิ่มข้อมูลเฉพาะสำหรับนิสิตเท่านั้น
     if (role === 'student') {
-      // รับค่า studentId
-      const studentId = formData.get('studentId') as string;
       if (!studentId) {
         return NextResponse.json(
           { error: 'Student ID is required for students' },
           { status: 400 }
         );
       }
-      
+
       // ตรวจสอบว่ารหัสนิสิตไม่ซ้ำ
       const existingStudentId = await User.findOne({ studentId }).exec();
       if (existingStudentId) {
@@ -90,22 +99,23 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      
+
       userData.studentId = studentId;
-      
-      // รับค่า skills
-      const skillsString = formData.get('skills') as string;
-      if (skillsString) {
-        try {
-          userData.skills = JSON.parse(skillsString);
-          if (!Array.isArray(userData.skills)) {
-            userData.skills = []; // ถ้าไม่ใช่ array ให้ใช้ array ว่าง
-          }
-        } catch (e) {
-          userData.skills = [];
-        }
-      } else {
-        userData.skills = [];
+      userData.skills = Array.isArray(skills) ? skills : [];
+
+      // Add portfolio file if URL provided (already uploaded from client)
+      if (portfolioFileUrl) {
+        userData.resumeFiles = [{
+          name: portfolioFileName || 'portfolio.pdf',
+          url: portfolioFileUrl,
+          size: portfolioFileSize ? `${(portfolioFileSize / 1024).toFixed(2)} KB` : '0 KB',
+          uploadedAt: new Date(),
+        }];
+      }
+
+      // Add gallery images if URLs provided (already uploaded from client)
+      if (galleryImageUrls && galleryImageUrls.length > 0) {
+        userData.galleryImages = galleryImageUrls;
       }
     }
 
@@ -114,81 +124,9 @@ export async function POST(req: NextRequest) {
     // สร้างผู้ใช้ใหม่
     const user = new User(userData);
     await user.save();
-    
+
     // Get the user ID from the saved user
     const userId = user._id.toString();
-
-    // Handle profile image upload if provided
-    const profileImage = formData.get('profileImage') as File | null;
-    if (profileImage) {
-      // Convert the file to a buffer and then to base64
-      const bytes = await profileImage.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const base64Image = `data:${profileImage.type};base64,${buffer.toString('base64')}`;
-      
-      // Upload to Cloudinary
-      const profileImageUrl = await uploadToCloudinary(base64Image, userId, 'profileImage');
-      
-      // Update the user with the profile image URL
-      user.profileImageUrl = profileImageUrl;
-    }
-
-    // เพิ่มไฟล์เฉพาะสำหรับนิสิตเท่านั้น
-    if (role === 'student') {
-      // Handle portfolio upload if provided
-      const portfolio = formData.get('portfolio') as File | null;
-      if (portfolio) {
-        // Convert the file to a buffer and then to base64
-        const bytes = await portfolio.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const base64File = `data:${portfolio.type};base64,${buffer.toString('base64')}`;
-
-        // Upload to Cloudinary
-        const portfolioUrl = await uploadToCloudinary(base64File, userId, 'resume');
-
-        // Add to resumeFiles array
-        user.resumeFiles.push({
-          name: portfolio.name,
-          url: portfolioUrl,
-          size: `${(portfolio.size / 1024).toFixed(2)} KB`,
-          uploadedAt: new Date(),
-        });
-      }
-
-      // Handle gallery images upload if provided
-      const galleryImages: string[] = [];
-      
-      // Process up to 6 gallery images
-      for (let i = 0; i < 6; i++) {
-        const galleryImage = formData.get(`galleryImage${i}`) as File | null;
-        
-        if (galleryImage) {
-          // Convert the file to a buffer and then to base64
-          const bytes = await galleryImage.arrayBuffer();
-          const buffer = Buffer.from(bytes);
-          const base64Image = `data:${galleryImage.type};base64,${buffer.toString('base64')}`;
-          
-          // Upload to Cloudinary with a unique subfolder for gallery images
-          const galleryImageUrl = await uploadToCloudinary(
-            base64Image, 
-            userId, 
-            'profileImage', // Use the same folder but with a unique public_id
-            `gallery_${Date.now()}_${i}` // Create a unique ID for each image
-          );
-          
-          galleryImages.push(galleryImageUrl);
-        }
-      }
-      
-      if (galleryImages.length > 0) {
-        user.galleryImages = galleryImages;
-      }
-    }
-
-    // Save the updated user if files were uploaded
-    if (profileImage || (role === 'student' && (formData.get('portfolio') || formData.get('galleryImage0')))) {
-      await user.save();
-    }
 
     // ส่ง notification ยินดีต้อนรับ & แนะนำให้อัปเดตโปรไฟล์ (เฉพาะนิสิต)
     if (role === 'student') {
@@ -204,53 +142,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // สร้างข้อมูลสำหรับการตอบกลับโดยส่งข้อมูลเฉพาะตามบทบาท
-    const responseData: any = {
-      success: true, 
+    // สร้างข้อมูลสำหรับการตอบกลับ
+    const responseData: Record<string, unknown> = {
+      success: true,
       user: {
         id: userId,
         name,
         email,
         role,
         profileImageUrl: user.profileImageUrl
-      } 
+      }
     };
-    
+
     // เพิ่มข้อมูลสำหรับนิสิตเท่านั้น
     if (role === 'student') {
-
-      responseData.user.galleryImages = user.galleryImages;
+      (responseData.user as Record<string, unknown>).galleryImages = user.galleryImages;
     }
-    if (role === 'alumni') {
-      const teacherEmailsJson = formData.get('teacherEmails') as string;
-      
-      if (teacherEmailsJson) {
-        // Parse emails อย่างปลอดภัย
-        let teacherEmails: string[] = [];
-        try {
-          teacherEmails = JSON.parse(teacherEmailsJson);
-        } catch (e) {
-          teacherEmails = [];
-        }
 
-        // เรียกใช้ฟังก์ชันจาก libs/email.ts
-        // ไม่ต้อง await ก็ได้ เพื่อให้ User ได้รับ Response ทันที (Fire and Forget)
-        // หรือถ้าอยากมั่นใจว่าส่งชัวร์ค่อยใส่ await
-        sendTeacherVerificationEmails({
-          toEmails: teacherEmails,
-          studentName: `${firstName} ${lastName}`,
-          studentMajor: major,
-          profileImageUrl: user.profileImageUrl,
-          alumniId: userId, 
-          alumniEmail: email    
-        }).catch(err => console.error('Background email sending failed:', err));
-      }
+    // ส่งอีเมลยืนยันตัวตนให้อาจารย์ (สำหรับศิษย์เก่า)
+    if (role === 'alumni' && teacherEmails && teacherEmails.length > 0) {
+      sendTeacherVerificationEmails({
+        toEmails: teacherEmails,
+        studentName: name,
+        studentMajor: major,
+        profileImageUrl: user.profileImageUrl,
+        alumniId: userId,
+        alumniEmail: email
+      }).catch(err => console.error('Background email sending failed:', err));
     }
 
     return NextResponse.json(responseData, { status: 201 });
   } catch (error) {
     console.error('Registration error:', error);
-    
+
     // Check if it's a MongoDB duplicate key error
     if (error instanceof mongoose.Error.ValidationError) {
       return NextResponse.json(
@@ -258,10 +182,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // ส่งข้อความผิดพลาดที่ชัดเจน
     const errorMessage = error instanceof Error ? error.message : 'Something went wrong during registration';
-    
+
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

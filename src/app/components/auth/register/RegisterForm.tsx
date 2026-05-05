@@ -16,6 +16,7 @@ import Image from "next/image";
 import SkillsModal from "../../modals/SkillsModal";
 import JobsModal from "../../modals/JobsModal";
 import { jobCategories } from "@/app/constants/JobCategories";
+import { uploadToCloudinaryClient } from "@/hooks/useCloudinaryUpload";
 
 interface RegisterFormProps {
   onLoginClick: () => void;
@@ -37,10 +38,13 @@ export interface RegisterData {
   password?: string;
   confirmPassword?: string;
   profileImage?: File;
+  profileImageUrl?: string; // URL from Cloudinary
   portfolioFile?: File;
+  portfolioFileUrl?: string; // URL from Cloudinary
   bio?: string;
   contactInfo?: string[];
   galleryImages?: File[];
+  galleryImageUrls?: string[]; // URLs from Cloudinary
   interestedJobs?: string[];
   acceptedTerms: boolean;
 }
@@ -498,20 +502,19 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     setError("");
 
     try {
-      // Create FormData to send files
-      const formData = new FormData();
-
-      // Add basic user data
-      formData.append("firstName", registerData.firstName);
-      formData.append("lastName", registerData.lastName);
-      formData.append("email", registerData.email);
-      formData.append("password", registerData.password || "");
-      formData.append("role", registerData.role);
-      formData.append("major", registerData.major);
+      // Create JSON body instead of FormData (files are already uploaded to Cloudinary)
+      const requestBody: Record<string, unknown> = {
+        firstName: registerData.firstName,
+        lastName: registerData.lastName,
+        email: registerData.email,
+        password: registerData.password || "",
+        role: registerData.role,
+        major: registerData.major,
+      };
 
       // Add bio if provided
       if (registerData.bio) {
-        formData.append("bio", registerData.bio);
+        requestBody.bio = registerData.bio;
       }
 
       // Add interested job types if provided
@@ -519,10 +522,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
         registerData.interestedJobs &&
         registerData.interestedJobs.length > 0
       ) {
-        formData.append(
-          "interestedJobs",
-          JSON.stringify(registerData.interestedJobs),
-        );
+        requestBody.interestedJobs = registerData.interestedJobs;
       }
 
       // Add contact info if provided (filter out empty strings)
@@ -531,60 +531,54 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
           (info) => info.trim() !== "",
         );
         if (validContactInfo.length > 0) {
-          formData.append("contactInfo", JSON.stringify(validContactInfo));
+          requestBody.contactInfo = validContactInfo;
         }
       }
 
-      // Add profile image if provided
-      if (registerData.profileImage) {
-        formData.append("profileImage", registerData.profileImage);
+      // Add profile image URL if uploaded
+      if (registerData.profileImageUrl) {
+        requestBody.profileImageUrl = registerData.profileImageUrl;
       }
 
       // เพิ่มฟิลด์เฉพาะของนิสิตเท่านั้น
       if (registerData.role === "student") {
         // Add student ID
         if (registerData.studentId) {
-          formData.append("studentId", registerData.studentId);
+          requestBody.studentId = registerData.studentId;
         }
 
-        // Add skills as JSON string
+        // Add skills
         if (registerData.skills && registerData.skills.length > 0) {
-          formData.append("skills", JSON.stringify(registerData.skills));
+          requestBody.skills = registerData.skills;
         }
 
-        // Add portfolio file if provided
-        if (registerData.portfolioFile) {
-          formData.append("portfolio", registerData.portfolioFile);
+        // Add portfolio file URL if uploaded
+        if (registerData.portfolioFileUrl) {
+          requestBody.portfolioFileUrl = registerData.portfolioFileUrl;
+          requestBody.portfolioFileName = registerData.portfolioFile?.name;
+          requestBody.portfolioFileSize = registerData.portfolioFile?.size;
         }
 
-        // Add gallery images if provided
+        // Add gallery image URLs if uploaded
         if (
-          registerData.galleryImages &&
-          registerData.galleryImages.length > 0
+          registerData.galleryImageUrls &&
+          registerData.galleryImageUrls.length > 0
         ) {
-          registerData.galleryImages.forEach((file, index) => {
-            formData.append(`galleryImage${index}`, file);
-          });
+          requestBody.galleryImageUrls = registerData.galleryImageUrls;
         }
       }
 
       // เพิ่มฟิลด์เฉพาะของศิษย์เก่าเท่านั้น
       if (registerData.role === "alumni") {
-        if (registerData.profileImage) {
-          formData.append("profileImage", registerData.profileImage);
-        }
         if (registerData.teacherEmails) {
-          formData.append(
-            "teacherEmails",
-            JSON.stringify(registerData.teacherEmails),
-          );
+          requestBody.teacherEmails = registerData.teacherEmails;
         }
       }
 
-      // Send registration request
-      const response = await axios.post("/api/auth/register", formData, {
+      // Send registration request with JSON
+      const response = await axios.post("/api/auth/register", requestBody, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       });
 
@@ -733,9 +727,29 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
     setCurrentStep(5); // Move to profile step after OTP verification
   };
 
-  const handleCroppedImage = (file: File) => {
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const handleCroppedImage = async (file: File) => {
+    // Store the file for preview
     updateRegisterData({ profileImage: file });
     setCropImage(null);
+
+    // Upload to Cloudinary
+    setIsUploadingImage(true);
+    try {
+      const tempId = `temp_${Date.now()}`;
+      const result = await uploadToCloudinaryClient(file, {
+        folder: `temp/${tempId}`,
+        publicId: 'profile',
+        resourceType: 'image',
+      });
+      updateRegisterData({ profileImageUrl: result.url });
+    } catch (err) {
+      console.error('Failed to upload profile image:', err);
+      setError('ไม่สามารถอัปโหลดรูปโปรไฟล์ได้ กรุณาลองใหม่');
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   // Handle gallery images
@@ -864,6 +878,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
                 onOpenSkillsModal={() => setIsSkillsModalOpen(true)}
                 onOpenJobsModal={() => setIsJobsModalOpen(true)}
                 jobOptions={jobCategories}
+                onSelectImage={(imageUrl) => setCropImage(imageUrl)}
               />
               // <StepMajorAndSkills
               //   data={registerData}
@@ -896,6 +911,7 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
                 data={registerData}
                 updateData={updateRegisterData}
                 onSelectImage={(imageUrl) => setCropImage(imageUrl)}
+                isUploading={isUploadingImage}
               />
             )}
 
@@ -916,13 +932,13 @@ function RegisterForm({ onLoginClick }: RegisterFormProps) {
               <button
                 type="button"
                 onClick={nextStep}
-                disabled={!isStepValid() || isLoading}
-                className={`btn-primary ${!isStepValid() || isLoading ? "opacity-50 cursor-not-allowed" : ""} w-32 flex justify-center items-center`}
+                disabled={!isStepValid() || isLoading || isUploadingImage}
+                className={`btn-primary ${!isStepValid() || isLoading || isUploadingImage ? "opacity-50 cursor-not-allowed" : ""} w-32 flex justify-center items-center`}
               >
-                {isLoading && (
+                {(isLoading || isUploadingImage) && (
                   <span className="inline-block h-4 w-4 border-2 border-white border-r-transparent rounded-full animate-spin mr-2"></span>
                 )}
-                {currentStep < 5 ? "ถัดไป" : "สร้างบัญชี"}
+                {isUploadingImage ? "กำลังอัปโหลด..." : currentStep < 5 ? "ถัดไป" : "สร้างบัญชี"}
               </button>
             </div>
 

@@ -24,9 +24,10 @@ interface StepProfileProps {
   data: RegisterData;
   updateData: (data: Partial<RegisterData>) => void;
   onSelectImage: (imageUrl: string) => void;
+  isUploading?: boolean;
 }
 
-function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
+function StepProfile({ data, updateData, onSelectImage, isUploading }: StepProfileProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [portfolioError, setPortfolioError] = useState('');
   const [contactItems, setContactItems] = useState<ContactItem[]>([{ type: "email", value: "" }]);
@@ -134,8 +135,8 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
       URL.revokeObjectURL(previewImage);
       setPreviewImage(null);
     }
-    // Reset profile image data
-    updateData({ profileImage: undefined });
+    // Reset profile image data and URL
+    updateData({ profileImage: undefined, profileImageUrl: undefined });
   };
 
   // Format file size in KB or MB
@@ -160,18 +161,23 @@ function StepProfile({ data, updateData, onSelectImage }: StepProfileProps) {
       {/* Profile Image */}
       <div className="w-full">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+          <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center relative">
             {previewImage ? (
               <img
                 src={previewImage}
                 alt="Preview"
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover ${isUploading ? 'opacity-50' : ''}`}
               />
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
+            )}
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              </div>
             )}
           </div>
 

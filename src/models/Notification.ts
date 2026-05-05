@@ -51,7 +51,9 @@ const NotificationSchema: Schema = new Schema(
         'review_received_by_owner',     // ผู้ว่าจ้างได้รับรีวิวจากนิสิต
 
         // ── ระบบ ────────────────────────────
-        'system_message'
+        'system_message',
+        'system_welcome',           // ยินดีต้อนรับผู้ใช้ใหม่
+        'system_alumni_pending'     // แจ้งศิษย์เก่าว่าบัญชียังรอการยืนยัน
       ]
     },
     title: { 
