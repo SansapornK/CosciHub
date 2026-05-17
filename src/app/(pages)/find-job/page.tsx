@@ -38,7 +38,7 @@ const SearchInput = ({
         initial={false}
         animate={{ scale: isFocused ? 1.015 : 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="relative w-full md:w-3/5 lg:w-1/2 group"
+        className="relative w-full md:w-3/5 lg:w-1/2 2xl:max-w-[700px] group"
       >
         <div
           className={`absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-blue-500 rounded-full blur-md transition-all duration-700
@@ -249,7 +249,7 @@ function FindJobPageContent() {
 
   return (
     <div className="flex flex-col gap-4 md:gap-6 bg-gray-50/30 min-h-screen">
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white py-10 md:py-20 px-5 md:px-10 text-center rounded-b-[2rem] md:rounded-b-[3rem]">
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white py-10 md:py-20 px-5 md:px-10 2xl:px-20 text-center rounded-b-[2rem] md:rounded-b-[3rem]">
         <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[80%] bg-blue-100/70 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[45%] h-[70%] bg-indigo-100/40 rounded-full blur-[100px] pointer-events-none" />
 
@@ -291,7 +291,7 @@ function FindJobPageContent() {
         </div>
       </section>
 
-      <section className="px-4 md:px-10 pb-6">
+      <section className="px-4 md:px-10 2xl:px-20 pb-6 2xl:max-w-[1800px] 2xl:mx-auto">
         <JobFilter
           selectedJobTypes={selectedJobTypes}
           onJobTypesChange={handleJobTypesChange}

@@ -131,11 +131,11 @@ const JobCardMobile: React.FC<JobCardProps> = ({
         </p>
 
         {/* ── Row 3: Badges ── */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-500 text-[11px] font-semibold px-2.5 py-1 rounded-full">
-            {data.type}
+        <div className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-500 text-[11px] font-semibold px-2.5 py-1 rounded-full max-w-[45%] overflow-hidden">
+            <span className="truncate">{data.type}</span>
           </span>
-          <span className="inline-flex items-center gap-1 bg-zinc-100 text-zinc-500 text-[11px] font-medium px-2.5 py-1 rounded-full">
+          <span className="inline-flex items-center gap-1 bg-zinc-100 text-zinc-500 text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0">
             <svg
               className="w-[11px] h-[11px]"
               viewBox="0 0 24 24"
@@ -231,7 +231,7 @@ const JobCardDesktop: React.FC<JobCardProps> = ({
         <p className="text-sm font-medium text-gray-800 mb-1 text-left">
           คำอธิบายงาน :
         </p>
-        <p className="text-sm text-gray-500 line-clamp-3 text-left leading-relaxed">
+        <p className="text-sm text-gray-500 line-clamp-1 text-left leading-relaxed">
           {data.details}
         </p>
       </div>

@@ -644,13 +644,13 @@ export default function Home() {
       <motion.div initial="hidden" animate="visible" className="bg-[#FFFFFF]">
         <div>
           {/* --- Hero section --- */}
-          <section className="relative w-full h-[550px] md:h-[650px] overflow-hidden">
+          <section className="relative w-full h-[550px] md:h-[650px] 2xl:h-[750px] overflow-hidden">
             <HeroCarousel
               images={HERO_SLIDES}
               setCurrentSlide={setCurrentSlideIndex}
             />
             <div className="absolute inset-0 z-30 pointer-events-none">
-              <div className="max-w-7xl mx-auto h-full flex items-end px-6 md:px-6 lg:px-6 pb-16 md:pb-20">
+              <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto h-full flex items-end px-6 md:px-6 lg:px-6 pb-16 md:pb-20">
                 <div className="relative flex flex-col items-start text-start text-white max-w-2xl w-full">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -891,7 +891,7 @@ export default function Home() {
         </section>
 
         {/* --- Job Recommendation Section--- */}
-        <section className="w-full flex flex-col gap-3 mt-5 mb-10 justify-center text-center py-10 px-6 md:px-12">
+        <section className="w-full flex flex-col gap-3 mt-5 mb-10 justify-center text-center py-10 px-6 md:px-12 2xl:max-w-[1600px] mx-auto">
           <motion.div
             variants={fadeInUp}
             className="flex items-center justify-between mb-2 px-4 md:px-0"
@@ -913,14 +913,14 @@ export default function Home() {
               [1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="min-w-[85vw] md:min-w-full h-64 bg-gray-100 animate-pulse rounded-[2rem] shrink-0"
+                  className="w-[85vw] max-w-[85vw] md:w-auto h-64 bg-gray-100 animate-pulse rounded-[2rem] shrink-0"
                 />
               ))
             ) : recommendedJobs.length > 0 ? (
               recommendedJobs.map((job: any) => (
                 <div
                   key={job._id}
-                  className="min-w-[85vw] md:min-w-full snap-center shrink-0 pb-4"
+                  className="w-[85vw] max-w-[85vw] md:w-auto snap-center shrink-0 pb-4"
                 >
                   <JobCard
                     fromPageName="หน้าแรก"
@@ -976,7 +976,7 @@ export default function Home() {
           viewport={{ once: true, amount: 0.3 }}
           initial="hidden"
           whileInView="visible"
-          className="w-full flex flex-col gap-1 my-20 justify-center text-center px-6 md:px-12 max-w-7xl mx-auto"
+          className="w-full flex flex-col gap-1 my-20 justify-center text-center px-6 md:px-12 max-w-7xl 2xl:max-w-[1600px] mx-auto"
         >
           {/* Header */}
           <div className="flex flex-col items-center justify-center mb-6">
@@ -1094,7 +1094,7 @@ export default function Home() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
           variants={fadeInUp}
-          className="w-full py-8 px-6 md:px-16 max-w-7xl mx-auto"
+          className="w-full py-8 px-6 md:px-16 max-w-7xl 2xl:max-w-[1600px] mx-auto"
         >
           {/* Mobile: stack vertical, Desktop: overlap layout */}
           <div className="relative flex flex-col overflow-hidden rounded-[2rem] p-6 md:p-10 min-h-[400px] md:min-h-[480px]">

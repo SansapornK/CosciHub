@@ -304,7 +304,7 @@ const JobDetailPage = () => {
           DESKTOP ONLY — Original breadcrumb nav
           (hidden on mobile)
       ═══════════════════════════════════════ */}
-      <nav className="hidden md:flex bg-transparent max-w-6xl mx-auto px-6 py-6 items-center gap-2 text-sm md:text-base">
+      <nav className="hidden md:flex bg-transparent max-w-6xl 2xl:max-w-[1400px] mx-auto px-6 py-6 items-center gap-2 text-sm md:text-base">
         <div className="flex items-center">
           <BackButton />
         </div>
@@ -480,7 +480,7 @@ const JobDetailPage = () => {
           MAIN — Desktop uses original layout
                  Mobile uses tab-controlled view
       ═══════════════════════════════════════ */}
-      <main className="max-w-6xl mx-auto pb-32 md:pb-12 pt-3 md:pt-0">
+      <main className="max-w-6xl 2xl:max-w-[1400px] mx-auto pb-32 md:pb-12 pt-3 md:pt-0">
         {/* ── Desktop: original card ── */}
         <div className="hidden md:flex flex-col lg:flex-row gap-3 items-stretch">
           {/* ════ LEFT — Job Detail ════ */}

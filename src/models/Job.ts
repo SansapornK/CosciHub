@@ -47,14 +47,11 @@ const JobSchema = new mongoose.Schema({
   },
   location: { type: String },
   deliveryDate: { type: Date },
-  // NOTE: Run migration script to rename budgetMin → budget in MongoDB
-  // db.jobs.updateMany({}, [{ $set: { budget: "$budgetMin" } }, { $unset: ["budgetMin", "budgetMax"] }])
-  budget: { type: Number, required: true, min: 0 },
+  budget: { type: Number, required: true, min: 1 },
   capacity: { type: Number, required: true, default: 1 },
   applicationDeadline: { type: Date, required: true },
 
   // ─── เจ้าของงาน ─────────────────────────────────
-  //  ใช้ String ต่อไป (backward compat กับ data เดิม)
   owner: { type: String },
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,

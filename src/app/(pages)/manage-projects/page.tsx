@@ -493,7 +493,7 @@ export default function ManageProjectsPage() {
     };
 
   return (
-    <div className="flex flex-col gap-4 md:gap-6 pb-10 px-4 md:px-0 max-w-7xl mx-auto w-full">
+    <div className="flex flex-col gap-4 md:gap-6 pb-10 px-4 md:px-0 max-w-7xl 2xl:max-w-[1600px] mx-auto w-full">
       {isFreelancer ? (
         <div className="flex justify-between items-center mt-4 md:mt-8">
           <h2 className="text-xl md:text-3xl font-black text-[#0C5BEA] flex items-center gap-2 md:gap-3">
@@ -517,7 +517,7 @@ export default function ManageProjectsPage() {
 
       {/* --- Dashboard Summary Section --- */}
       {isFreelancer && (
-        <div className="w-full max-w-7xl mx-auto mb-5 md:mb-10">
+        <div className="w-full max-w-7xl 2xl:max-w-[1600px] mx-auto mb-5 md:mb-10">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
